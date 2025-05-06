@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
 				<ForgotpasswordForm />
 				<div className='text-center'>
 					<Link
-						href='/auth/sign-in'
+						href='/auth/login'
 						className='inline-flex items-center text-sm font-medium text-primary hover:text-rose-600'
 					>
 						<ArrowLeft className='mr-1 h-4 w-4' />

@@ -66,7 +66,7 @@ export default function ProductDetailsPage({
 						className='text-primary hover:text-primary/80 inline-flex items-center'
 					>
 						<ArrowLeft className='mr-2 h-4 w-4' />
-						Back to Marketplace
+						Go back
 					</Link>
 				</div>
 			</div>

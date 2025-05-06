@@ -37,7 +37,7 @@ export function ProductCard({
 			)}
 		>
 			<Link
-				href={`/marketplace/${product.id}`}
+				href={`/discover/${product.id}`}
 				className={cn(isListView ? "flex flex-row items-start w-full" : "")}
 			>
 				<div
