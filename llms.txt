@@ -1,0 +1,4559 @@
+TITLE: Publish JSON to URL with Delay, Headers, Body (Python)
+DESCRIPTION: This snippet demonstrates how to publish a JSON message to a specific URL using the QStash Python SDK. It sets a 3-second delay, includes custom headers, and specifies a JSON body. The `message_id` of the published message is then printed to the console. Requires the `qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/publish.mdx#_snippet_0
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+res = client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    headers={
+        "test-header": "test-value",
+    },
+    delay="3s",
+)
+
+print(res.message_id)
+```
+
+----------------------------------------
+
+TITLE: Verifying Signature with QStash SDK
+DESCRIPTION: This Python code snippet shows how to verify the signature of a QStash request using the `qstash` SDK. It creates a `Receiver` instance with the necessary signing keys, extracts the signature and body from the request, and then calls the `verify` method to confirm the request's validity. The `req` object is assumed to be a request object in a framework like Flask or Django.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/signature.mdx#_snippet_1
+
+LANGUAGE: python
+CODE:
+```
+from qstash import Receiver
+
+receiver = Receiver(
+    current_signing_key="YOUR_CURRENT_SIGNING_KEY",
+    next_signing_key="YOUR_NEXT_SIGNING_KEY",
+)
+
+# ... in your request handler
+
+signature, body = req.headers["Upstash-Signature"], req.body
+
+receiver.verify(
+    body=body,
+    signature=signature,
+    url="YOUR-SITE-URL",
+)
+```
+
+----------------------------------------
+
+TITLE: Publish with Rate & Parallelism Limit (cURL)
+DESCRIPTION: Publishes a JSON payload with both a rate limit (20 calls per second) and a parallelism limit (10) using cURL. It requires an Authorization header with a Bearer token and sets the Upstash-Flow-Control-Key and Upstash-Flow-Control-Value headers to define both limits. The Upstash-Flow-Control-Value combines both Rate and Parallelism limits.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/flowcontrol.mdx#_snippet_5
+
+LANGUAGE: bash
+CODE:
+```
+curl -XPOST -H 'Authorization: Bearer XXX' \
+            -H "Content-type: application/json" \
+            -H "Upstash-Flow-Control-Key:USER_GIVEN_KEY"  \
+            -H "Upstash-Flow-Control-Value:Rate=20,Parallelism=10" \
+           'https://qstash.upstash.io/v2/publish/https://example.com' \
+            -d '{"message":"Hello, World!"}'
+```
+
+----------------------------------------
+
+TITLE: Next.js API Route with QStash Signature Verification (ts)
+DESCRIPTION: This API route handles incoming requests to perform a long-running task.  It verifies the request's signature using `verifySignatureAppRouter` from `@upstash/qstash/nextjs` for security. The route simulates a long-running task by making multiple HTTP requests with a delay between each. It depends on `@upstash/qstash/nextjs`.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_19
+
+LANGUAGE: ts
+CODE:
+```
+import { verifySignatureAppRouter } from "@upstash/qstash/nextjs"
+
+async function handler(request: Request) {
+  const data = await request.json()
+
+  for (let i = 0; i < 10; i++) {
+    await fetch("https://firstqstashmessage.requestcatcher.com/test", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  return Response.json({ success: true })
+}
+
+export const POST = verifySignatureAppRouter(handler)
+
+```
+
+----------------------------------------
+
+TITLE: Verify QStash Signature in API Route
+DESCRIPTION: This code secures the API endpoint by verifying the signature of the incoming request, ensuring that it originates from QStash. It utilizes `verifySignatureAppRouter` from `@upstash/qstash/nextjs` to protect the handler function. Requires `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY` environment variables.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_14
+
+LANGUAGE: ts
+CODE:
+```
+import { verifySignatureAppRouter } from "@upstash/qstash/nextjs"
+
+async function handler(request: Request) {
+  const data = await request.json()
+
+  for (let i = 0; i < 10; i++) {
+    await fetch("https://firstqstashmessage.requestcatcher.com/test", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" },
+    })
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  return Response.json({ success: true })
+}
+
+export const POST = verifySignatureAppRouter(handler)
+```
+
+----------------------------------------
+
+TITLE: Creating a Schedule with Cron - Typescript
+DESCRIPTION: Creates a schedule to publish a message to a specified destination URL every minute using a cron expression. Requires the `@upstash/qstash` package and an Upstash token.  The `cron` parameter defines the schedule, and `destination` specifies the URL to which the message will be sent.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/schedules.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.schedules.create({
+  destination: "https://example.com",
+  cron: "* * * * *",
+});
+```
+
+----------------------------------------
+
+TITLE: Handle Callback in Next.js
+DESCRIPTION: This JavaScript code demonstrates how to handle a QStash callback in a Next.js API route.  It verifies the signature, decodes the base64-encoded response body, and logs the decoded content.  The `verifySignature` middleware from `@upstash/qstash/nextjs` is used for security.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/callbacks.mdx#_snippet_4
+
+LANGUAGE: javascript
+CODE:
+```
+// pages/api/callback.js
+
+import { verifySignature } from "@upstash/qstash/nextjs";
+
+function handler(req, res) {
+  // responses from qstash are base64-encoded
+  const decoded = atob(req.body.body);
+  console.log(decoded);
+
+  return res.status(200).end();
+}
+
+export default verifySignature(handler);
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+```
+
+----------------------------------------
+
+TITLE: Get URL Group with Node.js
+DESCRIPTION: Retrieves a URL Group from Qstash using Node.js and the `fetch` API. Requires a valid Bearer token in the Authorization header.  The URL Group name is specified in the URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/get.mdx#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/topics/my-url-group', {
+  headers: {
+    'Authorization': 'Bearer <token>'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Start QStash Job with Next.js API Route (TS)
+DESCRIPTION: This Next.js API route (`/api/start-email-job`) receives a request, extracts a list of users from the request body, and then uses the Upstash QStash client to publish a message that triggers a background job. It constructs the URL for the background job endpoint (`/api/send-email`) and passes the user list in the message body. It relies on the `@upstash/qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/background-jobs.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const qstashClient = new Client({
+  token: "YOUR_TOKEN",
+});
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const users: string[] = body.users;
+  // If you know the public URL of the email API, you can use it directly
+  const rootDomain = request.url.split('/').slice(0, 3).join('/');
+  const emailAPIURL = `${rootDomain}/api/send-email`; // ie: https://yourapp.com/api/send-email
+
+  // Tell QStash to start the background job.
+  // For proper error handling, refer to the quick start.
+  await qstashClient.publishJSON({
+    url: emailAPIURL,
+    body: {
+      users
+    }
+  });
+
+  return new Response("Job started", { status: 200 });
+}
+```
+
+----------------------------------------
+
+TITLE: Enqueueing OpenAI Chat Completion Request - JavaScript
+DESCRIPTION: This snippet enqueues a chat completion request to the OpenAI LLM using QStash. It requires the `@upstash/qstash` package and uses the `queue(...).enqueueJSON` method to add the request to a named queue, specifying the model and message. A callback URL handles asynchronous responses.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/llm.mdx#_snippet_2
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Client, upstash } from "@upstash/qstash";
+
+const client = new Client({
+    token: "<QSTASH_TOKEN>",
+});
+
+const result = await client.queue({ queueName: "queue-name" }).enqueueJSON({
+    api: { name: "llm", provider: openai({ token: "_OPEN_AI_TOKEN_"}) },
+    body: {
+        model: "gpt-3.5-turbo",
+        messages: [
+            {
+                role: "user",
+                content: "Write a hello world program in Rust.",
+            },
+        ],
+    },
+    callback: "https://abc.requestcatcher.com",
+});
+
+console.log(result);
+```
+
+----------------------------------------
+
+TITLE: Setting Authorization Header for QStash API Requests
+DESCRIPTION: This snippet shows how to set the `Authorization` header with a bearer token when making requests to the QStash API. The `QSTASH_TOKEN` should be replaced with the actual token obtained from the Upstash console. This header is required for all QStash API requests.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/security.mdx#_snippet_0
+
+LANGUAGE: http
+CODE:
+```
+"Authorization": "Bearer <QSTASH_TOKEN>"
+```
+
+----------------------------------------
+
+TITLE: Verifying QStash Signatures in Python
+DESCRIPTION: This snippet demonstrates how to use the QStash Python SDK to verify the signature of an incoming message. It initializes a `Receiver` instance with the current and next signing keys, then uses the `verify` method to check the message body, signature, and URL against these keys.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/receiver.mdx#_snippet_0
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import Receiver
+
+receiver = Receiver(
+    current_signing_key="YOUR_CURRENT_SIGNING_KEY",
+    next_signing_key="YOUR_NEXT_SIGNING_KEY",
+)
+
+# ... in your request handler
+
+signature, body = req.headers["Upstash-Signature"], req.body
+
+receiver.verify(
+    body=body,
+    signature=signature,
+    url="YOUR-SITE-URL",
+)
+```
+
+----------------------------------------
+
+TITLE: Qstash Bulk Cancel with Node.js
+DESCRIPTION: This snippet shows how to cancel multiple messages in Qstash using Node.js and the `fetch` API. It constructs a DELETE request to the `/v2/messages` endpoint, including the necessary headers for authorization and content type, along with the message IDs in the request body.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/bulk-cancel.mdx#_snippet_2
+
+LANGUAGE: JavaScript
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/messages', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer <token>',
+    'Content-Type': 'application/json',
+    body: {
+        messageIds: [
+            "msg_id_1",
+            "msg_id_2",
+            "msg_id_3",
+        ],
+    },
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Create URL Group and Add Endpoints (QStash, Python)
+DESCRIPTION: This snippet creates a URL group and adds two endpoints to it using the QStash client.  It requires the `qstash` library to be installed. The `url_group` is named "my-url-group", and two endpoints are added, each with a URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/url-groups.mdx#_snippet_0
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+client.url_group.upsert_endpoints(
+    url_group="my-url-group",
+    endpoints=[
+        {"url": "https://my-endpoint-1"},
+        {"url": "https://my-endpoint-2"},
+    ],
+)
+```
+
+----------------------------------------
+
+TITLE: Verifying Signature with QStash SDK
+DESCRIPTION: This TypeScript code snippet demonstrates how to verify the signature of a QStash request using the `@upstash/qstash` SDK. It initializes a `Receiver` with the current and next signing keys, retrieves the signature and body from the request, and then calls the `verify` method to validate the request.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/signature.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Receiver } from "@upstash/qstash";
+
+const receiver = new Receiver({
+  currentSigningKey: "YOUR_CURRENT_SIGNING_KEY",
+  nextSigningKey: "YOUR_NEXT_SIGNING_KEY",
+});
+
+// ... in your request handler
+
+const signature = req.headers["Upstash-Signature"];
+const body = req.body;
+
+const isValid = receiver.verify({
+  body,
+  signature,
+  url: "YOUR-SITE-URL",
+});
+```
+
+----------------------------------------
+
+TITLE: Batching messages with queue in Python
+DESCRIPTION: This snippet shows how to send a batch of messages to different queues using the QStash Python client. It initializes a QStash client with a token and uses the `batch` method to send an array of BatchRequest objects, each specifying a queue name, destination URL, body and retry attempts. It requires the `upstash_qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_8
+
+LANGUAGE: Python
+CODE:
+```
+from upstash_qstash import QStash
+from upstash_qstash.message import BatchRequest
+
+qstash = QStash("<QSTASH_TOKEN>")
+
+messages = [
+    BatchRequest(
+        queue="my-queue",
+        url="https://httpstat.us/200",
+        body=f"hi 1",
+        retries=0
+    ),
+    BatchRequest(
+        queue="my-second-queue",
+        url="https://httpstat.us/200",
+        body=f"hi 2",
+        retries=0
+    ),
+]
+
+qstash.message.batch(messages)
+```
+
+----------------------------------------
+
+TITLE: Publish Message with cURL
+DESCRIPTION: This snippet demonstrates how to publish a message to a specified destination URL using cURL. It sets the Authorization header with a bearer token, specifies the content type as application/json, sets custom headers for method, delay, retries, and a forward custom header, and includes a JSON payload with the message.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/publish.mdx#_snippet_0
+
+LANGUAGE: sh curl
+CODE:
+```
+curl -X POST "https://qstash.upstash.io/v2/publish/https://www.example.com" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -H "Upstash-Method: POST" \
+  -H "Upstash-Delay: 10s" \
+  -H "Upstash-Retries: 3" \
+  -H "Upstash-Forward-Custom-Header: custom-value" \
+  -d '{"message":"Hello, World!"}'
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Custom Headers (Typescript)
+DESCRIPTION: This snippet demonstrates how to publish a message to a specific URL using the Upstash Qstash client in Typescript. It includes the message body and custom headers, including the authorization token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/publishing.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://example.com",
+  body: { "hello": "world" },
+  headers: { "my-header": "my-value" },
+});
+```
+
+----------------------------------------
+
+TITLE: Verifying QStash Message Signature in Typescript
+DESCRIPTION: This snippet demonstrates how to verify the signature of a QStash message using the `@upstash/qstash` SDK. It initializes a `Receiver` with signing keys and then uses the `verify` method to validate the message's signature, body, and URL.  The signature is expected to be in the `Upstash-Signature` header.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/receiver.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Receiver } from "@upstash/qstash";
+
+const receiver = new Receiver({
+  currentSigningKey: "YOUR_CURRENT_SIGNING_KEY",
+  nextSigningKey: "YOUR_NEXT_SIGNING_KEY",
+});
+
+// ... in your request handler
+
+const signature = req.headers["Upstash-Signature"];
+const body = req.body;
+
+const isValid = receiver.verify({
+  body,
+  signature,
+  url: "YOUR-SITE-URL",
+});
+```
+
+----------------------------------------
+
+TITLE: Queueing a Task with QStash in Next.js
+DESCRIPTION: This code snippet demonstrates how to queue an image processing task using QStash after an image upload in a Next.js route handler. It uses the `@upstash/qstash` client to publish a JSON message to a specified URL with the image ID. The URL needs to be publicly accessible for QStash to call. Requires the QSTASH_TOKEN environment variable.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash"
+import { NextResponse } from "next/server"
+
+const client = new Client({ token: process.env.QSTASH_TOKEN! })
+
+export const POST = async (req: Request) => {
+  // Image uploading logic
+
+  // 👇 Once uploading is done, queue an image processing task
+  const result = await client.publishJSON({
+    url: "https://your-api-endpoint.com/process-image",
+    body: { imageId: "123" },
+  })
+
+  return NextResponse.json({
+    message: "Image queued for processing!",
+    qstashMessageId: result.messageId,
+  })
+}
+```
+
+----------------------------------------
+
+TITLE: Receiving QStash Message in Next.js
+DESCRIPTION: This code snippet demonstrates how to receive and process a QStash message in a Next.js route handler. It uses the `verifySignatureAppRouter` middleware from `@upstash/qstash/nextjs` to ensure that the message originates from QStash.  It extracts the imageId from the request body and simulates image processing logic.  Requires the QSTASH_CURRENT_SIGNING_KEY and QSTASH_NEXT_SIGNING_KEY environment variables for signature verification.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { verifySignatureAppRouter } from "@upstash/qstash/nextjs"
+
+// 👇 Verify that this messages comes from QStash
+export const POST = verifySignatureAppRouter(async (req: Request) => {
+  const body = await req.json()
+  const { imageId } = body as { imageId: string }
+
+  // Image processing logic, i.e. using sharp
+
+  return new Response(`Image with id "${imageId}" processed successfully.`)
+})
+```
+
+----------------------------------------
+
+TITLE: Create/Update Queue with Parallelism (cURL)
+DESCRIPTION: This cURL command creates or updates a QStash queue with a specified parallelism. It sends a POST request to the queues endpoint with a JSON payload containing the queueName and parallelism. The Authorization header includes the bearer token, and the Content-Type header is set to application/json.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/queues.mdx#_snippet_3
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/queues/ \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "queueName": "my-queue", 
+    "parallelism": 5,
+  }'
+```
+
+----------------------------------------
+
+TITLE: Publish JSON with Callback URL and GET Method (Python)
+DESCRIPTION: This snippet configures a publish request with callback and failure callback URLs using the QStash Python SDK. The `method` is set to `GET`, causing QStash to make a GET request to the specified URL. Requires the `qstash` package and pre-configured callback endpoints.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/publish.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    callback="https://my-callback...",
+    failure_callback="https://my-failure-callback...",
+    method="GET",
+)
+```
+
+----------------------------------------
+
+TITLE: Overwriting Schedule - cURL
+DESCRIPTION: Creates or overwrites an existing schedule using a cron expression and a specified schedule ID. Requires an Upstash token in the `Authorization` header, the cron expression in the `Upstash-Cron` header, and the schedule ID in the `Upstash-Schedule-Id` header. The request body contains the message to be sent.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/schedules.mdx#_snippet_9
+
+LANGUAGE: curl
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Cron: * * * * *" \
+    -H "Upstash-Schedule-Id: existingScheduleId" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/schedules/https://example.com'
+```
+
+----------------------------------------
+
+TITLE: Complete Cloudflare Worker Script
+DESCRIPTION: This code shows the entire Cloudflare Worker script, which includes importing the necessary modules, defining the environment variables, creating a receiver instance, verifying the signature of the incoming request, and returning a response.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/cloudflare-workers.mdx#_snippet_7
+
+LANGUAGE: typescript
+CODE:
+```
+import { Receiver } from "@upstash/qstash";
+export interface Env {
+  QSTASH_CURRENT_SIGNING_KEY: string;
+  QSTASH_NEXT_SIGNING_KEY: string;
+}
+
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext
+  ): Promise<Response> {
+    const c = new Receiver({
+      currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
+      nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
+    });
+
+    const body = await request.text();
+
+    const isValid = await c
+      .verify({
+        signature: request.headers.get("Upstash-Signature")!,
+        body,
+      })
+      .catch((err) => {
+        console.error(err);
+        return false;
+      });
+    if (!isValid) {
+      return new Response("Invalid signature", { status: 401 });
+    }
+    console.log("The signature was valid");
+
+    // do work here
+
+    return new Response("Hello World!");
+  },
+};
+```
+
+----------------------------------------
+
+TITLE: QStash Server Action to Publish a Message in Next.js (ts)
+DESCRIPTION: This server action uses the Upstash QStash client to publish a JSON message to a specified URL. It depends on the `@upstash/qstash` package and environment variable `QSTASH_TOKEN`. The function returns the `messageId` upon successful publishing, or `null` if an error occurs.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_18
+
+LANGUAGE: ts
+CODE:
+```
+"use server"
+import { Client } from "@upstash/qstash";
+
+const qstashClient = new Client({
+  token: process.env.QSTASH_TOKEN!,
+});
+
+export async function startBackgroundJob() {
+  try {
+    const response = await qstashClient.publishJSON({
+      "url": "https://qstash-bg-job.vercel.app/api/long-task",
+      body: {
+        "hello": "world"
+      }
+    });
+    return response.messageId;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+```
+
+----------------------------------------
+
+TITLE: Manual Webhook Signature Verification Function (TypeScript)
+DESCRIPTION: This function manually verifies the Qstash webhook signature. It decodes the JWT, validates the header, payload, and signature, and checks the issuer, subject (URL), expiration, and body hash to ensure the request's integrity.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/nodejs.mdx#_snippet_3
+
+LANGUAGE: TypeScript
+CODE:
+```
+/**
+ * @param jwt - The content of the `upstash-signature` header (JWT)
+ * @param signingKey - The signing key to use to verify the signature (Get it from Upstash Console)
+ * @param body - The raw body of the request
+ * @param url - The public URL of the lambda function
+ */
+async function verify(
+  jwt: string,
+  signingKey: string,
+  body: string | null,
+  url: string
+): Promise<void> {
+  const split = jwt.split(".")
+  if (split.length != 3) {
+    throw new Error("Invalid JWT")
+  }
+  const [header, payload, signature] = split
+
+  if (
+    signature !=
+    createHmac("sha256", signingKey)
+      .update(`${header}.${payload}`)
+      .digest("base64url")
+  ) {
+    throw new Error("Invalid JWT signature")
+  }
+
+  // JWT is verified, start looking at payload claims
+  const p: {
+    sub: string
+    iss: string
+    exp: number
+    nbf: number
+    body: string
+  } = JSON.parse(Buffer.from(payload, "base64url").toString())
+
+  if (p.iss !== "Upstash") {
+    throw new Error(`invalid issuer: ${p.iss}, expected \"Upstash\"`)
+  }
+  if (p.sub !== url) {
+    throw new Error(`invalid subject: ${p.sub}, expected \"${url}\"}`)
+  }
+
+  const now = Math.floor(Date.now() / 1000)
+  if (now > p.exp) {
+    throw new Error("token has expired")
+  }
+  if (now < p.nbf) {
+    throw new Error("token is not yet valid")
+  }
+
+  if (body != null) {
+    if (
+      p.body.replace(/=+$/, "") !=
+      createHash("sha256").update(body).digest("base64url")
+    ) {
+      throw new Error("body hash does not match")
+    }
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: AWS Lambda handler function (Python)
+DESCRIPTION: Defines the AWS Lambda handler function that receives events and context. It retrieves the current and next signing keys from environment variables, extracts the signature, URL, and body from the event, and attempts to verify the signature using both signing keys. If verification is successful, it proceeds with processing the request; otherwise, it returns an error.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/python.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+def lambda_handler(event, context):
+
+    # parse the inputs
+    current_signing_key = os.environ['QSTASH_CURRENT_SIGNING_KEY']
+    next_signing_key = os.environ['QSTASH_NEXT_SIGNING_KEY']
+
+    headers = event['headers']
+    signature = headers['upstash-signature']
+    url = "https://{}{}".format(event["requestContext"]["domainName"], event["rawPath"])
+    body = None
+    if 'body' in event:
+        body = event['body']
+
+
+    # check verification now
+    try:
+        verify(signature, current_signing_key, body, url)
+    except Exception as e:
+        print("Failed to verify signature with current signing key:", e)
+        try:
+            verify(signature, next_signing_key, body, url)
+        except Exception as e2:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({
+                    "error": str(e2),
+                }),
+            }
+
+
+    # Your logic here...
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "message": "ok",
+        }),
+    }
+```
+
+----------------------------------------
+
+TITLE: Webhook Verification using Qstash SDK (TypeScript)
+DESCRIPTION: This code snippet demonstrates how to verify Qstash webhook signatures within an AWS Lambda function using the Upstash Qstash SDK. It retrieves the signature from the request headers, verifies it against the body and URL, and returns an appropriate HTTP status code based on the verification result.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/nodejs.mdx#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { Receiver } from "@upstash/qstash"
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda"
+
+const receiver = new Receiver({
+  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY ?? "",
+  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY ?? "",
+})
+
+export const handler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const signature = event.headers["upstash-signature"]
+  const lambdaFunctionUrl = `https://${event.requestContext.domainName}`
+
+  if (!signature) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ message: "Missing signature" }),
+    }
+  }
+
+  try {
+    await receiver.verify({
+      signature: signature,
+      body: event.body ?? "",
+      url: lambdaFunctionUrl,
+    })
+  } catch (err) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ message: "Invalid signature" }),
+    }
+  }
+
+  // Request is valid, perform business logic
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: "Request processed successfully" }),
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Content Based Deduplication (cURL)
+DESCRIPTION: This snippet demonstrates how to publish a message to QStash using cURL, including the `Upstash-Content-Based-Deduplication` header. This allows QStash to automatically deduplicate messages based on their content, destination, and relevant headers.
+Requires a QStash token for authorization.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/deduplication.mdx#_snippet_3
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Content-Based-Deduplication: true" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/...'
+```
+
+----------------------------------------
+
+TITLE: Publish with Content-Based Deduplication (TypeScript)
+DESCRIPTION: This snippet shows how to publish a message with content-based deduplication enabled. The `contentBasedDeduplication` option ensures that only unique messages are delivered, preventing duplicates based on the content of the message. Requires the `@upstash/qstash` package and a valid QSTASH_TOKEN.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/publish.mdx#_snippet_5
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  contentBasedDeduplication: true,
+});
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Deduplication ID (cURL)
+DESCRIPTION: This snippet demonstrates how to publish a message to QStash using cURL, including the `Upstash-Deduplication-Id` header. This allows QStash to prevent duplicate messages from being enqueued based on the provided ID.
+Requires a QStash token for authorization.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/deduplication.mdx#_snippet_0
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Deduplication-Id: abcdef" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://my-api..."'
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message to Queue (TypeScript)
+DESCRIPTION: This TypeScript snippet enqueues a JSON message to a QStash queue using the QStash client library. It initializes a client with the QSTASH_TOKEN, creates a queue instance, and uses the enqueueJSON method to send the message. The url specifies the delivery endpoint and body contains the JSON payload.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/queues.mdx#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const queue = client.queue({
+  queueName: "my-queue"
+})
+
+await queue.enqueueJSON({
+  url: "https://example.com",
+  body: {
+    "Hello": "World"
+  }
+})
+```
+
+----------------------------------------
+
+TITLE: Configure the Number of Retries (TypeScript)
+DESCRIPTION: This snippet shows how to configure the number of retries for a published message. The `retries` option specifies the maximum number of retry attempts in case of delivery failures. Requires the `@upstash/qstash` package and a valid QSTASH_TOKEN.  The maximum number of retries depends on the QStash plan.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/publish.mdx#_snippet_3
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  retries: 1,
+});
+```
+
+----------------------------------------
+
+TITLE: Importing Receiver from QStash Library
+DESCRIPTION: This code snippet imports the `Receiver` class from the `@upstash/qstash` library. The `Receiver` class is used to verify the signatures of incoming webhooks from QStash.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/cloudflare-workers.mdx#_snippet_3
+
+LANGUAGE: typescript
+CODE:
+```
+import { Receiver } from "@upstash/qstash";
+```
+
+----------------------------------------
+
+TITLE: Get Queue Details (TypeScript)
+DESCRIPTION: This TypeScript snippet retrieves the details of a QStash queue using the QStash client library.  It initializes a client, creates a queue instance, and calls the get method. The result is assigned to 'res'.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/queues.mdx#_snippet_7
+
+LANGUAGE: TypeScript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const queue = client.queue({
+  queueName: "my-queue"
+})
+
+const res = await queue.get()
+```
+
+----------------------------------------
+
+TITLE: Publish with RatePerSecond Limit (TypeScript)
+DESCRIPTION: Publishes a JSON payload to a specified URL with a rate limit of 10 calls per second using the QStash client. It requires a QSTASH_TOKEN for authentication and uses a user-defined key for flow control. The client will delay message delivery if the rate limit is exceeded.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/flowcontrol.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+await client.publishJSON({
+    url: "https://example.com",
+    body: { hello: "world" },
+    flowControl: { key: "USER_GIVEN_KEY", ratePerSecond: 10 },
+});
+```
+
+----------------------------------------
+
+TITLE: Create QStash Schedule with Node.js
+DESCRIPTION: This snippet demonstrates how to create a schedule using Node.js and the fetch API. It sends a POST request to the QStash API endpoint with the destination URL and the cron expression in the headers. The Authorization header is also required.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/create.mdx#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/schedules/https://www.example.com/endpoint', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <token>',
+    'Upstash-Cron': '*/5 * * * *'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Publish to URL with Delay, Headers, and Body (TypeScript)
+DESCRIPTION: This snippet demonstrates how to publish a JSON payload to a specified URL using the QStash TypeScript SDK. It includes setting a 3-second delay and adding custom headers. The `publishJSON` method is used to send a JSON body. Requires the `@upstash/qstash` package and a valid QSTASH_TOKEN.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/publish.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  headers: { "test-header": "test-value" },
+  delay: "3s",
+});
+```
+
+----------------------------------------
+
+TITLE: Create QStash Schedule with Python
+DESCRIPTION: This snippet demonstrates how to create a schedule using Python and the requests library. It sends a POST request to the QStash API endpoint with the destination URL and the cron expression in the headers.  The Authorization header is also required.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/create.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+    'Upstash-Cron': '*/5 * * * *'
+}
+
+response = requests.post(
+  'https://qstash.upstash.io/v2/schedules/https://www.example.com/endpoint',
+   headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Resume Qstash Schedule with Python
+DESCRIPTION: Resumes a Qstash schedule using the Upstash Qstash Python client. It initializes a `QStash` client with the Qstash token and then calls the `schedule.resume()` method with the schedule ID. Requires the `qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/resume.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+
+client.schedule.resume("<SCHEDULE_ID>")
+```
+
+----------------------------------------
+
+TITLE: Handling Chat-based Rate Limit Error in QStash - TypeScript
+DESCRIPTION: This snippet demonstrates how to handle chat-based rate limit errors when using QStash for chat-related API calls. It catches QstashChatRatelimitError, logs the reset time for requests, and suggests queueing requests as a handling strategy. It uses @upstash/qstash along with openai integration for a sample chat request, and requires an OpenAI API key set in the environment.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/api-ratelimiting.mdx#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { QstashChatRatelimitError, Client, openai } from "@upstash/qstash";
+
+try {
+  // Example of a chat-related request that could hit the chat rate limit
+  const client = new Client({
+    token: "<QSTASH_TOKEN>",
+  });
+
+  const result = await client.publishJSON({
+    api: {
+      name: "llm",
+      provider: openai({ token: process.env.OPENAI_API_KEY! }),
+    },
+    body: {
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: "Where is the capital of Turkey?",
+        },
+      ],
+    },
+    callback: "https://oz.requestcatcher.com/",
+  });
+} catch (error) {
+  if (error instanceof QstashChatRatelimitError) {
+    console.log("Chat rate limit exceeded. Retry after:", error.resetRequests);
+    // Handle chat-specific rate limiting, perhaps by queueing requests
+  } else {
+    console.error("An unexpected error occurred:", error);
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Creating/Updating Queue with Parallelism - TypeScript
+DESCRIPTION: This snippet demonstrates how to create or update a queue using the Upstash QStash client with a specified parallelism. It requires the `@upstash/qstash` package and an Upstash token. The `upsert` method is used to create or update the queue, and the `get` method is used to retrieve the queue details.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/queues.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const queueName = "upstash-queue";
+await client.queue({ queueName }).upsert({ parallelism: 2 });
+
+const queueDetails = await client.queue({ queueName }).get();
+```
+
+----------------------------------------
+
+TITLE: Publish to URL Group with Delay, Headers, and Body (TypeScript)
+DESCRIPTION: This snippet shows how to publish a JSON payload to a URL group using the QStash TypeScript SDK.  It sets a 3-second delay and includes custom headers. The `urlGroup` option specifies the target URL group. Requires the `@upstash/qstash` package, a valid QSTASH_TOKEN, and a pre-existing URL group configured in QStash.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/publish.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  urlGroup: "my-url-group",
+  body: { hello: "world" },
+  headers: { "test-header": "test-value" },
+  delay: "3s",
+});
+
+// When publishing to a URL Group, the response is an array of messages for each URL in the URL Group
+console.log(res[0].messageId);
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Callback using Typescript
+DESCRIPTION: This TypeScript code publishes a message to QStash with a callback URL using the `@upstash/qstash` library. The `publishJSON` method is used to send a JSON payload, and the `callback` property is set to the desired callback URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/callbacks.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  callback: "https://my-callback...",
+});
+```
+
+----------------------------------------
+
+TITLE: Publishing Message with Retry Option TypeScript
+DESCRIPTION: This TypeScript snippet uses the `@upstash/qstash` library to publish a JSON message to a URL and configures the number of retries using the `retries` option. It requires a QStash token for authentication, which is passed during client initialization.  The client publishes a json body with specified url.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/retry.mdx#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  retries: 2,
+});
+```
+
+----------------------------------------
+
+TITLE: Batching messages with headers and body in TypeScript
+DESCRIPTION: This snippet shows how to send a batch of messages with custom headers and bodies using the QStash TypeScript client. It initializes a QStash client and uses the `batchJSON` method to send an array of message objects. Each object can include the `url`, `urlGroup`, `delay`, `body`, and `headers` properties.  It requires the `@upstash/qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_10
+
+LANGUAGE: TypeScript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+// Each message is the same as the one you would send with the publish endpoint
+const msgs = [
+  {
+    urlGroup: "myUrlGroup",
+    delay: 5,
+    body: "Hello World",
+    headers: {
+      hello: "123456",
+    },
+  },
+  {
+    url: "https://example.com/destination1",
+    delay: 7,
+    headers: {
+      hello: "789",
+    },
+  },
+  {
+    url: "https://example.com/destination2",
+    delay: 9,
+    headers: {
+      hello: "again",
+    },
+    body: {
+      Some: "Data",
+    },
+  },
+];
+
+const res = await client.batchJSON(msgs);
+```
+
+----------------------------------------
+
+TITLE: Qstash Cancelled Message Response
+DESCRIPTION: Example of the JSON response returned after a successful bulk message cancellation.  The 'cancelled' field indicates the number of messages that were successfully cancelled.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/bulk-cancel.mdx#_snippet_0
+
+LANGUAGE: JSON
+CODE:
+```
+{
+  "cancelled": 10
+}
+```
+
+----------------------------------------
+
+TITLE: Enqueueing Chat Completion Request - TypeScript
+DESCRIPTION: This snippet shows how to enqueue a chat completion request with Anthropic as the provider in QStash. It uses `enqueueJSON` with a specified queue name, configures the API with the LLM name and Anthropic provider, defines the model and message in the body, and sets a callback URL. It requires the `@upstash/qstash` package and environment variables for QStash and Anthropic tokens.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/anthropic.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { anthropic, Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const result = await client.queue({ queueName: "your-queue-name" }).enqueueJSON({
+  api: { name: "llm", provider: anthropic({ token: "<ANTHROPIC_TOKEN>" }) },
+  body: {
+    model: "claude-3-5-sonnet-20241022",
+    messages: [
+      {
+        role: "user",
+        content: "Generate ideas for a marketing campaign.",
+      },
+    ],
+  },
+  callback: "https://example.com/callback",
+});
+
+console.log(result);
+```
+
+----------------------------------------
+
+TITLE: Publishing message to endpoint with Typescript SDK
+DESCRIPTION: This snippet uses the Typescript SDK to publish a JSON message to an endpoint.  It initializes a QStash client with an API token and then calls the `publishJSON` method, specifying the destination URL and the message body.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.publishJSON({
+  url: "https://example.com",
+  body: {
+    hello: "world",
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Publishing OpenAI Chat Completion Request - JavaScript
+DESCRIPTION: This snippet publishes a chat completion request to the OpenAI LLM using QStash. It requires the `@upstash/qstash` package and uses the `publishJSON` method to send the request with a specified model and message. A callback URL is provided for asynchronous response handling.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/llm.mdx#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Client, upstash } from "@upstash/qstash";
+
+const client = new Client({
+    token: "<QSTASH_TOKEN>",
+});
+
+const result = await client.publishJSON({
+    api: { name: "llm", provider: openai({ token: "_OPEN_AI_TOKEN_"}) },
+    body: {
+        model: "gpt-3.5-turbo",
+        messages: [
+            {
+            role: "user",
+            content: "Write a hello world program in Rust.",
+            },
+        ],
+    },
+    callback: "https://abc.requestcatcher.com/",
+});
+
+console.log(result);
+```
+
+----------------------------------------
+
+TITLE: Delete Messages with cURL
+DESCRIPTION: This cURL command deletes messages from the Upstash Qstash DLQ using the DELETE /v2/dlq endpoint. It requires an Authorization header with a bearer token and a Content-Type header set to application/json. The request body contains a JSON object with an array of 'dlqIds' to be deleted.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/dlq/deleteMessages.mdx#_snippet_2
+
+LANGUAGE: Shell
+CODE:
+```
+curl -XDELETE https://qstash.upstash.io/v2/dlq \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+     "dlqIds": ["11111-0", "22222-0", "33333-0"]
+    }'
+```
+
+----------------------------------------
+
+TITLE: Handling Burst Rate Limit Error in QStash - TypeScript
+DESCRIPTION: This snippet demonstrates how to handle burst rate limit errors when interacting with the QStash API. It wraps a potentially rate-limited request in a try-catch block, specifically catching the QstashRatelimitError. Upon catching this error, the code logs the reset time and suggests implementing exponential backoff or delays before retrying. The snippet depends on the @upstash/qstash library.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/api-ratelimiting.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { QstashRatelimitError } from "@upstash/qstash";
+
+try {
+  // Example of a request that could hit the burst rate limit
+  const result = await client.publishJSON({
+    url: "https://my-api...",
+    // or urlGroup: "the name or id of a url group"
+    body: {
+      hello: "world",
+    },
+  });
+} catch (error) {
+  if (error instanceof QstashRatelimitError) {
+    console.log("Burst rate limit exceeded. Retry after:", error.reset);
+    // Implement exponential backoff or delay before retrying
+  } else {
+    console.error("An unexpected error occurred:", error);
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message with QStash via Node.js
+DESCRIPTION: Enqueues a message to a QStash queue using Node.js and the `fetch` API. It constructs a POST request with the queue name, destination URL, and necessary headers.  The request includes authorization, content type, and Upstash-specific headers for configuring method, retries, and custom header forwarding. The message is stringified into JSON for the request body.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/enqueue.mdx#_snippet_1
+
+LANGUAGE: js Node
+CODE:
+```
+const response = await fetch(
+  "https://qstash.upstash.io/v2/enqueue/myQueue/https://www.example.com",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer <token>",
+      "Content-Type": "application/json",
+      "Upstash-Method": "POST",
+      "Upstash-Retries": "3",
+      "Upstash-Forward-Custom-Header": "custom-value",
+    },
+    body: JSON.stringify({
+      message: "Hello, World!",
+    }),
+  }
+);
+```
+
+----------------------------------------
+
+TITLE: Publish with Rate & Parallelism Limit (TypeScript)
+DESCRIPTION: Publishes a JSON payload with both a rate limit (20 calls per second) and a parallelism limit (10) using the QStash client.  It requires a QSTASH_TOKEN for authentication and uses a user-defined key for flow control. This combines rate limiting and concurrency control.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/flowcontrol.mdx#_snippet_4
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+await client.publishJSON({
+    url: "https://example.com",
+    body: { hello: "world" },
+    flowControl: { key: "USER_GIVEN_KEY", ratePerSecond: 20, parallelism: 10 },
+});
+```
+
+----------------------------------------
+
+TITLE: Batching messages with headers and body in Python
+DESCRIPTION: This snippet shows how to send a batch of messages with custom headers and bodies using the QStash Python client. It initializes a QStash client and uses the `batch_json` method to send an array of message objects. Each object can include the `url`, `url_group`, `delay`, `body`, and `headers` properties. It requires the `qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_11
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+client.message.batch_json(
+    [
+        {
+            "url_group": "my-url-group",
+            "delay": "5s",
+            "body": {"hello": "world"},
+            "headers": {"random": "header"},
+        },
+        {
+            "url": "https://example.com/destination1",
+            "delay": "1m",
+        },
+        {
+            "url": "https://example.com/destination2",
+            "body": {"hello": "again"},
+        },
+    ]
+)
+```
+
+----------------------------------------
+
+TITLE: Publishing message with delay using Typescript SDK
+DESCRIPTION: This snippet uses the Typescript SDK to publish a message with a delay of 300 seconds (5 minutes).  The delay is specified in seconds using the `delay` parameter.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_7
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.publishJSON({
+  url: "https://example.com",
+  body: {
+    hello: "world",
+  },
+  delay: 300,
+});
+```
+
+----------------------------------------
+
+TITLE: Publishing messages in batch using cURL
+DESCRIPTION: This snippet demonstrates publishing multiple messages in a single request (batch) using cURL. The request body contains a JSON array of message objects, each with a destination URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_18
+
+LANGUAGE: shell
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/batch \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -d '\n     [\n      {
+        "destination": "https://example.com/destination1"
+      },
+      {
+        "destination": "https://example.com/destination2"
+      }
+     ]'
+```
+
+----------------------------------------
+
+TITLE: Sending Test Request via CURL to QStash
+DESCRIPTION: This CURL command sends a POST request to the specified Lambda URL via QStash. It includes the necessary authorization header with the QSTASH_TOKEN and sets the content type to application/json, sending a simple JSON payload.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/nodejs.mdx#_snippet_7
+
+LANGUAGE: bash
+CODE:
+```
+curl --request POST "https://qstash.upstash.io/v2/publish/<YOUR-LAMBDA-URL>" \
+-H "Authorization: Bearer <QSTASH_TOKEN>" \
+-H "Content-Type: application/json" \
+-d "{ \"hello\": \"world\"}"
+```
+
+----------------------------------------
+
+TITLE: Batching messages with destinations in TypeScript
+DESCRIPTION: This snippet demonstrates how to send a batch of messages to different destinations using the QStash TypeScript client. It initializes a QStash client with a token and uses the `batchJSON` method to send an array of message objects, each specifying a destination URL. It requires the `@upstash/qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+// Each message is the same as the one you would send with the publish endpoint
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.batchJSON([
+  {
+    url: "https://example.com/destination1",
+  },
+  {
+    url: "https://example.com/destination2",
+  },
+]);
+```
+
+----------------------------------------
+
+TITLE: Cancel Message with Node.js
+DESCRIPTION: This snippet demonstrates cancelling a message in Qstash using Node.js and the `fetch` API. It sends a DELETE request to the Qstash API, including the message ID and the authorization token in the headers.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/cancel.mdx#_snippet_1
+
+LANGUAGE: js Node
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/messages/msg_123', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer <token>'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message with QStash via Curl
+DESCRIPTION: Enqueues a message to a specified QStash queue using a curl command.  The command constructs a POST request with required headers for authentication, content type, and Upstash-specific options like method, retries, and custom header forwarding. The message body is set as a JSON string.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/enqueue.mdx#_snippet_0
+
+LANGUAGE: sh curl
+CODE:
+```
+curl -X POST "https://qstash.upstash.io/v2/enqueue/myQueue/https://www.example.com" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -H "Upstash-Method: POST" \
+  -H "Upstash-Retries: 3" \
+  -H "Upstash-Forward-Custom-Header: custom-value" \
+  -d '{"message":"Hello, World!"}'
+```
+
+----------------------------------------
+
+TITLE: Create Queue with Parallelism - Python
+DESCRIPTION: This snippet creates or updates an Upstash Qstash queue with a specified parallelism level. It initializes the QStash client with a token, then uses the `queue.upsert` method to create or update the queue, and finally retrieves and prints the queue details. The `parallelism` parameter defines the number of concurrent executions for messages in the queue.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/queues.mdx#_snippet_0
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+
+queue_name = "upstash-queue"
+client.queue.upsert(queue_name, parallelism=2)
+
+print(client.queue.get(queue_name))
+```
+
+----------------------------------------
+
+TITLE: Creating schedule with cron expression
+DESCRIPTION: This snippet demonstrates creating a schedule that runs every 5 minutes using a cron expression.  It requires the Upstash Qstash client library and a valid QSTASH_TOKEN.  The destination URL specifies the endpoint to be called by the schedule.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.schedules.create({
+  destination: "https://my-api...",
+  cron: "*/5 * * * *",
+});
+```
+
+----------------------------------------
+
+TITLE: QStash Schedule Response
+DESCRIPTION: This snippet demonstrates the JSON response received after successfully creating a QStash schedule. The response includes the unique schedule ID.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/create.mdx#_snippet_4
+
+LANGUAGE: json
+CODE:
+```
+{
+  "scheduleId": "scd_1234"
+}
+```
+
+----------------------------------------
+
+TITLE: Publish with Parallelism Limit (TypeScript)
+DESCRIPTION: Publishes a JSON payload to a specified URL with a parallelism limit of 10 using the QStash client. It requires a QSTASH_TOKEN for authentication and uses a user-defined key for flow control.  This limits the number of concurrent active calls to the endpoint.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/flowcontrol.mdx#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+await client.publishJSON({
+    url: "https://example.com",
+    body: { hello: "world" },
+    flowControl: { key: "USER_GIVEN_KEY", parallelism: 10 },
+});
+```
+
+----------------------------------------
+
+TITLE: Publishing to FIFO queue with Typescript SDK
+DESCRIPTION: This snippet demonstrates how to publish messages to a FIFO queue using the Typescript SDK.  It first creates a queue object using `client.queue` and then enqueues a JSON message using `queue.enqueueJSON`.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_16
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const queue = client.queue({
+  queueName: "my-queue"
+})
+
+await queue.enqueueJSON({
+  url: "https://example.com",
+  body: {
+    "Hello": "World"
+  }
+})
+```
+
+----------------------------------------
+
+TITLE: Get Signing Keys with cURL
+DESCRIPTION: Retrieves signing keys from the Qstash API using cURL. Requires a bearer token for authorization in the header. The response contains the current and next signing keys.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/signingKeys/get.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl https://qstash.upstash.io/v2/keys \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Getting schedule by ID
+DESCRIPTION: This snippet demonstrates how to get a schedule by its ID using the Upstash Qstash client. It requires the Upstash Qstash client library and a valid QSTASH_TOKEN. It retrieves the schedule using `scheduleId` and prints the cron expression.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_3
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const res = await client.schedules.get("scheduleId");
+console.log(res.cron);
+```
+
+----------------------------------------
+
+TITLE: Configuring Retry Policy for QStash Client
+DESCRIPTION: Configures the retry policy for the QStash client. This includes specifying the number of retries and a custom backoff function. Replace `<QSTASH_TOKEN>` with your actual QStash token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/gettingstarted.mdx#_snippet_3
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash(
+    "<QSTASH_TOKEN>",
+    retry={
+        "retries": 3,
+        "backoff": lambda retry_count: (2**retry_count) * 20,
+    },
+)
+```
+
+----------------------------------------
+
+TITLE: Pausing/Resuming Queue - TypeScript
+DESCRIPTION: This snippet demonstrates how to pause and resume a queue using the Upstash QStash client. It requires the `@upstash/qstash` package and an Upstash token. The `pause` and `resume` methods are used to control the queue's state. The `get` method is used to check the paused status of the queue.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/queues.mdx#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const name = "upstash-pause-resume-queue";
+const queue = client.queue({ queueName: name });
+await queue.upsert({ parallelism: 1 });
+
+// pause queue
+await queue.pause();
+
+const queueInfo = await queue.get();
+console.log(queueInfo.paused); // prints true
+
+// resume queue
+await queue.resume();
+```
+
+----------------------------------------
+
+TITLE: Delete Messages with Node.js
+DESCRIPTION: This Node.js code snippet deletes messages from the Upstash Qstash DLQ using the fetch API. It requires an Authorization header with a bearer token and a Content-Type header set to application/json. The request body contains a JSON object with an array of 'dlqIds' to be deleted.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/dlq/deleteMessages.mdx#_snippet_3
+
+LANGUAGE: JavaScript
+CODE:
+```
+const response = await fetch("https://qstash.upstash.io/v2/dlq", {
+  method: "DELETE",
+  headers: {
+    Authorization: "Bearer <token>",
+    "Content-Type": "application/json",
+  },
+  body: {
+    dlqIds: [
+      "11111-0",
+      "22222-0",
+      "33333-0",
+    ],
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Creating schedule with callback URL
+DESCRIPTION: This snippet demonstrates creating a schedule that runs every hour and sends the result to a callback URL.  It requires the Upstash Qstash client library and a valid QSTASH_TOKEN.  It also specifies callback and failureCallback URLs.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.schedules.create({
+  destination: "https://my-api...",
+  cron: "0 * * * *",
+  callback: "https://my-callback...",
+  failureCallback: "https://my-failure-callback...",
+});
+```
+
+----------------------------------------
+
+TITLE: Create/Update Queue with Parallelism (TypeScript)
+DESCRIPTION: This TypeScript snippet creates or updates a QStash queue with a specified parallelism using the QStash client library. It initializes a client with the QSTASH_TOKEN, creates a queue instance, and uses the upsert method to set the parallelism. Parallelism parameter controls the number of concurrent message deliveries.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/queues.mdx#_snippet_4
+
+LANGUAGE: TypeScript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const queue = client.queue({
+  queueName: "my-queue"
+})
+
+await queue.upsert({
+  parallelism: 1,
+})
+```
+
+----------------------------------------
+
+TITLE: Setting callback URL with Typescript SDK
+DESCRIPTION: This snippet demonstrates setting the callback and failure callback URLs using the Typescript SDK. These URLs are specified using the `callback` and `failureCallback` parameters in the `publishJSON` method.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_25
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.publishJSON({
+  url: "https://example.com",
+  body: {
+    hello: "world",
+  },
+  callback: "https://example.com/callback",
+  failureCallback: "https://example.com/failure",
+});
+```
+
+----------------------------------------
+
+TITLE: Sending custom header with Typescript SDK
+DESCRIPTION: This snippet demonstrates sending a custom header using the Typescript SDK. The custom header is added within the `headers` object passed to the `publishJSON` method.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_10
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.publishJSON({
+  url: "https://example.com",
+  body: {
+    hello: "world",
+  },
+  headers: {
+    "My-Header": "my-value",
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Cancel Message with Go
+DESCRIPTION: This snippet shows how to cancel a message in Qstash using Go's `net/http` package. It creates a DELETE request, sets the authorization token in the header, and executes the request. Error handling is included.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/cancel.mdx#_snippet_3
+
+LANGUAGE: Go Go
+CODE:
+```
+req, err := http.NewRequest("DELETE", "https://qstash.upstash.io/v2/messages/msg_123", nil)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Relative Delay (Python)
+DESCRIPTION: This Python code demonstrates how to publish a JSON message with a relative delay using the Upstash Qstash client. It calls the `publish_json` method of the `message` object, specifying the URL, body, and delay using the `delay` parameter. Ensure the `qstash` package is installed and replace `<QSTASH_TOKEN>` with your Qstash token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/delay.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    headers={
+        "test-header": "test-value",
+    },
+    delay="60s",
+)
+```
+
+----------------------------------------
+
+TITLE: Batch Messages cURL Request
+DESCRIPTION: This cURL command demonstrates how to send a batch of messages to the Qstash API endpoint. It sends a POST request with a JSON payload containing an array of message objects, each specifying a destination, headers, and body. The Authorization header includes the bearer token for authentication, and the Content-Type is set to application/json. The batch request supports different destinations, including URL Groups, destinations and queues.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/batch.mdx#_snippet_0
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/batch   -H "Authorization: Bearer XXX" \
+    -H "Content-Type: application/json" \
+    -d '
+    [
+      {
+          "destination": "myUrlGroup",
+          "headers":{
+            "Upstash-Delay":"5s",
+            "Upstash-Forward-Hello":"123456"
+          },
+          "body": "Hello World"
+      },
+      {
+          "queue": "test",
+          "destination": "https://example.com/destination",
+          "headers":{
+            "Upstash-Forward-Hello":"789"
+          }
+      },
+      {
+          "destination": "https://example.com/destination1",
+          "headers":{
+            "Upstash-Delay":"7s",
+            "Upstash-Forward-Hello":"789"
+          }
+      },
+      {
+          "destination": "https://example.com/destination2",
+          "headers":{
+            "Upstash-Delay":"9s",
+            "Upstash-Forward-Hello":"again"
+          }
+      }
+    ]'
+```
+
+----------------------------------------
+
+TITLE: JWT signature verification function (Python)
+DESCRIPTION: This `verify` function validates the JWT signature against a provided signing key, request body, and URL. It performs several checks, including verifying the JWT format, signature, issuer, subject (URL), expiration time, and body hash, raising an exception if any check fails. The function uses `hmac` and `hashlib` to compute SHA256 hashes and base64 encoding to compare against the JWT's signature and body hash.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/python.mdx#_snippet_3
+
+LANGUAGE: python
+CODE:
+```
+# @param jwt_token - The content of the `upstash-signature` header
+# @param signing_key - The signing key to use to verify the signature (Get it from Upstash Console)
+# @param body - The raw body of the request
+# @param url - The public URL of the lambda function
+def verify(jwt_token, signing_key, body, url):
+    split = jwt_token.split(".")
+    if len(split) != 3:
+        raise Exception("Invalid JWT.")
+
+    header, payload, signature = split
+
+    message = header + '.' + payload
+    generated_signature = base64.urlsafe_b64encode(hmac.new(bytes(signing_key, 'utf-8'), bytes(message, 'utf-8'), digestmod=hashlib.sha256).digest()).decode()
+
+    if generated_signature != signature and signature + "=" != generated_signature :
+        raise Exception("Invalid JWT signature.")
+
+    decoded = jwt.decode(jwt_token, options={"verify_signature": False})
+    sub = decoded['sub']
+    iss = decoded['iss']
+    exp = decoded['exp']
+    nbf = decoded['nbf']
+    decoded_body = decoded['body']
+
+    if iss != "Upstash":
+        raise Exception("Invalid issuer: {}".format(iss))
+
+    if sub.rstrip("/") != url.rstrip("/"):
+        raise Exception("Invalid subject: {}".format(sub))
+
+    now = time.time()
+    if now > exp:
+        raise Exception("Token has expired.")
+
+    if now < nbf:
+        raise Exception("Token is not yet valid.")
+
+
+    if body != None:
+        while decoded_body[-1] == "=":
+            decoded_body = decoded_body[:-1]
+
+        m = hashlib.sha256()
+        m.update(bytes(body, 'utf-8'))
+        m = m.digest()
+        generated_hash = base64.urlsafe_b64encode(m).decode()
+
+        if generated_hash != decoded_body and generated_hash != decoded_body + "=" :
+                raise Exception("Body hash doesn't match.")
+```
+
+----------------------------------------
+
+TITLE: Pausing/Resuming a schedule
+DESCRIPTION: This snippet demonstrates how to pause and resume a schedule using its ID.  It requires the Upstash Qstash client library and a valid QSTASH_TOKEN. It retrieves the schedule's status, and prints if the schedule is currently paused.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_8
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const scheduleId = "my-schedule"
+
+// pause schedule
+await client.schedules.pause({ schedule: scheduleId });
+
+// check if paused
+const result = await client.schedules.get(scheduleId);
+console.log(getResult.isPaused) // prints true
+
+// resume schedule
+await client.schedules.resume({ schedule: scheduleId });
+```
+
+----------------------------------------
+
+TITLE: Sending a Single Email with Resend - Typescript
+DESCRIPTION: This snippet demonstrates sending a single email using the `publishJSON` method with the `resend` provider. It requires the `QSTASH_TOKEN` for Qstash authentication and `RESEND_TOKEN` for Resend authentication. The email content is defined in the `body` field, including sender, recipient, subject, and HTML content.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/resend.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client, resend } from "@upstash/qstash";
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+await client.publishJSON({
+  api: {
+    name: "email",
+    provider: resend({ token: "<RESEND_TOKEN>" }),
+  },
+  body: {
+    from: "Acme <onboarding@resend.dev>",
+    to: ["delivered@resend.dev"],
+    subject: "Hello World",
+    html: "<p>It works!</p>",
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Cancel messages in bulk with Upstash Qstash in TypeScript
+DESCRIPTION: Deletes multiple messages at once or all messages from Upstash Qstash. Requires the `@upstash/qstash` package and a valid Qstash token. Demonstrates deleting a list of messages using `deleteMany()` and deleting all messages using `deleteAll()`.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/messages.mdx#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+// deleting two messages at once
+await client.messages.deleteMany([
+  "message-id-1",
+  "message-id-2",
+])
+
+
+// deleting all messages
+await client.messages.deleteAll()
+```
+
+----------------------------------------
+
+TITLE: Delete a Queue - Python
+DESCRIPTION: This snippet deletes an existing Upstash QStash queue. It initializes the QStash client with a token and uses the `queue.delete` method to remove the queue specified by `queue_name`. No direct output is generated, but the queue is deleted from the Upstash platform.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/queues.mdx#_snippet_1
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+
+queue_name = "upstash-queue"
+client.queue.delete(queue_name)
+```
+
+----------------------------------------
+
+TITLE: Setting max retry count with cURL
+DESCRIPTION: This snippet demonstrates setting the maximum retry count for a message using cURL.  It adds the `Upstash-Retries` header with the desired number of retries.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_21
+
+LANGUAGE: shell
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Upstash-Retries: 3" \
+    -H "Content-type: application/json" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://example.com'
+```
+
+----------------------------------------
+
+TITLE: QStash Webhook Handler in Deno Deploy
+DESCRIPTION: This code snippet sets up an HTTP server using Deno's `serve` function to handle incoming requests. It uses the `Receiver` class from the `upstash_qstash` library to verify the Upstash signature included in the request headers. It retrieves the current and next signing keys from Deno environment variables.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/deno-deploy.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { serve } from "https://deno.land/std@0.142.0/http/server.ts";
+import { Receiver } from "https://deno.land/x/upstash_qstash@v0.1.4/mod.ts";
+
+serve(async (req: Request) => {
+  const r = new Receiver({
+    currentSigningKey: Deno.env.get("QSTASH_CURRENT_SIGNING_KEY")!,
+    nextSigningKey: Deno.env.get("QSTASH_NEXT_SIGNING_KEY")!,
+  });
+
+  const isValid = await r
+    .verify({
+      signature: req.headers.get("Upstash-Signature")!,
+      body: await req.text(),
+    })
+    .catch((err: Error) => {
+      console.error(err);
+      return false;
+    });
+
+  if (!isValid) {
+    return new Response("Invalid signature", { status: 401 });
+  }
+
+  console.log("The signature was valid");
+
+  // do work
+
+  return new Response("OK", { status: 200 });
+});
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Deduplication ID (TypeScript)
+DESCRIPTION: This snippet demonstrates how to publish a message to QStash using the TypeScript client, including the `deduplicationId` option. This allows QStash to prevent duplicate messages from being enqueued based on the provided ID.
+Requires the `@upstash/qstash` package and a QStash token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/deduplication.mdx#_snippet_1
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  deduplicationId: "abcdef",
+});
+```
+
+----------------------------------------
+
+TITLE: Cancel/delete a message with Upstash Qstash in TypeScript
+DESCRIPTION: Deletes a specific message from Upstash Qstash using its ID. Requires the `@upstash/qstash` package and a valid Qstash token. The `messages.delete()` method is used to remove the message from the queue.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/messages.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const messages = client.messages
+const msg = await messages.delete("msgId");
+```
+
+----------------------------------------
+
+TITLE: Publishing message with delay using cURL
+DESCRIPTION: This snippet demonstrates how to publish a message with a specified delay (5 minutes) using cURL.  It adds the 'Upstash-Delay' header with the delay duration specified in a format like '5m'.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_6
+
+LANGUAGE: shell
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Delay: 5m" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://example.com'
+```
+
+----------------------------------------
+
+TITLE: Delete Messages with Go
+DESCRIPTION: This Go code snippet deletes messages from the Upstash Qstash DLQ using the net/http library. It constructs a DELETE request to the /v2/dlq endpoint with an Authorization header containing a bearer token and sets the Content-Type to application/json.  The request body contains a JSON object with an array of 'dlqIds' to be deleted.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/dlq/deleteMessages.mdx#_snippet_5
+
+LANGUAGE: Go
+CODE:
+```
+var data = strings.NewReader(`{
+  "dlqIds": [
+    "11111-0",
+    "22222-0",
+    "33333-0"
+  ]
+}`)
+req, err := http.NewRequest("DELETE", "https://qstash.upstash.io/v2/dlq", data)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+req.Header.Set("Content-Type", "application/json")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Remove Endpoint from URL Group (QStash, Python)
+DESCRIPTION: This snippet removes an endpoint from a URL group using the QStash client.  It requires the `qstash` library.  It removes the endpoint with URL "https://my-endpoint-1" from the URL group named "my-url-group".
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/url-groups.mdx#_snippet_3
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+client.url_group.remove_endpoints(
+    url_group="my-url-group",
+    endpoints=[
+        {"url": "https://my-endpoint-1"},
+    ],
+)
+```
+
+----------------------------------------
+
+TITLE: Upsert Queue with Qstash API - Node.js
+DESCRIPTION: This Node.js code snippet creates or updates a queue in Upstash Qstash using the `fetch` API. It sends a POST request to the `/v2/queues/` endpoint with the `queueName` and `parallelism` parameters in the JSON body.  The `Authorization` and `Content-Type` headers are required.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/upsert.mdx#_snippet_1
+
+LANGUAGE: Node
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/queues/', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer <token>',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    "queueName": "my-queue" , 
+    "parallelism" : 5,
+  })
+});
+```
+
+----------------------------------------
+
+TITLE: Upsert Queue with Qstash API - cURL
+DESCRIPTION: This cURL command creates or updates a queue in Upstash Qstash. It sends a POST request to the `/v2/queues/` endpoint with the `queueName` and `parallelism` parameters in the JSON body. The `Authorization` header is required for authentication.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/upsert.mdx#_snippet_0
+
+LANGUAGE: sh curl
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/queues/ \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "queueName": "my-queue" , 
+    "parallelism" : 5,
+  }'
+```
+
+----------------------------------------
+
+TITLE: Scheduling to Queue - Typescript
+DESCRIPTION: Creates a schedule to add an item to a queue every minute using a cron expression. Requires the `@upstash/qstash` package and an Upstash token.  The `cron` parameter defines the schedule, and `queueName` specifies the queue to which the message will be added.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/schedules.mdx#_snippet_6
+
+LANGUAGE: typescript
+CODE:
+```
+curl -XPOST \
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.schedules.create({
+  destination: "https://example.com",
+  cron: "* * * * *",
+  queueName: "yourQueueName",
+});
+```
+
+----------------------------------------
+
+TITLE: Verifying Signature with QStash SDK
+DESCRIPTION: This Go code snippet illustrates how to verify the signature of a QStash request using the `qstash-go` library. It initializes a `Receiver` with the current and next signing keys, retrieves the signature from the request headers and reads the request body. It then calls the `Verify` method to validate the request, passing the signature, body, and optionally the URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/signature.mdx#_snippet_2
+
+LANGUAGE: go
+CODE:
+```
+import "github.com/qstash/qstash-go"
+
+receiver := qstash.NewReceiver("<CURRENT_SIGNING_KEY>", "NEXT_SIGNING_KEY")
+
+// ... in your request handler
+
+signature := req.Header.Get("Upstash-Signature")
+body, err := io.ReadAll(req.Body)
+// handle err
+
+err := receiver.Verify(qstash.VerifyOptions{
+    Signature: signature,
+    Body:      string(body),
+    Url:       "YOUR-SITE-URL", // optional
+})
+// handle err
+```
+
+----------------------------------------
+
+TITLE: Get DLQ Message by ID - Python
+DESCRIPTION: This snippet demonstrates how to retrieve a specific message from the QStash DLQ using its ID. It initializes a QStash client and then calls the `dlq.get()` method with the ID of the desired message. The retrieved message is stored in the `msg` variable.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/dlq.mdx#_snippet_1
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+msg = client.dlq.get("<dlq-id>")
+```
+
+----------------------------------------
+
+TITLE: List URL Groups - TypeScript
+DESCRIPTION: This snippet lists all URL Groups using the Upstash Qstash client. It imports the `Client` class, instantiates it with a Qstash token, and then calls the `list` method on the `urlGroups` property.  The code iterates through the returned array of URL Groups and logs the name and endpoints of each group to the console.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/url-groups.mdx#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const allUrlGroups = await client.urlGroups.list();
+for (const urlGroup of allUrlGroups) {
+  console.log(urlGroup.name, urlGroup.endpoints);
+}
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Node.js
+DESCRIPTION: This snippet shows how to publish a message using Node.js and the `fetch` API. It configures the request with the POST method, sets the Authorization header with a bearer token, specifies the content type, includes custom headers for method, delay, retries, and a forward custom header, and stringifies a JSON payload containing the message.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/publish.mdx#_snippet_1
+
+LANGUAGE: js Node
+CODE:
+```
+const response = await fetch(
+  "https://qstash.upstash.io/v2/publish/https://www.example.com",
+  {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer <token>",
+      "Content-Type": "application/json",
+      "Upstash-Method": "POST",
+      "Upstash-Delay": "10s",
+      "Upstash-Retries": "3",
+      "Upstash-Forward-Custom-Header": "custom-value",
+    },
+    body: JSON.stringify({
+      message: "Hello, World!",
+    }),
+  }
+);
+```
+
+----------------------------------------
+
+TITLE: Pause Queue with Python
+DESCRIPTION: This snippet demonstrates how to pause a Qstash queue using the Upstash Qstash Python client. It initializes a QStash client with the QSTASH_TOKEN and then calls the `pause()` method on the queue object, specifying the queue name. It requires the `qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/pause.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+
+client.queue.pause("<QUEUE_NAME>")
+```
+
+----------------------------------------
+
+TITLE: List Logs with Go
+DESCRIPTION: This snippet showcases how to retrieve logs from the Qstash API using Go's `net/http` package. It constructs an HTTP request, sets the authorization header with the bearer token, and sends the request.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/logs/list.mdx#_snippet_3
+
+LANGUAGE: go
+CODE:
+```
+req, err := http.NewRequest("GET", "https://qstash.upstash.io/v2/logs", nil)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Publishing a message using Curl
+DESCRIPTION: This Curl command publishes a message to QStash, specifying the destination URL of the webhook endpoint, the authorization token, the content type, and the message body. Replace `<QSTASH_TOKEN>` with your actual token and `https://winter-cherry-9545.fly.dev` with your actual app URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/fly-io/go.mdx#_snippet_7
+
+LANGUAGE: Bash
+CODE:
+```
+curl --request POST "https://qstash.upstash.io/v2/publish/https://winter-cherry-9545.fly.dev" \
+     -H "Authorization: Bearer <QSTASH_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d "{ \"hello\": \"world\"}"
+```
+
+----------------------------------------
+
+TITLE: Pause/Resume a Queue - Python
+DESCRIPTION: This snippet demonstrates how to pause and resume an Upstash QStash queue. It initializes the QStash client, upserts a queue with parallelism, pauses the queue using `queue.pause`, checks the paused status using `queue.get`, and then resumes it using `queue.resume`. The `parallelism` parameter during upsert specifies the concurrency.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/queues.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+
+queue_name = "upstash-queue"
+client.queue.upsert(queue_name, parallelism=1)
+
+client.queue.pause(queue_name)
+
+queue = client.queue.get(queue_name)
+print(queue.paused) # prints True
+
+client.queue.resume(queue_name)
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message with QStash via Python
+DESCRIPTION: Enqueues a message to a QStash queue using Python's `requests` library. The code creates a dictionary for the headers, including authentication, content type, and Upstash-specific configurations.  The message body is prepared as a JSON dictionary and passed to the `requests.post` method.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/enqueue.mdx#_snippet_2
+
+LANGUAGE: python Python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+    'Content-Type': 'application/json',
+    'Upstash-Method': 'POST',
+    'Upstash-Retries': '3',
+    'Upstash-Forward-Custom-Header': 'custom-value',
+}
+
+json_data = {
+    'message': 'Hello, World!",
+}
+
+response = requests.post(
+  'https://qstash.upstash.io/v2/enqueue/myQueue/https://www.example.com',
+   headers=headers,
+   json=json_data
+)
+```
+
+----------------------------------------
+
+TITLE: Create URL Group with Endpoints - TypeScript
+DESCRIPTION: This snippet creates a URL Group and adds two endpoints using the Upstash Qstash client.  It imports the `Client` class, instantiates it with a Qstash token, and then calls the `addEndpoints` method on the `urlGroups` property.  The `name` parameter defines the name of the group, and the `endpoints` parameter is an array of endpoint objects, each with a `url` property.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/url-groups.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const urlGroups = client.urlGroups;
+await urlGroups.addEndpoints({
+  name: "url_group_name",
+  endpoints: [
+    { url: "https://my-endpoint-1" },
+    { url: "https://my-endpoint-2" },
+  ],
+});
+```
+
+----------------------------------------
+
+TITLE: Publish with Callback URL and GET Method (TypeScript)
+DESCRIPTION: This example demonstrates how to publish a message with a callback URL and specify the HTTP method as GET. The `callback` option specifies the URL to be called upon successful message delivery, and `failureCallback` is called on failure. Requires the `@upstash/qstash` package and a valid QSTASH_TOKEN.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/publish.mdx#_snippet_2
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  callback: "https://my-callback...",
+  failureCallback: "https://my-failure-callback...",
+  method: "GET",
+});
+```
+
+----------------------------------------
+
+TITLE: Making a Chat Completion Request with cURL
+DESCRIPTION: This cURL command demonstrates how to send a request to the Qstash LLM chat completions endpoint. It sets the `Authorization` header with the QSTASH_TOKEN, specifies the content type as `application/json`, and includes a JSON payload with the model and the message to be processed.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/llm/create.mdx#_snippet_0
+
+LANGUAGE: curl
+CODE:
+```
+curl "https://qstash.upstash.io/llm/v1/chat/completions" \
+    -X POST \
+    -H "Authorization: Bearer QSTASH_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "meta-llama/Meta-Llama-3-8B-Instruct",
+        "messages": [
+            {
+                "role": "user",
+                "content": "What is the capital of Turkey?"
+            }
+        ]
+    }'
+```
+
+----------------------------------------
+
+TITLE: Delete Queue with Node.js
+DESCRIPTION: This snippet demonstrates how to delete a queue using Node.js and the fetch API. It sends a DELETE request to the Qstash API endpoint, including the queue name and authorization token in the header. Requires the `fetch` API or a similar HTTP client library.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/remove.mdx#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/queue/my-queue', {
+  method: "DELETE",
+  headers: {
+    'Authorization': 'Bearer <token>'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Relative Delay (Typescript)
+DESCRIPTION: This TypeScript code snippet shows how to publish a JSON message with a relative delay using the Upstash Qstash client. It utilizes the `publishJSON` method, specifying the URL, body, and delay in seconds. Ensure `@upstash/qstash` is installed as a dependency and replace `<QSTASH_TOKEN>` with your Qstash token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/delay.mdx#_snippet_1
+
+LANGUAGE: Typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  delay: 60,
+});
+```
+
+----------------------------------------
+
+TITLE: List DLQ Messages with Pagination
+DESCRIPTION: This code snippet demonstrates how to retrieve all messages from the Qstash DLQ using pagination. It initializes a Qstash client, retrieves messages in batches using a cursor, and accumulates them into a single array. The process continues until the cursor is null, indicating the end of the message list.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/dlq.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client("<QSTASH_TOKEN>");
+const dlq = client.dlq;
+const all_messages = [];
+let cursor = null;
+while (true) {
+  const res = await dlq.listMessages({ cursor });
+  all_messages.push(...res.messages);
+  cursor = res.cursor;
+  if (!cursor) {
+    break;
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message to Queue (cURL)
+DESCRIPTION: This cURL command enqueues a JSON message to a specified QStash queue. It sends a POST request with the message body to the enqueue endpoint. The Authorization header includes the bearer token. The content type is set to application/json.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/queues.mdx#_snippet_0
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST -H 'Authorization: Bearer XXX' \
+            -H "Content-type: application/json" \
+  'https://qstash.upstash.io/v2/enqueue/my-queue/https://example.com' -d '{"message":"Hello, World!"}'
+```
+
+----------------------------------------
+
+TITLE: Deleting a schedule
+DESCRIPTION: This snippet demonstrates how to delete a schedule using its ID. It requires the Upstash Qstash client library and a valid QSTASH_TOKEN.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_6
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.schedules.delete("scheduleId");
+```
+
+----------------------------------------
+
+TITLE: Pausing Schedule with Node.js
+DESCRIPTION: This snippet showcases how to pause a Qstash schedule using the Upstash Qstash client in Node.js. It initializes the client with a token and then calls the `schedules.pause` method, passing the schedule ID as an argument. It assumes the `@upstash/qstash` package and `isomorphic-fetch` polyfill are installed.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/pause.mdx#_snippet_1
+
+LANGUAGE: Node
+CODE:
+```
+import { Client } from "@upstash/qstash";
+/**
+ * Import a fetch polyfill only if you are using node prior to v18.
+ * This is not necessary for nextjs, deno or cloudflare workers.
+ */
+import "isomorphic-fetch";
+
+const c = new Client({
+  token: "<QSTASH_TOKEN>",
+});
+
+c.schedules.pause({
+  schedule: "<SCHEDULE_ID>"
+});
+
+```
+
+----------------------------------------
+
+TITLE: Deleting Endpoints with Node.js
+DESCRIPTION: This snippet demonstrates how to remove endpoints from a URL Group using a DELETE request with Node.js and the `fetch` API. It sets the authorization and content-type headers and sends the endpoint data in the request body.  The urlGroupName parameter should be provided in the url.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/remove-endpoint.mdx#_snippet_1
+
+LANGUAGE: Node
+CODE:
+```
+const response = await fetch("https://qstash.upstash.io/v2/topics/:urlGroupName/endpoints", {
+  method: "DELETE",
+  headers: {
+    Authorization: "Bearer <token>",
+    "Content-Type": "application/json",
+  },
+  body: {
+    endpoints: [
+      {
+        name: "endpoint1",
+      },
+      {
+        url: "https://somewhere-else.com",
+      },
+    ],
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Resume Queue with curl
+DESCRIPTION: This snippet demonstrates how to resume a queue using a curl command. It sends a POST request to the specified endpoint with the queue name and authorization token. The request requires the queue name and a valid bearer token for authentication.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/resume.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl -X POST https://qstash.upstash.io/v2/queues/queue_1234/resume \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message to Queue (Python)
+DESCRIPTION: This Python code enqueues a JSON message to a QStash queue using the QStash library. It initializes the QStash client with the API token, then uses the `enqueue_json` method on the `message` object to send the message. The url and body are passed as parameters.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/queues.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.enqueue_json(
+    queue="my-queue",
+    url="https://example.com",
+    body={
+        "Hello": "World",
+    },
+)
+```
+
+----------------------------------------
+
+TITLE: Publishing LLM Request with Anthropic - TypeScript
+DESCRIPTION: This snippet demonstrates how to publish an LLM request to QStash using Anthropic as the provider. It configures the `api` property with the LLM name and the Anthropic provider, specifies the model and message in the `body`, and sets a callback URL for asynchronous response handling. Requires the `@upstash/qstash` package and environment variables for QStash and Anthropic tokens.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/anthropic.mdx#_snippet_0
+
+LANGUAGE: typescript
+CODE:
+```
+import { anthropic, Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.publishJSON({
+  api: { name: "llm", provider: anthropic({ token: "<ANTHROPIC_TOKEN>" }) },
+  body: {
+    model: "claude-3-5-sonnet-20241022",
+    messages: [{ role: "user", content: "Summarize recent tech trends." }],
+  },
+  callback: "https://example.com/callback",
+});
+```
+
+----------------------------------------
+
+TITLE: Delete Schedule - QStash Python
+DESCRIPTION: Deletes a QStash schedule by its ID. It requires the QStash Python SDK and a valid QSTASH-TOKEN.  The schedule id must exist to be deleted.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/schedules.mdx#_snippet_5
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+client.schedule.delete("<schedule-id>")
+```
+
+----------------------------------------
+
+TITLE: Upsert Queue with Qstash API - Go
+DESCRIPTION: This Go code creates or updates a queue in Upstash Qstash using the `net/http` package. It sends a POST request to the `/v2/queues/` endpoint with the `queueName` and `parallelism` parameters in the request body.  The `Authorization` and `Content-Type` headers are required. The `strings` and `log` packages are also used.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/upsert.mdx#_snippet_3
+
+LANGUAGE: Go
+CODE:
+```
+var data = strings.NewReader(`{
+    "queueName": "my-queue" , 
+    "parallelism" : 5,
+  }`)
+req, err := http.NewRequest("POST", "https://qstash.upstash.io/v2/queues/", data)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+req.Header.Set("Content-Type", "application/json")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Publish JSON to URL Group with Delay, Headers, Body (Python)
+DESCRIPTION: This snippet publishes a JSON message to a URL group using the QStash Python SDK. It sets a 3-second delay, includes custom headers, and provides a JSON body. The `message_id` of the first message in the response array (corresponding to the first URL in the group) is printed. Requires the `qstash` package and a pre-configured URL group.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/publish.mdx#_snippet_1
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+res = client.message.publish_json(
+    url_group="my-url-group",
+    body={
+        "hello": "world",
+    },
+    headers={
+        "test-header": "test-value",
+    },
+    delay="3s",
+)
+
+# When publishing to a URL group, the response is an array of messages for each URL in the group
+print(res[0].message_id)
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Failure Callback using cURL
+DESCRIPTION: This cURL command publishes a message to QStash with a specified failure callback URL. The `Upstash-Failure-Callback` header is used to provide the callback URL, which QStash will call when the message delivery fails after all retries.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/callbacks.mdx#_snippet_5
+
+LANGUAGE: bash
+CODE:
+```
+curl -X POST \
+  https://qstash.upstash.io/v2/publish/<DESTINATION_URL> \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <QSTASH_TOKEN>' \
+  -H 'Upstash-Failure-Callback: <CALLBACK_URL>' \
+  -d '{ "hello": "world" }'
+```
+
+----------------------------------------
+
+TITLE: Start Background Job with QStash
+DESCRIPTION: This code defines a server action using Next.js to publish a message to QStash. It initializes the QStash client with a token from the environment variables and sends a JSON payload to a specified URL.  Requires the `@upstash/qstash` package and a valid `QSTASH_TOKEN` environment variable.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_8
+
+LANGUAGE: ts
+CODE:
+```
+"use server"
+import { Client } from "@upstash/qstash"
+
+const qstashClient = new Client({
+  // Add your token to a .env file
+  token: process.env.QSTASH_TOKEN!,
+})
+
+export async function startBackgroundJob() {
+  await qstashClient.publishJSON({
+    url: "https://firstqstashmessage.requestcatcher.com/test",
+    body: {
+      hello: "world",
+    },
+  })
+}
+```
+
+----------------------------------------
+
+TITLE: Publish JSON with Failure Callback Python
+DESCRIPTION: This Python code uses the QStash client to publish a JSON message to a specified URL and defines a failure callback URL. It authenticates using a provided token and uses the `publish_json` method to send the message. If the message publication fails, QStash invokes the provided callback.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/handling-failures.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    failure_callback="https://my-callback...",
+)
+```
+
+----------------------------------------
+
+TITLE: Get Message with Python - Qstash
+DESCRIPTION: This snippet demonstrates how to retrieve a message from Qstash using Python's `requests` library. It creates a GET request to the Qstash API endpoint with the message ID and a bearer token for authentication. Replace `<token>` with your actual Qstash token and `msg_123` with the desired message ID.  Requires the `requests` library.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/get.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.get(
+  'https://qstash.upstash.io/v2/messages/msg_123',
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Listing all schedules
+DESCRIPTION: This snippet shows how to list all schedules associated with your Upstash Qstash account.  It requires the Upstash Qstash client library and a valid QSTASH_TOKEN. The result is printed to the console.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_4
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const allSchedules = await client.schedules.list();
+console.log(allSchedules);
+```
+
+----------------------------------------
+
+TITLE: Qstash Bulk Cancel with Go
+DESCRIPTION: This snippet demonstrates how to cancel multiple messages in Qstash using Go's `net/http` package. It creates a DELETE request to the `/v2/messages` endpoint with the necessary headers for authorization and content type, along with the message IDs in the request body, formatted as a JSON string.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/bulk-cancel.mdx#_snippet_4
+
+LANGUAGE: Go
+CODE:
+```
+var data = strings.NewReader(`{
+  "messageIds": [
+    "msg_id_1",
+    "msg_id_2",
+    "msg_id_3"
+  ]
+}`)
+req, err := http.NewRequest("DELETE", "https://qstash.upstash.io/v2/messages", data)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+req.Header.Set("Content-Type", "application/json")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Enqueue Message with QStash via Go
+DESCRIPTION: Enqueues a message to a QStash queue using Go's `net/http` library. It creates a new HTTP request with the POST method, URL, and JSON body.  The necessary headers, including authorization, content type, and Upstash-specific configurations, are set before sending the request using the default HTTP client. Error handling is included for request creation and execution.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/enqueue.mdx#_snippet_3
+
+LANGUAGE: go Go
+CODE:
+```
+var data = strings.NewReader(`{"message":"Hello, World!"}`)
+req, err := http.NewRequest("POST", "https://qstash.upstash.io/v2/enqueue/myQueue/https://www.example.com", data)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+req.Header.Set("Content-Type", "application/json")
+req.Header.Set("Upstash-Method", "POST")
+req.Header.Set("Upstash-Retries", "3")
+req.Header.Set("Upstash-Forward-Custom-Header", "custom-value")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Failure Callback using Python
+DESCRIPTION: This Python code publishes a message to QStash with a failure callback URL using the `qstash` library. The `publish_json` method is called on the `message` object, with the `failure_callback` parameter set to the callback URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/callbacks.mdx#_snippet_7
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    failure_callback="https://my-callback...",
+)
+```
+
+----------------------------------------
+
+TITLE: Listing all schedules with Typescript SDK
+DESCRIPTION: This snippet lists all schedules using the Typescript SDK.  It calls the `schedules.list()` method.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_31
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const scheds = await client.schedules.list();
+```
+
+----------------------------------------
+
+TITLE: Authenticate with Bearer Token using cURL
+DESCRIPTION: This snippet demonstrates how to authenticate a request to the QStash API by including the `QSTASH_TOKEN` in the `Authorization` header as a Bearer token. The `curl` command sends a request to the specified QStash endpoint with the token included in the header. Ensure `QSTASH_TOKEN` is replaced with your actual token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/authentication.mdx#_snippet_0
+
+LANGUAGE: bash
+CODE:
+```
+curl https://qstash.upstash.io/v2/publish/... \
+  -H "Authorization: Bearer <QSTASH_TOKEN>"
+```
+
+----------------------------------------
+
+TITLE: Remove Endpoint from URL Group - TypeScript
+DESCRIPTION: This snippet removes an endpoint from a URL Group using the Upstash Qstash client. It imports the `Client` class, initializes it with a Qstash token, and calls the `removeEndpoints` method on the `urlGroups` property. The `name` parameter specifies the name of the URL Group, and the `endpoints` parameter is an array containing the endpoint to be removed.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/url-groups.mdx#_snippet_3
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const urlGroups = client.urlGroups;
+await urlGroups.removeEndpoints({
+  name: "urlGroupName",
+  endpoints: [{ url: "https://my-endpoint-1" }],
+});
+```
+
+----------------------------------------
+
+TITLE: Get Signing Keys with Go
+DESCRIPTION: Retrieves signing keys from the Qstash API using Go's `net/http` package. Requires a bearer token for authorization in the header. The response is expected to be a JSON object containing `current` and `next` signing keys.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/signingKeys/get.mdx#_snippet_3
+
+LANGUAGE: go
+CODE:
+```
+req, err := http.NewRequest("GET", "https://qstash.upstash.io/v2/keys", nil)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Batching messages with URL Groups in cURL
+DESCRIPTION: This snippet shows how to send a batch of messages to a URL Group and a destination using cURL. It sends a POST request to the QStash batch endpoint with an array of message objects. One object specifies a URL Group name, and the other specifies a direct destination URL.  The Authorization header is required for authentication.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_3
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/batch \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -d '
+     [
+      {
+        "destination": "myUrlGroup"
+      },
+      {
+        "destination": "https://example.com/destination2"
+      }
+     ]'
+```
+
+----------------------------------------
+
+TITLE: Listing Schedules with Node.js
+DESCRIPTION: This snippet demonstrates how to list all schedules using Node.js and the fetch API. It sends a GET request to the Qstash API endpoint with the Authorization header set to a bearer token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/list.mdx#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/schedules', {
+  headers: {
+    'Authorization': 'Bearer <token>'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Sending Batch Emails with Resend - Typescript
+DESCRIPTION: This snippet demonstrates sending multiple emails at once using Resend's Batch Email API via the `publishJSON` method. It sets the `batch` option to `true` in the `resend` provider configuration. The `body` field contains an array of email configurations, each specifying the details for an individual email, such as sender, recipient, subject, and HTML content.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/resend.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+await client.publishJSON({
+  api: {
+    name: "email",
+    provider: resend({ token: "<RESEND_TOKEN>", batch: true }),
+  },
+  body: [
+    {
+      from: "Acme <onboarding@resend.dev>",
+      to: ["foo@gmail.com"],
+      subject: "Hello World",
+      html: "<h1>It works!</h1>",
+    },
+    {
+      from: "Acme <onboarding@resend.dev>",
+      to: ["bar@outlook.com"],
+      subject: "World Hello",
+      html: "<p>It works!</p>",
+    },
+  ],
+});
+```
+
+----------------------------------------
+
+TITLE: Publishing a Message to QStash
+DESCRIPTION: This curl command publishes a message to QStash, targeting the deployed Cloudflare Worker.  It includes the `Authorization` header with the QSTASH_TOKEN and sets the `Content-Type` to `application/json`.  The message body is a simple JSON object.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/cloudflare-workers.mdx#_snippet_9
+
+LANGUAGE: shell
+CODE:
+```
+curl --request POST "https://qstash.upstash.io/v2/publish/https://cloudflare-workers.upstash.workers.dev" \
+     -H "Authorization: Bearer <QSTASH_TOKEN>" \
+     -H "Content-Type: application/json" \
+     -d "{ \"hello\": \"world\"}"
+```
+
+----------------------------------------
+
+TITLE: Publishing OpenAI Chat Completion Request - Python
+DESCRIPTION: This snippet publishes a chat completion request to the OpenAI LLM using QStash. It requires the `qstash` package and uses the `message.publish_json` method to send the request with a specified model and message. A callback URL is provided for asynchronous response handling.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/llm.mdx#_snippet_1
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+from qstash.chat import upstash
+
+q = QStash("<QSTASH_TOKEN>")
+
+result = q.message.publish_json(
+    api={"name": "llm", "provider": openai("<OPENAI_API_KEY>")},
+    body={
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Write a hello world program in Rust.",
+            }
+        ],
+    },
+    callback="https://abc.requestcatcher.com/",
+)
+
+print(result)
+```
+
+----------------------------------------
+
+TITLE: QStash Enqueue Response Example (Group)
+DESCRIPTION: Illustrates a QStash enqueue API response for a group of messages. Each object in the array represents a message with its `messageId` and `url`. A `deduplicated` field indicates if a message was deduplicated.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/enqueue.mdx#_snippet_5
+
+LANGUAGE: json URL Group
+CODE:
+```
+[
+  {
+    "messageId": "msd_1234",
+    "url": "https://www.example.com"
+  },
+  {
+    "messageId": "msd_5678",
+    "url": "https://www.somewhere-else.com",
+    "deduplicated": true
+  }
+]
+```
+
+----------------------------------------
+
+TITLE: Enqueueing OpenAI Chat Completion Request - Python
+DESCRIPTION: This snippet enqueues a chat completion request to the OpenAI LLM using QStash. It requires the `qstash` package and uses the `message.enqueue_json` method to add the request to a named queue, specifying the model and message. A callback URL handles asynchronous responses.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/llm.mdx#_snippet_3
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+from qstash.chat import upstash
+
+q = QStash("<QSTASH_TOKEN>")
+
+result = q.message.enqueue_json(
+    queue="queue-name",
+    api={"name": "llm", "provider": openai("<OPENAI_API_KEY>")},
+    body={
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {
+                "role": "user",
+                "content": "Write a hello world program in Rust.",
+            }
+        ],
+    },
+    callback="https://abc.requestcatcher.com",
+)
+
+print(result)
+```
+
+----------------------------------------
+
+TITLE: Batching messages with URL Groups in TypeScript
+DESCRIPTION: This snippet demonstrates how to send a batch of messages to a URL Group and a destination using the QStash TypeScript client. It initializes a QStash client with a token and uses the `batchJSON` method to send an array of message objects. One object specifies a URL Group name, and the other specifies a destination URL. It requires the `@upstash/qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_4
+
+LANGUAGE: TypeScript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+// Each message is the same as the one you would send with the publish endpoint
+const res = await client.batchJSON([
+  {
+    urlGroup: "myUrlGroup",
+  },
+  {
+    url: "https://example.com/destination2",
+  },
+]);
+```
+
+----------------------------------------
+
+TITLE: Resume Qstash Schedule with Go
+DESCRIPTION: Resumes a Qstash schedule using the Upstash Qstash Go client.  It creates a new `qstash.NewClient` with the Qstash token.  Then calls the `Schedules().Resume()` method with the schedule ID.  It requires the `github.com/upstash/qstash-go` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/resume.mdx#_snippet_3
+
+LANGUAGE: Go
+CODE:
+```
+package main
+
+import "github.com/upstash/qstash-go"
+
+func main() {
+
+	client := qstash.NewClient("<QSTASH_TOKEN>")
+
+	// error checking is omitted for brevity
+	err := client.Schedules().Resume("<SCHEDULE_ID>")
+}
+```
+
+----------------------------------------
+
+TITLE: Get URL Group by Name (QStash, Python)
+DESCRIPTION: This snippet retrieves a URL group by its name using the QStash client.  It depends on the `qstash` library. The `url_group` is retrieved using its name "my-url-group", and then its name and endpoints are printed to the console.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/url-groups.mdx#_snippet_1
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+url_group = client.url_group.get("my-url-group")
+
+print(url_group.name, url_group.endpoints)
+```
+
+----------------------------------------
+
+TITLE: Manual Webhook Verification Handler (TypeScript)
+DESCRIPTION: This code snippet provides a manual implementation of Qstash webhook signature verification in an AWS Lambda function.  It extracts the signature and keys from the request and environment variables, then calls a `verify` function to validate the signature.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/nodejs.mdx#_snippet_2
+
+LANGUAGE: TypeScript
+CODE:
+```
+import type { APIGatewayEvent, APIGatewayProxyResult } from "aws-lambda"
+import { createHash, createHmac } from "node:crypto"
+
+export const handler = async (
+  event: APIGatewayEvent,
+): Promise<APIGatewayProxyResult> => {
+  const signature = event.headers["upstash-signature"] ?? ""
+  const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY ?? ""
+  const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY ?? ""
+
+  const url = `https://${event.requestContext.domainName}`
+
+  try {
+    // Try to verify the signature with the current signing key and if that fails, try the next signing key
+    // This allows you to roll your signing keys once without downtime
+    await verify(signature, currentSigningKey, event.body, url).catch((err) => {
+      console.error(
+        `Failed to verify signature with current signing key: ${err}`
+      )
+
+      return verify(signature, nextSigningKey, event.body, url)
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.toString() : err
+
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: message }),
+    }
+  }
+
+  // Add your business logic here
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: "Request processed successfully" }),
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Cancel Message with Python
+DESCRIPTION: This snippet demonstrates how to cancel a message in Qstash using Python's `requests` library. It sends a DELETE request with the message ID and sets the authorization token in the header.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/cancel.mdx#_snippet_2
+
+LANGUAGE: Python Python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.delete(
+  'https://qstash.upstash.io/v2/messages/msg_123', 
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Publishing Message with Retry Parameter Python
+DESCRIPTION: This Python code uses the `qstash` library to publish a JSON message to a URL. The `retries` parameter within the `publish_json` function specifies the maximum number of retry attempts.  The QStash token is required for authentication during client initialization.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/retry.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    retries=2,
+)
+```
+
+----------------------------------------
+
+TITLE: Deleting Endpoints with Python
+DESCRIPTION: This snippet demonstrates how to remove endpoints from a URL Group using a DELETE request with the Python `requests` library. The authorization and content-type headers are set, and the endpoint data is passed as the request body. Requires the `requests` library.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/remove-endpoint.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+    'Content-Type': 'application/json',
+}
+
+data = {
+   "endpoints": [
+      {
+        "name": "endpoint1",
+      },
+      {
+        "url": "https://somewhere-else.com"
+      }
+    ]
+}
+
+response = requests.delete(
+  'https://qstash.upstash.io/v2/topics/:urlGroupName/endpoints',
+  headers=headers,
+  data=data
+)
+```
+
+----------------------------------------
+
+TITLE: Setting callback URL with cURL
+DESCRIPTION: This snippet demonstrates setting the callback and failure callback URLs using cURL. It uses the `Upstash-Callback` and `Upstash-Failure-Callback` headers.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_24
+
+LANGUAGE: shell
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Callback: https://example.com/callback" \
+    -H "Upstash-Failure-Callback: https://example.com/failure" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://example.com'
+```
+
+----------------------------------------
+
+TITLE: Publishing Message with Retry Header cURL
+DESCRIPTION: This cURL command publishes a JSON message to a specified URL using QStash and sets the `Upstash-Retries` header to control the maximum number of retry attempts. The `Authorization` header with the bearer token is required for authentication, and the `Content-type` header specifies the request body format.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/retry.mdx#_snippet_0
+
+LANGUAGE: shell cURL
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Retries: 2" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://my-api...'
+```
+
+----------------------------------------
+
+TITLE: React Component to Start Background Job in Next.js (tsx)
+DESCRIPTION: This React component renders a button that, when clicked, initiates a background job using the `startBackgroundJob` action. It manages loading state and displays a message indicating the job's status.  It uses `useState` hook for managing loading state and displaying messages.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/vercel-nextjs.mdx#_snippet_17
+
+LANGUAGE: tsx
+CODE:
+```
+"use client"
+import { startBackgroundJob } from "@/app/actions";
+import { useState } from "react";
+
+export default function Home() {
+const [loading, setLoading] = useState(false);
+const [msg, setMsg] = useState("");
+
+    async function handleClick() {
+      setLoading(true);
+      const messageId = await startBackgroundJob();
+      if (messageId) {
+        setMsg(`Started job with ID ${messageId}`);
+      } else {
+        setMsg("Failed to start background job");
+      }
+      setLoading(false);
+    }
+
+    return (
+      <main className="flex flex-col h-lvh items-center justify-center">
+        <button onClick={handleClick} disabled={loading} className="btn btn-primary w-1/2 h-56 bg-green-500 text-xl sm:text-3xl rounded-lg hover:bg-green-600 disabled:bg-gray-500">
+          Start Background Job
+        </button>
+
+        {loading && <div className="text-2xl mt-8">Loading...</div>}
+        {msg && <p className="text-center text-lg">{msg}</p>}
+      </main>
+    );
+
+}
+
+```
+
+----------------------------------------
+
+TITLE: Rotate Signing Keys with QStash Python
+DESCRIPTION: This snippet rotates the signing keys using the QStash client. It initializes a QStash client with a provided token and then calls the `signing_key.rotate()` method to generate a new set of keys. The new `current` and `next` keys are then printed to the console.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/keys.mdx#_snippet_1
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+new_signing_key = client.signing_key.rotate()
+
+print(new_signing_key.current, new_signing_key.next)
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Custom Headers (Python)
+DESCRIPTION: This snippet demonstrates how to publish a message to a specific URL using the Upstash Qstash client in Python. It includes the message body and custom headers, including the authorization token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/publishing.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://my-api...",
+    body={
+        "hello": "world",
+    },
+    headers={
+        "my-header": "my-value",
+    },
+)
+```
+
+----------------------------------------
+
+TITLE: Pausing Schedule with Python
+DESCRIPTION: This snippet demonstrates how to pause a Qstash schedule using the Upstash Qstash client in Python.  It initializes the client with the Qstash token and calls the `schedule.pause` method with the schedule ID. It requires the `qstash` package to be installed.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/pause.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+
+client.schedule.pause("<SCHEDULE_ID>")
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Failure Callback using Typescript
+DESCRIPTION: This TypeScript code publishes a message to QStash with a failure callback URL using the `@upstash/qstash` library. The `publishJSON` method is used to send a JSON payload, and the `failureCallback` property is set to the desired callback URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/callbacks.mdx#_snippet_6
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  failureCallback: "https://my-callback...",
+});
+```
+
+----------------------------------------
+
+TITLE: Get URL Group by Name - TypeScript
+DESCRIPTION: This snippet retrieves a URL Group by its name using the Upstash Qstash client. It imports the `Client` class, initializes it with a Qstash token, and calls the `get` method on the `urlGroups` property, passing the group name as an argument. The returned `urlGroup` object's name and endpoints are then logged to the console.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/url-groups.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const urlGroups = client.urlGroups;
+const urlGroup = await urlGroups.get("urlGroupName");
+console.log(urlGroup.name, urlGroup.endpoints);
+```
+
+----------------------------------------
+
+TITLE: Remove URL Group with Node.js
+DESCRIPTION: Removes a URL group using a DELETE request in Node.js with the fetch API. Requires the URL group name and a valid authorization token in the headers.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/remove.mdx#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/topics/my-url-group', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer <token>'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Get Schedule with Go HTTP
+DESCRIPTION: This snippet demonstrates retrieving a schedule using Go's `net/http` package. It creates a GET request to the Qstash API endpoint and sets the authorization token in the header.  Error handling is included. Replace `<token>` with your actual Qstash API token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/get.mdx#_snippet_3
+
+LANGUAGE: go
+CODE:
+```
+req, err := http.NewRequest("GET", "https://qstash.upstash.io/v2/schedules/scd_1234", nil)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Content Based Deduplication (TypeScript)
+DESCRIPTION: This snippet demonstrates how to publish a message to QStash using the TypeScript client, including the `contentBasedDeduplication` option. This allows QStash to automatically deduplicate messages based on their content, destination, and relevant headers.
+Requires the `@upstash/qstash` package and a QStash token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/deduplication.mdx#_snippet_4
+
+LANGUAGE: TypeScript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  contentBasedDeduplication: true,
+});
+```
+
+----------------------------------------
+
+TITLE: Publishing message to URL Group with Typescript SDK
+DESCRIPTION: This snippet uses the Typescript SDK to publish a message to a URL group. Instead of a direct URL, it uses the `urlGroup` parameter to specify the target group.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_4
+
+LANGUAGE: typescript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.publishJSON({
+  urlGroup: "myUrlGroup",
+  body: {
+    hello: "world",
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: List Events using Node.js
+DESCRIPTION: This snippet shows how to list events using Node.js with the `fetch` API. It sends a GET request to the Qstash events endpoint, including the authorization token in the header.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/events/list.mdx#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const response = await fetch("https://qstash.upstash.io/v2/events", {
+  headers: {
+    Authorization: "Bearer <token>",
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Pausing Schedule with cURL
+DESCRIPTION: This snippet demonstrates how to pause a Qstash schedule using a cURL command. It sends a POST request to the /v2/schedules/{scheduleId}/pause endpoint with an authorization header. The `scheduleId` needs to be replaced with the actual schedule ID, and `<token>` with a valid bearer token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/pause.mdx#_snippet_0
+
+LANGUAGE: sh curl
+CODE:
+```
+curl -X POST https://qstash.upstash.io/v2/schedules/scd_1234/pause \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Custom Headers (cURL)
+DESCRIPTION: This snippet demonstrates how to publish a message to a specific URL using cURL with custom headers. It includes the Authorization header, a custom header prefixed with Upstash-Forward-, and the Content-type header. The message body is a JSON object.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/publishing.mdx#_snippet_0
+
+LANGUAGE: shell
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H 'Upstash-Forward-My-Header: my-value' \
+    -H "Content-type: application/json" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://example.com'
+```
+
+----------------------------------------
+
+TITLE: Batch Sending OpenAI Chat Completion Requests - Python
+DESCRIPTION: This snippet sends a batch of chat completion requests to the OpenAI LLM using QStash. It requires the `qstash` package and utilizes the `message.batch_json` method, where each element contains an api, body, and callback URL for handling asynchronous responses.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/integrations/llm.mdx#_snippet_5
+
+LANGUAGE: Python
+CODE:
+```
+from qstash import QStash
+from qstash.chat import upstash
+
+q = QStash("<QSTASH_TOKEN>")
+
+result = q.message.batch_json(
+    [
+        {
+            "api":{"name": "llm", "provider": openai("<OPENAI_API_KEY>")},
+            "body": {...},
+            "callback": "https://abc.requestcatcher.com",
+        },
+        ...
+    ]
+)
+
+print(result)
+```
+
+----------------------------------------
+
+TITLE: Scheduling to URL Group - Python
+DESCRIPTION: Creates a schedule that publishes a message to a specified URL group every minute using a cron expression. Requires the `qstash` Python package and an Upstash token. The `destination` parameter is set to the URL group name.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/schedules.mdx#_snippet_4
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.schedule.create(
+    destination="url-group-name",
+    cron="* * * * *",
+)
+```
+
+----------------------------------------
+
+TITLE: List URL Groups using Go
+DESCRIPTION: This snippet demonstrates how to list URL Groups using Go's `net/http` package. It creates a GET request to the Qstash API, sets the authorization header, and executes the request.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/list.mdx#_snippet_3
+
+LANGUAGE: go
+CODE:
+```
+req, err := http.NewRequest("GET", "https://qstash.upstash.io/v2/topics", nil)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Delete DLQ Message via cURL (Qstash)
+DESCRIPTION: This cURL command demonstrates how to delete a message from the Qstash Dead Letter Queue (DLQ). It requires the DLQ ID of the message to be removed and a bearer token for authentication. A successful deletion returns a 200 status code.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/dlq/deleteMessage.mdx#_snippet_0
+
+LANGUAGE: shell
+CODE:
+```
+curl -X DELETE https://qstash.upstash.io/v2/dlq/my-dlq-id \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Add Endpoints to URL Group with Typescript
+DESCRIPTION: This Typescript code snippet demonstrates how to add endpoints to a URL Group using the `@upstash/qstash` client library. It initializes the client with a QStash token and then uses the `urlGroups.addEndpoints` method to add the specified endpoints to the URL Group. The `name` parameter specifies the URL Group name, and the `endpoints` parameter is an array of endpoint objects, each containing a `name` and a `url`.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/url-group-endpoint.mdx#_snippet_1
+
+LANGUAGE: Typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const urlGroups = client.urlGroups;
+await urlGroups.addEndpoints({
+  name: "urlGroupName",
+  endpoints: [
+    { name: "endpoint1", url: "https://example.com" },
+    { name: "endpoint2", url: "https://somewhere-else.com" },
+  ],
+});
+```
+
+----------------------------------------
+
+TITLE: Get Schedule with Node.js Fetch
+DESCRIPTION: This snippet retrieves a schedule using Node.js's `fetch` API. It sends a GET request to the Qstash API endpoint, including the authorization token in the header. The example uses `scd_1234` as the schedule ID. Replace `<token>` with your actual Qstash API token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/get.mdx#_snippet_1
+
+LANGUAGE: js
+CODE:
+```
+const response = await fetch('https://qstash.upstash.io/v2/schedules/scd_1234', {
+  headers: {
+    'Authorization': 'Bearer <token>'
+  }
+});
+```
+
+----------------------------------------
+
+TITLE: Create QStash Schedule with Curl
+DESCRIPTION: This snippet demonstrates how to create a schedule using curl. It sends a POST request to the QStash API endpoint with the destination URL and the cron expression in the headers.  The Authorization header is also required.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/create.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/schedules/https://www.example.com/endpoint \
+  -H "Authorization: Bearer <token>" \
+  -H "Upstash-Cron: */5 * * * *"
+```
+
+----------------------------------------
+
+TITLE: Creating schedule with custom ID
+DESCRIPTION: This snippet demonstrates how to create a schedule with a user-provided schedule ID. It requires the Upstash Qstash client library and a valid QSTASH_TOKEN. If a schedule with the same ID already exists, it will be overwritten.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/schedules.mdx#_snippet_5
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+await client.schedules.create({
+  destination: "https://example.com",
+  scheduleId: "USER_PROVIDED_SCHEDULE_ID",
+  cron: "* * * * *",
+});
+```
+
+----------------------------------------
+
+TITLE: Delete URL Group (QStash, Python)
+DESCRIPTION: This snippet deletes a URL group using the QStash client.  It requires the `qstash` library. It deletes the URL group named "my-url-group".
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/py/examples/url-groups.mdx#_snippet_4
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH-TOKEN>")
+client.url_group.delete("my-url-group")
+```
+
+----------------------------------------
+
+TITLE: Listing Schedules with Go
+DESCRIPTION: This snippet demonstrates how to list all schedules using Go's net/http package. It creates a GET request to the Qstash API endpoint, sets the Authorization header, and executes the request.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/list.mdx#_snippet_3
+
+LANGUAGE: go
+CODE:
+```
+req, err := http.NewRequest("GET", "https://qstash.upstash.io/v2/schedules", nil)
+if err != nil {
+  log.Fatal(err)
+}
+req.Header.Set("Authorization", "Bearer <token>")
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+  log.Fatal(err)
+}
+defer resp.Body.Close()
+```
+
+----------------------------------------
+
+TITLE: Sending custom header with Python SDK
+DESCRIPTION: This snippet shows how to send a custom header using the Python SDK. The custom header is added within the `headers` dictionary passed to the `publish_json` method.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_11
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://example.com",
+    body={
+        "hello": "world",
+    },
+    headers={
+        "My-Header": "my-value",
+    },
+)
+```
+
+----------------------------------------
+
+TITLE: List URL Groups using Python
+DESCRIPTION: This snippet illustrates listing URL Groups using Python's `requests` library. It constructs a GET request with the authorization header to access the Qstash API.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/list.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.get(
+  'https://qstash.upstash.io/v2/topics',
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Pausing Schedule with Go
+DESCRIPTION: This snippet demonstrates how to pause a Qstash schedule using the Upstash Qstash client in Go.  It initializes a new Qstash client instance with the provided token.  It calls the `Schedules().Pause()` method to pause the desired schedule. It requires the `github.com/upstash/qstash-go` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/pause.mdx#_snippet_3
+
+LANGUAGE: Go
+CODE:
+```
+package main
+
+import "github.com/upstash/qstash-go"
+
+func main() {
+
+	client := qstash.NewClient("<QSTASH_TOKEN>")
+
+	// error checking is omitted for brevity
+	err := client.Schedules().Pause("<SCHEDULE_ID>")
+}
+```
+
+----------------------------------------
+
+TITLE: Publishing message to endpoint with cURL
+DESCRIPTION: This snippet demonstrates how to publish a JSON message to a specified endpoint using cURL. It requires setting the 'Authorization' header with a bearer token and the 'Content-Type' header to 'application/json'. The message body is included in the request's data.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_0
+
+LANGUAGE: shell
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://example.com'
+```
+
+----------------------------------------
+
+TITLE: Publishing a message using cURL with QStash
+DESCRIPTION: This snippet demonstrates how to publish a message to QStash using cURL. It includes setting the Authorization header with the QSTASH_TOKEN, the Content-Type header to application/json, and the message body as a JSON object.  It posts to the QStash API endpoint, specifying the target API URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/getstarted.mdx#_snippet_0
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer <QSTASH_TOKEN>' \
+    -H "Content-type: application/json" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://<your-api-url>'
+```
+
+----------------------------------------
+
+TITLE: Publishing message to endpoint with Python SDK
+DESCRIPTION: This snippet demonstrates how to publish a JSON message to an endpoint using the Python SDK. It initializes a QStash client with an API token and then calls the `publish_json` method on the `message` object, providing the destination URL and message body.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.publish_json(
+    url="https://example.com",
+    body={
+        "hello": "world",
+    },
+)
+```
+
+----------------------------------------
+
+TITLE: List Logs with Python
+DESCRIPTION: This snippet demonstrates how to retrieve logs from the Qstash API using Python's `requests` library. It sets the authorization header with the bearer token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/logs/list.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.get(
+  'https://qstash.upstash.io/v2/logs',
+   headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: List Queues with curl
+DESCRIPTION: Lists all queues using the Qstash API with a curl request. Requires an authorization token in the header. No parameters are needed.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/list.mdx#_snippet_0
+
+LANGUAGE: sh curl
+CODE:
+```
+curl https://qstash.upstash.io/v2/queues \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Batching messages with queue in TypeScript
+DESCRIPTION: This snippet demonstrates how to send a batch of messages to different queues using the QStash TypeScript client. It initializes a QStash client with a token and uses the `batchJSON` method to send an array of message objects, each specifying a queue name and a destination URL. It requires the `@upstash/qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_7
+
+LANGUAGE: TypeScript
+CODE:
+```
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+
+const res = await client.batchJSON([
+  {
+    queueName: "my-queue",
+    url: "https://example.com/destination1",
+  },
+  {
+    queueName: "my-second-queue",
+    url: "https://example.com/destination2",
+  },
+]);
+```
+
+----------------------------------------
+
+TITLE: Batching messages with headers and body in cURL
+DESCRIPTION: This snippet shows how to send a batch of messages with custom headers and bodies using cURL.  It sends a POST request to the QStash batch endpoint with an array of message objects. Each object includes the 'destination', 'headers', and 'body' properties. The Authorization and Content-Type headers are required for authentication and proper request parsing.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_9
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/batch   -H "Authorization: Bearer XXX" \
+    -H "Content-Type: application/json" \
+    -d '\n    [
+      {
+          "destination": "myUrlGroup",
+          "headers":{
+            "Upstash-Delay":"5s",
+            "Upstash-Forward-Hello":"123456"
+          },
+          "body": "Hello World"
+      },
+      {
+          "destination": "https://example.com/destination1",
+          "headers":{
+            "Upstash-Delay":"7s",
+            "Upstash-Forward-Hello":"789"
+          }
+      },
+      {
+          "destination": "https://example.com/destination2",
+          "headers":{
+            "Upstash-Delay":"9s",
+            "Upstash-Forward-Hello":"again"
+          }
+      }
+    ]'
+```
+
+----------------------------------------
+
+TITLE: Get URL Group with cURL
+DESCRIPTION: Retrieves a URL Group from Qstash using a cURL command. Requires a valid Bearer token in the Authorization header. The URL Group name is specified in the URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/url-groups/get.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl https://qstash.upstash.io/v2/topics/my-url-group \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Publishing Message via Curl
+DESCRIPTION: This command publishes a message to QStash, using a curl command. It includes the Upstash API key and Content-Type header, and sends a JSON payload to the forwarding ngrok URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/howto/local-tunnel.mdx#_snippet_3
+
+LANGUAGE: bash
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/publish/https://e02f-2a02-810d-af40-5284-b139-58cc-89df-b740.eu.ngrok.io/api/webhooks'
+```
+
+----------------------------------------
+
+TITLE: Creating a Receiver Instance
+DESCRIPTION: This code creates a new instance of the `Receiver` class, passing in the current and next signing keys from the environment variables.  The `Receiver` instance will be used to verify the signatures of incoming QStash webhooks.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/cloudflare-workers.mdx#_snippet_5
+
+LANGUAGE: typescript
+CODE:
+```
+const receiver = new Receiver({
+  currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
+  nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
+});
+```
+
+----------------------------------------
+
+TITLE: List Queues in Python
+DESCRIPTION: Lists all queues using the Qstash API with a Python request. Requires the `requests` library and an authorization token in the header.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/list.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.get(
+  'https://qstash.upstash.io/v2/queues',
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Publishing to FIFO queue with Python SDK
+DESCRIPTION: This snippet demonstrates how to publish messages to a FIFO queue using the Python SDK. It uses the `enqueue_json` method on the `message` object, specifying the queue name, URL, and message body.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_17
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.enqueue_json(
+    queue="my-queue",
+    url="https://example.com",
+    body={
+        "Hello": "World",
+    },
+)
+```
+
+----------------------------------------
+
+TITLE: Delete Queue with Python
+DESCRIPTION: This snippet shows how to delete a queue using Python and the `requests` library. It sends a DELETE request to the Qstash API endpoint, including the queue name and authorization token in the header. Requires the `requests` library.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/remove.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.delete(
+  'https://qstash.upstash.io/v2/queue/my-queue',
+   headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: QStash Scheduled Job Creation via SDK
+DESCRIPTION: This Python script uses the QStash SDK to create a scheduled job. It requires a QStash token and the URL of the endpoint to be invoked.  The cron expression `0 12 * * *` schedules the job to run daily at noon.  Replace `<QSTASH_TOKEN>` with your actual QStash token and `https://YOUR_URL.vercel.app/api` with your deployed application's URL.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/python-vercel.mdx#_snippet_7
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.schedule.create(
+    destination="https://YOUR_URL.vercel.app/api",
+    cron="0 12 * * *",
+)
+```
+
+----------------------------------------
+
+TITLE: Get Schedule with curl
+DESCRIPTION: This snippet demonstrates how to retrieve a schedule using curl. It sends a GET request to the Qstash API endpoint with the schedule ID and an authorization token in the header. Replace `<token>` with your actual Qstash API token, and `scd_1234` with the target schedule ID.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/get.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl https://qstash.upstash.io/v2/schedules/scd_1234 \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: List Queues in Node.js
+DESCRIPTION: Lists all queues using the Qstash API with a Node.js fetch request. Requires an authorization token in the header. Uses the native fetch API.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/list.mdx#_snippet_1
+
+LANGUAGE: Node
+CODE:
+```
+const response = await fetch("https://qstash.upstash.io/v2/queues", {
+  headers: {
+    Authorization: "Bearer <token>",
+  },
+});
+```
+
+----------------------------------------
+
+TITLE: Scheduling to URL Group - cURL
+DESCRIPTION: Creates a schedule that publishes a message to a specified URL group every minute using a cron expression.  Requires an Upstash token in the `Authorization` header and the cron expression in the `Upstash-Cron` header.  The URL in the request specifies the endpoint for creating schedules to a URL group, using either the URL group ID or name.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/schedules.mdx#_snippet_5
+
+LANGUAGE: curl
+CODE:
+```
+curl -XPOST \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -H "Upstash-Cron: * * * * *" \
+    -d '{ "hello": "world" }' \
+    'https://qstash.upstash.io/v2/schedules/<URL_GROUP_ID_OR_NAME>'
+```
+
+----------------------------------------
+
+TITLE: Authenticate with Query Parameter using cURL
+DESCRIPTION: This snippet demonstrates authenticating a request to the QStash API by including the `QSTASH_TOKEN` as a query parameter in the URL. This method is useful when setting headers is not possible. Replace `<QSTASH_TOKEN>` with your actual token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/authentication.mdx#_snippet_1
+
+LANGUAGE: bash
+CODE:
+```
+curl https://qstash.upstash.io/v2/publish/...?qstash_token=<QSTASH_TOKEN>
+```
+
+----------------------------------------
+
+TITLE: AWS CDK Lambda Deployment (TypeScript)
+DESCRIPTION: This code snippet defines an AWS CDK stack for deploying a Lambda function that processes videos. It creates a Lambda function using `NodejsFunction`, configures an API Gateway to expose the Lambda function publicly via a POST method.  The `entry` property points to the Lambda function's handler file.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/quickstarts/aws-lambda/nodejs.mdx#_snippet_4
+
+LANGUAGE: TypeScript
+CODE:
+```
+import * as cdk from "aws-cdk-lib";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { Construct } from "constructs";
+import path from "path";
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+
+export class VideoProcessingStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props)
+
+    // Create the Lambda function
+    const videoProcessingLambda = new NodejsFunction(this, 'VideoProcessingLambda', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../lambda/index.ts'),
+    });
+
+    // Create the API Gateway
+    const api = new apigateway.RestApi(this, 'VideoProcessingApi', {
+      restApiName: 'Video Processing Service',
+      description: 'This service handles video processing.',
+      defaultMethodOptions: {
+        authorizationType: apigateway.AuthorizationType.NONE,
+      },
+    });
+
+    api.root.addMethod('POST', new apigateway.LambdaIntegration(videoProcessingLambda));
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Get Message with cURL - Qstash
+DESCRIPTION: This snippet demonstrates how to retrieve a message from Qstash using cURL.  It sends a GET request to the Qstash API endpoint with the message ID and a bearer token for authentication.  Replace `<token>` with your actual Qstash token and `msg_123` with the desired message ID.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/messages/get.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl https://qstash.upstash.io/v2/messages/msg_123 \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Publish Message with Absolute Delay (Typescript)
+DESCRIPTION: This TypeScript snippet demonstrates how to publish a JSON message with an absolute delay using the Upstash Qstash client. It uses the `publishJSON` method, specifying the URL, body, and the `notBefore` parameter which represents the Unix timestamp. Ensure `@upstash/qstash` is installed as a dependency and replace `<QSTASH_TOKEN>` with your Qstash token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/delay.mdx#_snippet_4
+
+LANGUAGE: Typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.publishJSON({
+  url: "https://my-api...",
+  body: { hello: "world" },
+  notBefore: 1657104947,
+});
+```
+
+----------------------------------------
+
+TITLE: Upsert Queue with Qstash API - Python
+DESCRIPTION: This Python code creates or updates a queue in Upstash Qstash using the `requests` library. It sends a POST request to the `/v2/queues/` endpoint with the `queueName` and `parallelism` parameters in the JSON body.  The `Authorization` and `Content-Type` headers are required.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/upsert.mdx#_snippet_2
+
+LANGUAGE: Python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+    'Content-Type': 'application/json',
+}
+
+json_data = {
+    "queueName": "my-queue" , 
+    "parallelism" : 5,
+  }
+
+response = requests.post(
+  'https://qstash.upstash.io/v2/queues/',
+  headers=headers, 
+  json=json_data
+)
+```
+
+----------------------------------------
+
+TITLE: Listing Schedules with Python
+DESCRIPTION: This snippet demonstrates how to list all schedules using Python's requests library. It sends a GET request to the Qstash API endpoint with the Authorization header set to a bearer token.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/list.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.get(
+  'https://qstash.upstash.io/v2/schedules', 
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Example JWT Header for Upstash-Signature
+DESCRIPTION: This snippet provides an example of the JWT header sent in the `Upstash-Signature` header. The header specifies the algorithm (`alg`) as HS256 (HMAC SHA256) and the type (`typ`) as JWT.  This header is part of the JWT used for request signing and verification.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/security.mdx#_snippet_1
+
+LANGUAGE: json
+CODE:
+```
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+```
+
+----------------------------------------
+
+TITLE: Get Schedule with Python Requests
+DESCRIPTION: This snippet shows how to retrieve a schedule using the Python `requests` library. It sends a GET request with the authorization token set in the headers.  Replace `<token>` with your actual Qstash API token, and ensure the `requests` library is installed (`pip install requests`).
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/schedules/get.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+
+response = requests.get(
+  'https://qstash.upstash.io/v2/schedules/scd_1234', 
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Publishing messages in batch using Python SDK
+DESCRIPTION: This snippet demonstrates batch publishing using the Python SDK. It uses the `batch_json` method on the `message` object, passing an array of message dictionaries.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_20
+
+LANGUAGE: python
+CODE:
+```
+from qstash import QStash
+
+client = QStash("<QSTASH_TOKEN>")
+client.message.batch_json(
+    [
+        {
+            "url": "https://example.com/destination1",
+        },
+        {
+            "url": "https://example.com/destination2",
+        },
+    ]
+)
+```
+
+----------------------------------------
+
+TITLE: Get Queue with cURL
+DESCRIPTION: Retrieves a queue named 'my-queue' using a cURL request to the Upstash Qstash API. Requires an authorization token in the header.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/queues/get.mdx#_snippet_0
+
+LANGUAGE: sh
+CODE:
+```
+curl https://qstash.upstash.io/v2/queues/my-queue \
+  -H "Authorization: Bearer <token>"
+```
+
+----------------------------------------
+
+TITLE: Rotate Signing Key with Python
+DESCRIPTION: This snippet demonstrates rotating a signing key using Python and the `requests` library. It sends a GET request to the Qstash API endpoint with the Authorization header containing the Bearer token. The API rotates the signing keys.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/api/signingKeys/rotate.mdx#_snippet_2
+
+LANGUAGE: python
+CODE:
+```
+import requests
+
+headers = {
+    'Authorization': 'Bearer <token>',
+}
+response = requests.get(
+  'https://qstash.upstash.io/v2/keys/rotate', 
+  headers=headers
+)
+```
+
+----------------------------------------
+
+TITLE: Batching messages with queue in cURL
+DESCRIPTION: This snippet shows how to send a batch of messages to different queues using cURL. It sends a POST request to the QStash batch endpoint with an array of message objects, each specifying a queue name and a destination URL. The Authorization header is required for authentication.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/features/batch.mdx#_snippet_6
+
+LANGUAGE: cURL
+CODE:
+```
+curl -XPOST https://qstash.upstash.io/v2/batch \
+    -H 'Authorization: Bearer XXX' \
+    -H "Content-type: application/json" \
+    -d '
+     [
+      {
+        "queue": "my-queue",
+        "destination": "https://example.com/destination1"
+      },
+      {
+        "queue": "my-second-queue",
+        "destination": "https://example.com/destination2"
+      }
+     ]'
+```
+
+----------------------------------------
+
+TITLE: Listing all schedules with cURL
+DESCRIPTION: This snippet lists all scheduled tasks using cURL.  It sends a GET request to the `/v2/schedules` endpoint with an authorization header.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/overall/apiexamples.mdx#_snippet_30
+
+LANGUAGE: shell
+CODE:
+```
+curl https://qstash.upstash.io/v2/schedules \
+    -H "Authorization: Bearer XXX"
+```
+
+----------------------------------------
+
+TITLE: Filtering Logs by State - TypeScript
+DESCRIPTION: This snippet shows how to filter Qstash logs based on their state (e.g., 'DELIVERED') and limit the number of results returned. It initializes a Qstash client and then calls the `logs` method with a `filter` object specifying the desired state and count. It utilizes the `@upstash/qstash` package.
+SOURCE: https://github.com/upstash/docs/blob/main/qstash/sdks/ts/examples/logs.mdx#_snippet_1
+
+LANGUAGE: typescript
+CODE:
+```
+import { Client } from "@upstash/qstash";
+
+const client = new Client({ token: "<QSTASH_TOKEN>" });
+const res = await client.logs({ 
+  filter: {
+    state: "DELIVERED",
+    count: 50
+  }
+});
+```

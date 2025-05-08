@@ -38,7 +38,33 @@ model User {
   store  Store? // Optional link to a store if the user is a vendor
   Review Review[]
 
+  phoneNumber         String?
+  phoneNumberVerified Boolean?
+
+  address Address? // One-to-one relation with Address
+
   @@map("user")
+  @@unique([phoneNumber])
+}
+
+model Address {
+  id              String   @id @default(uuid())
+  region          String
+  city            String
+  address_line1   String
+  address_line2   String?
+  digital_address String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations to User and Store
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("address")
 }
 
 model Store {
@@ -53,6 +79,7 @@ model Store {
   services  Service[]
   createdAt DateTime  @default(now())
   Review    Review[]
+  address   Address?  // One-to-one relation with Address
 
   @@map("store")
 }
