@@ -1,13 +1,15 @@
 "use client";
 import { CreateStoreFormData } from "@/lib/schemas/stores/create";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { MapPin, AlertCircle } from "lucide-react";
 import SelectComponent from "@/components/select-component";
 import { TextInput } from "@/components/text-input";
 import { regions } from "@/lib/constants/regions";
 import { useAddress } from "@/lib/swr/useAddresses";
+import { Address } from "@/prisma/generated/prisma-client";
+import AddressSkeleton from "./skeletons/address-skeleton";
 
 const CreateStoreAddress = ({
   form,
@@ -19,13 +21,23 @@ const CreateStoreAddress = ({
   const toggleAddressType = (useExisting: boolean) => {
     setUseExistingAddress(useExisting);
     form.setValue("useExistingAddress", useExisting);
-    if (!useExisting) {
+    if (useExisting) {
+      // Clear address fields when using existing address
+      form.setValue("address", undefined);
+    } else {
+      // Clear selected address when using new address
       form.setValue("selectedAddressId", undefined);
     }
   };
 
-  console.log(addresses);
-
+  const RenderError = (
+    <div className="p-4 rounded-lg border-2 border-destructive bg-destructive/5">
+      <div className="flex items-center gap-2 text-destructive">
+        <AlertCircle className="h-5 w-5" />
+        <p>Failed to load addresses. Please try again later.</p>
+      </div>
+    </div>
+  );
   return (
     <div className="space-y-4">
       <div>
@@ -70,40 +82,48 @@ const CreateStoreAddress = ({
               exit={{ opacity: 0, height: 0 }}
               className="space-y-2"
             >
-              {addresses.map((address) => (
-                <label
-                  key={address.id}
-                  className={`block p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                    form.watch("selectedAddressId") === address.id
-                      ? "border-primary bg-primary/5"
-                      : "border-input hover:border-primary/50"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    className="sr-only"
-                    value={address.id}
-                    {...form.register("selectedAddressId")}
-                  />
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-primary mt-1" />
-                    <div>
-                      <p className="font-medium">
-                        {address.address_line1}
-                        {address.address_line2 && `, ${address.address_line2}`}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {address.city}, {address.region}
-                      </p>
-                      {address.digital_address && (
-                        <p className="text-sm text-muted-foreground">
-                          Digital Address: {address.digital_address}
+              {isLoading ? (
+                // Loading skeleton for addresses
+                <AddressSkeleton />
+              ) : error ? (
+                RenderError
+              ) : (
+                addresses.map((address: Address) => (
+                  <label
+                    key={address.id}
+                    className={`block p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                      form.watch("selectedAddressId") === address.id
+                        ? "border-primary bg-primary/5"
+                        : "border-input hover:border-primary/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      className="sr-only"
+                      value={address.id}
+                      {...form.register("selectedAddressId")}
+                    />
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-primary mt-1" />
+                      <div>
+                        <p className="font-medium capitalize">
+                          {address.address_line1}
+                          {address.address_line2 &&
+                            `, ${address.address_line2}`}
                         </p>
-                      )}
+                        <p className="text-sm text-muted-foreground">
+                          {address.city}, {address.region + " Region"}
+                        </p>
+                        {address.digital_address && (
+                          <p className="text-sm text-muted-foreground">
+                            Digital Address: {address.digital_address}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </label>
-              ))}
+                  </label>
+                ))
+              )}
             </motion.div>
           ) : (
             <motion.div

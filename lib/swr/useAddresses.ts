@@ -5,7 +5,9 @@ export const useAddress = () => {
     const res = await fetch(url);
     return res.json();
   };
-  const { data, error, isLoading } = useSWR("/api/user/address", fetcher);
+  const { data, error, isLoading } = useSWR("/api/user/address", fetcher, {
+    revalidateOnFocus: false,
+  });
   return {
     addresses: data?.data,
     error,

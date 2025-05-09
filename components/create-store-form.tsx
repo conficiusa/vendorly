@@ -11,6 +11,7 @@ import {
 import StoreDataForm from "./store-data-form";
 import CreateStoreImages from "./create-store-images";
 import CreateStoreAddress from "./create-store-address";
+import { toast } from "sonner";
 
 export default function CreateStoreForm() {
   const form = useForm<CreateStoreFormData>({
@@ -30,17 +31,47 @@ export default function CreateStoreForm() {
     },
   });
   const {
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = form;
 
+  console.log(errors);
+  console.log(form.getValues());
   const onSubmit = async (data: CreateStoreFormData) => {
+    const { images, ...storeData } = data;
     try {
-      console.log("Form submitted:", data);
-      // Here you would typically upload images and create the store
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
-    } catch (error) {
-      console.error("Error creating store:", error);
-    } finally {
+      // First create the store
+      const storeRes = await fetch("/api/stores/create", {
+        method: "POST",
+        body: JSON.stringify(storeData),
+      });
+
+      const store = await storeRes.json();
+      if (!storeRes.ok) {
+        throw new Error(store.error);
+      }
+
+      // Then create upload job for images
+      const formData = new FormData();
+      images.forEach((image) => {
+        formData.append("images", image);
+      });
+      formData.append("storeId", store.store.id);
+
+      const uploadRes = await fetch("/api/jobs/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to queue image upload");
+      }
+
+      toast.success("Store Created Successfully", {
+        description: "Your store images are being processed",
+      });
+    } catch (error: any) {
+      console.error("Error:", error);
+      toast.error(error.message || "Failed to create store");
     }
   };
 

@@ -92,7 +92,7 @@ const mockStore = {
   ],
 };
 
-export default function StorePage({ params }: { params: { slug: string } }) {
+export default function StorePage() {
   const [activeImageIndex, setActiveImageIndex] = React.useState(0);
   const [activeTab, setActiveTab] = React.useState<
     "products" | "services" | "reviews"

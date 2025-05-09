@@ -29,7 +29,7 @@ const createStoreSchema = z
           files.every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
         "Only .jpg, .jpeg, .png and .webp formats are supported"
       ),
-    useExistingAddress: z.boolean().optional(),
+    useExistingAddress: z.boolean(),
     selectedAddressId: z.string().optional(),
     address: z
       .object({
@@ -43,8 +43,20 @@ const createStoreSchema = z
   })
   .refine(
     (data) => {
-      if (data.useExistingAddress === false) {
-        return data.address !== undefined;
+      if (data.useExistingAddress) {
+        return !!data.selectedAddressId;
+      }
+      return true;
+    },
+    {
+      message: "Please select an existing address",
+      path: ["selectedAddressId"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (!data.useExistingAddress) {
+        return !!data.address;
       }
       return true;
     },
