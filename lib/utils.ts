@@ -40,3 +40,10 @@ export async function generateUniqueSlug(
 
   return slug;
 }
+
+export const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(amount);
+};

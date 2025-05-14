@@ -67,12 +67,14 @@ export default function OnboardingPage() {
         body: JSON.stringify(data),
       });
 
+      const resData = await response.json();
       if (!response.ok) {
         throw new Error("Failed to update profile");
       }
-
+      const pathToGo =
+        resData.user.role === "VENDOR" ? "/store/create" : "/discover";
       toast.success("Welcome to Vendorly!");
-      router.replace("/discover");
+      router.replace(pathToGo);
     } catch (error) {
       toast.error("Failed to update profile", {
         description:

@@ -5,6 +5,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { uploadRouter } from "./api/uploadthing/core";
 import { extractRouterConfig } from "uploadthing/server";
 import Footer from "@/components/footer";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Vendorly",
@@ -19,9 +20,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <NextSSRPlugin routerConfig={extractRouterConfig(uploadRouter)} />
-        {children}
-        <Toaster richColors />
+        <TooltipProvider>
+          <div className="min-h-screen">
+            <NextSSRPlugin routerConfig={extractRouterConfig(uploadRouter)} />
+            {children}
+            <Toaster richColors />
+          </div>
+        </TooltipProvider>
         <Footer />
       </body>
     </html>

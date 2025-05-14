@@ -11,14 +11,44 @@ import {
 import StoreDataForm from "./store-data-form";
 import CreateStoreImages from "./create-store-images";
 import CreateStoreAddress from "./create-store-address";
+import StoreLogoUpload from "./store-logo-upload";
 import { toast } from "sonner";
+import { useUploadThing } from "@/lib/uploadthing";
+import { useRouter } from "next/navigation";
 
 export default function CreateStoreForm() {
+  const router = useRouter();
+  const { startUpload, isUploading: ImagesUploading } = useUploadThing(
+    "StoreImages",
+    {
+      onUploadError: () => {
+        toast.warning(
+          "Failed to upload images. You can retry in your dashboard"
+        );
+      },
+    }
+  );
+  const { startUpload: LogoUpload, isUploading } = useUploadThing(
+    "storeLogoUploader",
+    {
+      onClientUploadComplete: () => {
+        toast.success("You store has been set up", {
+          description: "You can start adding products and services",
+        });
+        router.push("/vendor/dashboard");
+      },
+      onUploadError: () => {
+        toast.warning("Failed to upload logo. You can retry in your dashboard");
+        router.push("/vendor/dashboard");
+      },
+    }
+  );
   const form = useForm<CreateStoreFormData>({
     resolver: zodResolver(createStoreSchema),
     defaultValues: {
       name: "",
       bio: "",
+      logo: undefined,
       images: [],
       useExistingAddress: false,
       address: {
@@ -37,10 +67,10 @@ export default function CreateStoreForm() {
   console.log(errors);
   console.log(form.getValues());
   const onSubmit = async (data: CreateStoreFormData) => {
-    const { images, ...storeData } = data;
+    const { images, logo, ...storeData } = data;
     try {
       // First create the store
-      const storeRes = await fetch("/api/stores/create", {
+      const storeRes = await fetch("/api/vendor/store", {
         method: "POST",
         body: JSON.stringify(storeData),
       });
@@ -50,25 +80,14 @@ export default function CreateStoreForm() {
         throw new Error(store.error);
       }
 
-      // Then create upload job for images
-      const formData = new FormData();
-      images.forEach((image) => {
-        formData.append("images", image);
-      });
-      formData.append("storeId", store.store.id);
-
-      const uploadRes = await fetch("/api/jobs/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to queue image upload");
+      // Upload images if provided
+      if (images.length > 0) {
+        await startUpload(images);
       }
-
-      toast.success("Store Created Successfully", {
-        description: "Your store images are being processed",
-      });
+      // Upload logo if provided
+      if (logo) {
+        await LogoUpload([logo]);
+    }
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error.message || "Failed to create store");
@@ -92,6 +111,7 @@ export default function CreateStoreForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
               <StoreDataForm form={form} />
+              <StoreLogoUpload form={form} />
               <CreateStoreImages form={form} />
               <CreateStoreAddress form={form} />
             </div>
@@ -99,13 +119,13 @@ export default function CreateStoreForm() {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading || ImagesUploading}
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSubmitting ? (
+                {isSubmitting || isUploading || ImagesUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Store...
+                    {isSubmitting ? "Creating Store..." : "Uploading Images..."}
                   </>
                 ) : (
                   "Create Store"

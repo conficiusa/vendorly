@@ -17,7 +17,7 @@ export const TextInput = <T extends ZodSchema<any, any, any>>({
   labelClassName,
 }: {
   control: Control<z.infer<T>>;
-  type?: "text" | "password" | "email" | "tel";
+  type?: "text" | "password" | "email" | "tel" |"number";
   placeholder?: string;
   required?: boolean;
   label?: string;

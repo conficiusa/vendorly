@@ -7,6 +7,8 @@ export const useAddress = () => {
   };
   const { data, error, isLoading } = useSWR("/api/user/address", fetcher, {
     revalidateOnFocus: false,
+
+    //set staletime to a long time
   });
   return {
     addresses: data?.data,

@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/prisma/prisma-client";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
+import { z } from "zod";
 
 const authmiddleware = async () => {
   const session = await getSession();
@@ -28,6 +29,87 @@ export const uploadRouter = {
         },
       });
       return { uploadedBy: metadata.userId, url: file.ufsUrl };
+    }),
+  storeLogoUploader: f({
+    image: {
+      minFileCount: 1,
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+  })
+    .middleware(authmiddleware)
+    .onUploadComplete(async ({ metadata, file }) => {
+      // Update the store with the new logo
+      const updatedStore = await prisma.store.update({
+        where: { userId: metadata.userId },
+        data: {
+          logo: file.ufsUrl,
+        },
+      });
+
+      if (!updatedStore) {
+        throw new UploadThingError("Store not found");
+      }
+
+      return { uploadedBy: metadata.userId, url: file.ufsUrl };
+    }),
+  StoreImages: f({
+    image: {
+      minFileCount: 1,
+      maxFileCount: 5,
+      maxFileSize: "4MB",
+    },
+  })
+    .middleware(authmiddleware)
+    .onUploadComplete(async ({ metadata, file }) => {
+      // Get all the uploaded image URLs
+      const imageUrls = [file.ufsUrl];
+
+      // Update the store with the new images in a single operation
+      const updatedStore = await prisma.store.update({
+        where: { userId: metadata.userId },
+        data: {
+          images: {
+            push: imageUrls,
+          },
+        },
+      });
+
+      if (!updatedStore) {
+        throw new UploadThingError("Store not found");
+      }
+
+      return { uploadedBy: metadata.userId, urls: imageUrls };
+    }),
+
+  productImages: f({
+    image: {
+      minFileCount: 1,
+      maxFileCount: 5,
+      maxFileSize: "4MB",
+    },
+  })
+    .input(z.object({ productId: z.string().min(1, "Required") }))
+    .middleware(async ({ input }) => {
+      console.log("input", input);
+
+      const session = await getSession();
+      if (!session) throw new UploadThingError("Unauthorized");
+      const user = session.user;
+      return { userId: user.id, productId: input.productId };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      const imageUrls = [file.ufsUrl];
+      const updatedProduct = await prisma.product.update({
+        where: { id: metadata.productId },
+        data: { images: { push: imageUrls } },
+      });
+
+      if (!updatedProduct) {
+        throw new UploadThingError("Product not found");
+      }
+
+      return { uploadedBy: metadata.userId, urls: imageUrls };
     }),
 } satisfies FileRouter;
 

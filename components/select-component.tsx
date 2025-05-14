@@ -19,6 +19,8 @@ interface SelectComponentProps {
   empty?: string;
   labelClassName?: string;
   error?: string;
+  isLoading?: boolean;
+  disabled?: boolean;
   [key: string]: any;
 }
 
@@ -31,6 +33,9 @@ export default function SelectComponent({
   labelClassName,
   empty,
   error,
+  isLoading,
+  disabled,
+  ...props
 }: SelectComponentProps) {
   return (
     <Controller
@@ -40,7 +45,7 @@ export default function SelectComponent({
         <div className="w-full space-y-2">
           <Label
             className={cn(
-              `block text-sm font-medium text-foreground `,
+              `block text-sm font-medium text-foreground`,
               labelClassName
             )}
           >
@@ -51,26 +56,33 @@ export default function SelectComponent({
               onValueChange={field.onChange}
               defaultValue={field.value}
               value={field.value}
+              disabled={disabled || isLoading}
+              {...props}
             >
               <SelectTrigger
                 className={cn(
-                  "text-muted-foreground w-full py-[22px] rounded-lg",
+                  "text-muted-foreground w-full py-[22px] rounded-lg bg-background shadow-none",
                   field?.value && "text-black dark:text-white",
                   error && "border-2 border-destructive"
                 )}
+                isLoading={isLoading}
               >
                 <SelectValue placeholder={placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {items?.length > 0 ? (
+                {isLoading ? (
+                  <SelectItem value="loading" disabled>
+                    Loading...
+                  </SelectItem>
+                ) : items?.length > 0 ? (
                   items?.map((item, index) => (
                     <SelectItem value={item?.value.toString()} key={index}>
                       {item?.label}
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem className="whitespace-wrap" value="">
-                    {empty || "no items to choose from"}
+                  <SelectItem value="no-items" disabled>
+                    {empty || "No items to choose from"}
                   </SelectItem>
                 )}
               </SelectContent>

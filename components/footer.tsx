@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
             <div className="w-[200px] relative h-[60px]">
-              <Image src={"/logo.png"} fill alt="vendorly logo" priority />
+              <Image src={"/logo.png"} fill alt="vendorly logo" priority sizes="200px"/>
             </div>
           </div>
           <p className="text-sm text-muted-foreground">

@@ -18,8 +18,7 @@ export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
 
-    console.log(body);
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: {
         id: session.user.id,
       },
@@ -46,10 +45,14 @@ export const POST = async (req: NextRequest) => {
             }
           : undefined,
       },
+      include: {
+        address: true,
+      },
     });
 
     return NextResponse.json({
       message: "Onboarding successful",
+      user: updatedUser,
     });
   } catch (error: any) {
     return NextResponse.json(

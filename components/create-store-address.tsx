@@ -38,11 +38,19 @@ const CreateStoreAddress = ({
       </div>
     </div>
   );
+  const EmptyAddresses = (
+    <div className="p-4 rounded-lg border-2 border-amber-500 bg-amber-50">
+      <div className="flex items-center gap-2 text-amber-600">
+        <AlertCircle className="h-5 w-5" />
+        <p>No address found. Please add a new address</p>
+      </div>
+    </div>
+  );
   return (
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium mb-3">Store Address</label>
-        <div className="flex gap-4 mb-4">
+        <div className="flex gap-4 mb-4 max-sm:flex-col">
           <button
             type="button"
             onClick={() => toggleAddressType(false)}
@@ -87,6 +95,8 @@ const CreateStoreAddress = ({
                 <AddressSkeleton />
               ) : error ? (
                 RenderError
+              ) : addresses.length === 0 ? (
+                EmptyAddresses
               ) : (
                 addresses.map((address: Address) => (
                   <label

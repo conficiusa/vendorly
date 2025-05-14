@@ -19,9 +19,6 @@ export const sendSMS = async (phoneNumber: string, content: string) => {
   const headers = {
     "Content-Type": "application/json",
   };
-  console.log("Sending SMS to:", phoneNumber);
-  console.log("Request URL:", baseurl);
-
   try {
     const response = await fetch(baseurl, {
       method: "GET",
@@ -41,7 +38,6 @@ export const sendSMS = async (phoneNumber: string, content: string) => {
     }
 
     const data = await response.json();
-    console.log("SMS sent successfully:", data);
     return data;
   } catch (error) {
     console.error("Error sending SMS:", error);

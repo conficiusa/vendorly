@@ -6,6 +6,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* from tailwind v3 task:migrate to v4 */
+
+/* width: {
+ 	"popover-content-width-same-as-its-trigger":
+ 		"var(--radix-popover-trigger-width)",
+ }
+
+ ,
+ maxHeight: {
+ 	"popover-content-width-same-as-its-trigger":
+ 		"var(--radix-popover-content-available-height)",
+ }
+
+ , */
+
 @theme inline {
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -40,6 +55,8 @@
 	--color-popover: var(--popover);
 	--color-card-foreground: var(--card-foreground);
 	--color-card: var(--card);
+	--width-popover-content-width-same-as-its-trigger: var(--radix-popover-trigger-width);
+	--height-popover-content-max-height-same-as-its-trigger: var(--radix-popover-content-available-height);
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
@@ -88,11 +105,11 @@
 	--border: oklch(0.92 0.004 286.32);
 	--input: oklch(0.92 0.004 286.32);
 	--ring: oklch(0.645 0.246 16.439);
-	--chart-1: oklch(0.646 0.222 41.116);
-	--chart-2: oklch(0.6 0.118 184.704);
-	--chart-3: oklch(0.398 0.07 227.392);
-	--chart-4: oklch(0.828 0.189 84.429);
-	--chart-5: oklch(0.769 0.188 70.08);
+	--chart-1: hsl(347 77% 50%);
+	--chart-2: hsl(352 83% 91%);
+	--chart-3: hsl(350 80% 72%);
+	--chart-4: hsl(351 83% 82%);
+	--chart-5: hsl(349 77% 62%);
 	--sidebar: oklch(0.985 0 0);
 	--sidebar-foreground: oklch(0.141 0.005 285.823);
 	--sidebar-primary: oklch(0.645 0.246 16.439);

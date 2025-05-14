@@ -45,11 +45,6 @@ const SignupForm = () => {
         last_name: formdata.last_name,
         phone: formdata.phone,
         callbackURL: "/discover",
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/auth/verify-email");
-          },
-        },
       },
       {
         onRequest: () => {
@@ -61,16 +56,24 @@ const SignupForm = () => {
             description: ctx.error.message,
           });
         },
-        onSuccess: () => {
+        onSuccess: async (ctx: any) => {
           toast.dismiss(loadingToastId);
-          toast.success("Logged In Successfully");
+          toast.success("Account created successfully");
+          const {
+            data: { user },
+          } = ctx;
+          await authClient.sendVerificationEmail({
+            email: user.email,
+            callbackURL: "/discover", // The redirect URL after verification
+          });
+          router.push("/auth/verify-email");
         },
       }
     );
   };
   return (
     <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         <TextInput
           control={control}
           name="first_name"

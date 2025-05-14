@@ -3,13 +3,12 @@ import { Controller } from "react-hook-form";
 import type { Control, Path } from "react-hook-form";
 import type { ZodSchema, z } from "zod";
 import { cn } from "@/lib/utils";
-import { Textarea } from "./ui/textarea";
 
 export const TextAreaInput = <T extends ZodSchema<any, any, any>>({
   control,
   placeholder,
   error,
-  rows = 40,
+  rows = 10,
   name,
   required = false,
   label,
@@ -45,7 +44,7 @@ export const TextAreaInput = <T extends ZodSchema<any, any, any>>({
               </label>
             )}
 
-            <Textarea
+            <textarea
               aria-invalid={!!error}
               rows={rows}
               onBlur={onBlur}
@@ -54,9 +53,8 @@ export const TextAreaInput = <T extends ZodSchema<any, any, any>>({
               id={name}
               placeholder={placeholder}
               className={cn(
-                "resize-none h-32",
-                error &&
-                  "w-full rounded-lg border border-input bg-background px-3 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ",
+                "w-full rounded-lg border border-input bg-background px-3 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ",
+                error && "border-2 border-destructive focus:border-0",
                 className
               )}
               required={required}

@@ -50,6 +50,11 @@ const CreateStoreImages = ({ form }: storeImagesFormProps) => {
   return (
     <div>
       <label className="block text-sm font-medium mb-3">Store Images</label>
+      <p className="text-sm text-muted-foreground mb-4">
+        Add up to 5 images of your store or products. These images will be
+        displayed on your store profile and help showcase your business to
+        potential customers.
+      </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {imagePreviews.map((preview, index) => (
           <div

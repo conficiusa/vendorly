@@ -28,6 +28,7 @@ export default function SignUpPage() {
 								fill
 								priority
 								className='object-contain'
+								sizes="150px"
 							/>
 						</div>
 						<h1 className='text-3xl font-bold tracking-tight text-gray-900'>

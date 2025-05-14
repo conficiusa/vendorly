@@ -17,7 +17,6 @@ export const auth = betterAuth({
     modelName: "rateLimit",
   },
   emailVerification: {
-    sendOnSignUp: true,
     expiresIn: 60 * 60 * 24, // 1 day
     sendVerificationEmail: async ({ user, url }) => {
       const body = await render(
@@ -34,7 +33,6 @@ export const auth = betterAuth({
     },
   },
   emailAndPassword: {
-    requireEmailVerification: true,
     resetPasswordTokenExpiresIn: 10 * 60, // 10 minutes
     enabled: true,
     sendResetPassword: async ({ url, user }) => {
@@ -47,9 +45,18 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "CUSTOMER",
+      },
       first_name: {
         type: "string",
         required: true,
+      },
+      onboarded: {
+        type: "boolean",
+        required: true,
+        defaultValue: false,
       },
       last_name: {
         type: "string",

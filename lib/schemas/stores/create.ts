@@ -16,6 +16,17 @@ const createStoreSchema = z
       .min(2, "Store name must be at least 2 characters")
       .max(50, "Store name cannot exceed 30 characters"),
     bio: z.string().max(500, "Bio cannot exceed 500 characters").optional(),
+    logo: z
+      .instanceof(File)
+      .refine(
+        (file) => file.size <= MAX_FILE_SIZE,
+        "Logo must be less than 4MB"
+      )
+      .refine(
+        (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+        "Only .jpg, .jpeg, .png and .webp formats are supported"
+      )
+      .optional(),
     images: z
       .array(z.instanceof(File))
       .min(1, "At least one store image is required")
