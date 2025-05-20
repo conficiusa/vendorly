@@ -20,7 +20,7 @@ export async function transformProductFormData(
     name: formData.name,
     slug,
     description: formData.description,
-    price: parseFloat(formData.price),
+    price: formData.price,
     stock: formData.hasVariants ? 0 : parseInt(formData.stock || "0"),
     faults: formData.faults,
     images: [], // Initialize with empty array, will be updated after image upload
