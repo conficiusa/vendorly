@@ -54,7 +54,6 @@ export const auth = betterAuth({
       },
       onboarded: {
         type: "boolean",
-        required: true,
         defaultValue: false,
       },
       last_name: {

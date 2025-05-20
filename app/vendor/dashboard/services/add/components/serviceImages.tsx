@@ -21,7 +21,6 @@ export function ServiceImages({
   onImagesChange,
   error,
 }: ServiceImagesProps) {
-  console.log(images);
   // Create object URLs only when images array changes
   const imageUrls = useMemo(() => {
     return images?.map((file) => URL.createObjectURL(file));

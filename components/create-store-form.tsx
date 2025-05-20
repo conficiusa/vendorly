@@ -60,7 +60,7 @@ export default function CreateStoreForm() {
       },
     },
   });
-  const {
+const {
     formState: { isSubmitting },
   } = form;
 
@@ -68,7 +68,7 @@ export default function CreateStoreForm() {
     const { images, logo, ...storeData } = data;
     try {
       // First create the store
-      const storeRes = await fetch("/api/vendor/store", {
+      const storeRes = await fetch("/api/vendors/store", {
         method: "POST",
         body: JSON.stringify(storeData),
       });
