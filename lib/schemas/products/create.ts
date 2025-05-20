@@ -6,10 +6,7 @@ export const createProductSchema = z
     category: z.string().min(1, "Category is required"),
     description: z.string().min(1, "Description is required"),
     faults: z.string().optional(),
-    price: z
-      .string()
-      .min(1, "Price is required")
-      .regex(/^\d*\.?\d*$/, "Invalid price format"),
+    price: z.number().gt(0, "Price must be greater than 0"),
     hasVariants: z.boolean().default(false),
     stock: z
       .string()
@@ -51,9 +48,9 @@ export const createProductSchema = z
         "Stock must be null when product has variants, and required when it doesn't",
       path: ["stock"],
     }
-);
-  
-// find a more effecient way to omit the images 
+  );
+
+// find a more effecient way to omit the images
 export const ServercreateProductSchema = z
   .object({
     name: z.string().min(1, "Product name is required"),
