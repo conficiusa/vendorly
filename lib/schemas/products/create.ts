@@ -57,10 +57,7 @@ export const ServercreateProductSchema = z
     category: z.string().min(1, "Category is required"),
     description: z.string().min(1, "Description is required"),
     faults: z.string().optional(),
-    price: z
-      .string()
-      .min(1, "Price is required")
-      .regex(/^\d*\.?\d*$/, "Invalid price format"),
+    price: z.number().gt(0, "Price must be greater than 0"),
     hasVariants: z.boolean().default(false),
     stock: z
       .string()
