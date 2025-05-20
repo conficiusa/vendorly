@@ -30,7 +30,7 @@ export function AddProductForm() {
       name: "",
       category: "",
       description: "",
-      price: "",
+      price: 0,
       images: [],
       hasVariants: false,
       variants: {
