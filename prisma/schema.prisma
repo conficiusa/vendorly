@@ -103,17 +103,25 @@ model Product {
 
 model Service {
   id              String            @id @default(uuid())
+  slug            String            @unique
   name            String
   description     String?
-  price           Float
+  rate            Float
+  unit            String
   storeId         String
   store           Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   Review          Review[]
+  images          String[]          @default([])
   Category        Category?         @relation(fields: [categoryId], references: [id])
   categoryId      String?
   ServiceCategory ServiceCategory[]
+  workingDays     Json              
+  dailyMax        Int               
+  serviceDuration Int              
+  operatingHours  Json              
+  isActive        Boolean           @default(true)
 
   @@map("service")
 }
@@ -174,9 +182,15 @@ model Review {
   @@map("review")
 }
 
+enum CategoryType { 
+  PRODUCT
+  SERVICE
+}
+
 model Category {
   id                String              @id @default(uuid())
   name              String
+  type              CategoryType        @default(PRODUCT)
   slug              String              @unique
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt

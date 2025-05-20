@@ -2,13 +2,10 @@
 
 import { useMemo, useState } from "react";
 import {
-  ResponsiveContainer,
   AreaChart,
   Area,
   XAxis,
-  YAxis,
   CartesianGrid,
-  Tooltip,
   BarChart,
   Bar,
   PieChart,
@@ -29,28 +26,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { chartConfig, pieChartConfig } from "@/lib/configs/chart-config";
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-card p-3 border shadow-sm rounded-lg">
-        <p className="font-medium">{label}</p>
-        <p className="text-primary font-bold">
-          ${payload[0].value.toLocaleString()}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const formatYAxisTick = (value: number) => {
-  if (value >= 1000) {
-    return `$${(value / 1000).toFixed(0)}k`;
-  }
-  return `$${value}`;
-};
+import {
+  AreaChartConfig,
+  chartConfig,
+  pieChartConfig,
+} from "@/lib/configs/chart-config";
 
 export function OverviewChart() {
   const [activeTab, setActiveTab] = useState("revenue");
@@ -90,53 +70,47 @@ export function OverviewChart() {
       </CardHeader>
       <CardContent className="h-[300px] pt-4">
         {activeTab === "revenue" && (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer config={AreaChartConfig}>
             <AreaChart
+              accessibilityLayer
               data={MOCK_SALES_DATA}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{
+                left: 12,
+                right: 12,
+              }}
             >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="name"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+              />
+              <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
               <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="5%"
-                    stopColor={chartColors.primary}
+                    stopColor="var(--color-chart-1)"
                     stopOpacity={0.8}
                   />
                   <stop
                     offset="95%"
-                    stopColor={chartColors.primary}
-                    stopOpacity={0}
+                    stopColor="var(--color-chart-4)"
+                    stopOpacity={0.1}
                   />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="hsl(var(--border))"
-              />
-              <XAxis
-                dataKey="name"
-                tick={{ fill: "hsl(var(--muted-foreground))" }}
-                tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))" }}
-              />
-              <YAxis
-                tickFormatter={formatYAxisTick}
-                tick={{ fill: "hsl(var(--muted-foreground))" }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip content={<CustomTooltip />} />
               <Area
-                type="monotone"
                 dataKey="total"
-                stroke={chartColors.primary}
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorRevenue)"
+                type="natural"
+                fill="url(#fillTotal)"
+                fillOpacity={0.4}
+                stroke="var(--color-desktop)"
+                stackId="a"
               />
             </AreaChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
 
         {activeTab === "categories" && (

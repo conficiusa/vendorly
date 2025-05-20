@@ -1,44 +1,27 @@
-import { useStore } from "@/lib/swr/fetchStore";
 import { Check, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import React from "react";
-import SidebarProfileSkeleton from "./skeletons/sidebar-profile-skeleton";
 import { Session } from "@/lib/types/better-auth.types";
+import { Store } from "@/prisma/generated/prisma-client";
 
 const SidebarProfile = ({
   session,
   collapsed,
+  store,
 }: {
   session: Session;
   collapsed: boolean;
+  store: Store;
 }) => {
-  const { error, isLoading, store } = useStore();
-
-  if (isLoading) {
-    return <SidebarProfileSkeleton />;
-  }
-
-  if (error || !store) {
-    return (
-      <div className="relative">
-        <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-destructive">
-          <div className="h-full w-full flex items-center justify-center bg-destructive/10">
-            <span className="text-destructive text-sm">Error</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return collapsed ? (
     <div className="flex justify-center my-4">
       <div className="relative">
-        <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-primary">
+        <div className="relative h-8 w-8 rounded-full overflow-hidden border-2 border-primary">
           {store?.logo ? (
             <Image
               src={store.logo}
               alt={store.name}
-              className="h-full w-full object-contain"
+              className="object-cover rounded-full"
               fill
             />
           ) : (
@@ -53,12 +36,12 @@ const SidebarProfile = ({
   ) : (
     <div className="flex flex-col items-center p-4 mb-4">
       <div className="relative">
-        <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-primary">
+        <div className="h-16 w-16 relative rounded-full overflow-hidden border-2 border-primary">
           {store?.logo ? (
             <Image
               src={store.logo}
               alt={store.name}
-              className="h-full w-full object-contain"
+              className="rounded-full object-cover"
               fill
             />
           ) : (

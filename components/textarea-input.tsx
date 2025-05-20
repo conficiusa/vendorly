@@ -37,7 +37,8 @@ export const TextAreaInput = <T extends ZodSchema<any, any, any>>({
                 htmlFor={name}
                 className={cn(
                   `block text-sm font-medium text-foreground `,
-                  labelClassName
+                  labelClassName,
+                  error && "text-destructive"
                 )}
               >
                 {label}

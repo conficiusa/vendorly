@@ -34,6 +34,7 @@ type ComboboxProps = {
   emptyText?: string;
   searchPlaceholder?: string;
   disabled?: boolean;
+  error?: string;
 };
 
 export function Combobox({
@@ -43,6 +44,7 @@ export function Combobox({
   name,
   label,
   isLoading,
+  error,
   emptyText = "No items found.",
   searchPlaceholder = "Search...",
   disabled,
@@ -54,75 +56,85 @@ export function Combobox({
       name={name}
       control={control}
       render={({ field }) => (
-        <div className="space-y-3">
-          {label && <Label>{label}</Label>}
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className={cn(
-                  "w-full justify-between py-[22px] rounded-lg bg-background shadow-none",
-                  !field.value && "font-normal text-muted-foreground"
-                )}
-                disabled={disabled || isLoading}
+        <div>
+          <div className="space-y-3">
+            {label && (
+              <Label className={cn(error && "text-destructive")}>{label}</Label>
+            )}
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className={cn(
+                    "w-full justify-between py-[22px] font-normal rounded-lg bg-background shadow-none",
+                    !field.value && "font-normal text-muted-foreground",
+                    error && "border-destructive border-2"
+                  )}
+                  disabled={disabled || isLoading}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  ) : field.value ? (
+                    items.find((item) => item.value === field.value)?.label
+                  ) : (
+                    <span className="text-muted-foreground font-normal">
+                      {placeholder || "Select item..."}
+                    </span>
+                  )}
+                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="p-0 w-popover-content-width-same-as-its-trigger max-h-popover-content-max-height-same-as-its-trigger"
+                align="start"
               >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Loading...</span>
-                  </div>
-                ) : field.value ? (
-                  items.find((item) => item.value === field.value)?.label
-                ) : (
-                  <span className="text-muted-foreground font-normal">
-                    {placeholder || "Select item..."}
-                  </span>
-                )}
-                <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="p-0 w-popover-content-width-same-as-its-trigger max-h-popover-content-max-height-same-as-its-trigger"
-              align="start"
-            >
-              <Command>
-                <CommandInput
-                  placeholder={searchPlaceholder}
-                  disabled={isLoading}
-                />
-                <CommandList>
-                  <CommandEmpty isLoading={isLoading}>{emptyText}</CommandEmpty>
-                  <CommandGroup>
-                    {items.map((item) => (
-                      <CommandItem
-                        key={item.value}
-                        value={item.value}
-                        keywords={[item.label]}
-                        onSelect={(currentValue) => {
-                          field.onChange(
-                            currentValue === field.value ? "" : currentValue
-                          );
-                          setOpen(false);
-                        }}
-                      >
-                        {item.label}
-                        <Check
-                          className={cn(
-                            "ml-auto",
-                            field.value === item.value
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                <Command>
+                  <CommandInput
+                    placeholder={searchPlaceholder}
+                    disabled={isLoading}
+                  />
+                  <CommandList>
+                    <CommandEmpty isLoading={isLoading}>
+                      {emptyText}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {items.map((item) => (
+                        <CommandItem
+                          key={item.value}
+                          value={item.value}
+                          keywords={[item.label]}
+                          onSelect={(currentValue) => {
+                            field.onChange(
+                              currentValue === field.value ? "" : currentValue
+                            );
+                            setOpen(false);
+                          }}
+                        >
+                          {item.label}
+                          <Check
+                            className={cn(
+                              "ml-auto",
+                              field.value === item.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+            {error && (
+              <p className="text-sm text-destructive pt-0.5 px-2">{error}</p>
+            )}
         </div>
       )}
     />

@@ -1,11 +1,11 @@
-import { Category } from "@/prisma/generated/prisma-client";
+import { Category, CategoryType } from "@/prisma/generated/prisma-client";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export function useCategories() {
+export function useCategories(type: CategoryType) {
   const { data, error, isLoading, mutate } = useSWR<Category[]>(
-    "/api/vendors/category",
+    `/api/vendors/category?type=${type}`,
     fetcher,
     {
       revalidateOnFocus: false,

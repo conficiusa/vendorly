@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { format } from "date-fns";
 import * as Icons from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -30,48 +31,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
-
-const MOCK_PRODUCTS = [
-  {
-    id: "1",
-    name: "Classic Denim Jeans",
-    description: "Premium quality denim jeans",
-    price: 79.99,
-    totalStock: 150,
-    image:
-      "https://images.pexels.com/photos/1082529/pexels-photo-1082529.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-    variants: [
-      { attributes: { Color: "Blue", Size: "32" }, stock: 50 },
-      { attributes: { Color: "Blue", Size: "34" }, stock: 50 },
-      { attributes: { Color: "Black", Size: "32" }, stock: 25 },
-      { attributes: { Color: "Black", Size: "34" }, stock: 25 },
-    ],
-    category: "Clothing",
-    status: "In Stock",
-  },
-  {
-    id: "2",
-    name: "Cotton T-Shirt",
-    description: "Comfortable cotton t-shirt",
-    price: 29.99,
-    totalStock: 200,
-    image:
-      "https://images.pexels.com/photos/428338/pexels-photo-428338.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-    variants: [
-      { attributes: { Color: "White", Size: "S" }, stock: 40 },
-      { attributes: { Color: "White", Size: "M" }, stock: 40 },
-      { attributes: { Color: "Black", Size: "S" }, stock: 60 },
-      { attributes: { Color: "Black", Size: "M" }, stock: 60 },
-    ],
-    category: "Clothing",
-    status: "In Stock",
-  },
-];
+import { useProducts } from "@/lib/swr/useProducts";
+import { ProductsTableSkeleton } from "@/components/skeletons/products-table-skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useDeleteProducts } from "@/lib/swr/mutations/useDeleteProducts";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 export function ProductsTable() {
+  const limit = 20;
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Debounce the search query to avoid too many API calls
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  const { error, isLoading, products, pagination, isValidating } = useProducts({
+    page: currentPage,
+    search: debouncedSearch,
+    limit,
+    sortBy,
+    sortOrder,
+  });
+  const { deleteProducts, isMutating } = useDeleteProducts();
+
+  // Reset to first page when search changes
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, []);
 
   const toggleProduct = (productId: string) => {
     setSelectedProducts((prev) =>
@@ -82,8 +86,270 @@ export function ProductsTable() {
   };
 
   const toggleAll = () => {
+    if (!products) return;
     setSelectedProducts((prev) =>
-      prev.length === MOCK_PRODUCTS.length ? [] : MOCK_PRODUCTS.map((p) => p.id)
+      prev.length === products.length ? [] : products.map((p) => p.id)
+    );
+  };
+
+  const handleDelete = async (ids: string[]) => {
+    await deleteProducts(ids);
+    setSelectedProducts([]);
+    setShowDeleteDialog(false);
+    setProductToDelete(null);
+  };
+
+  const handleSingleDelete = (productId: string) => {
+    setProductToDelete(productId);
+    setShowDeleteDialog(true);
+  };
+
+  const handleBulkDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const renderContent = () => {
+    if (isLoading && !isValidating) {
+      return <ProductsTableSkeleton />;
+    }
+
+    if (error) {
+      return (
+        <Alert variant="destructive">
+          <Icons.AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load products. Please try again later.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (!products || products.length === 0) {
+      return (
+        <Alert>
+          <Icons.Info className="h-4 w-4" />
+          <AlertTitle>No Products</AlertTitle>
+          <AlertDescription>
+            {searchQuery
+              ? "No products found matching your search."
+              : "You haven't added any products yet. Click the 'Add Product' button to get started."}
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    return (
+      <>
+        <div className="rounded-md bg-background p-4 sm:p-6 md:p-8">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedProducts.length === products.length}
+                    onCheckedChange={toggleAll}
+                  />
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => {
+                    if (sortBy === "name") {
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortBy("name");
+                      setSortOrder("asc");
+                    }
+                  }}
+                >
+                  Product
+                  {sortBy === "name" &&
+                    (sortOrder === "asc" ? (
+                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                    ) : (
+                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                    ))}
+                </TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => {
+                    if (sortBy === "price") {
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortBy("price");
+                      setSortOrder("asc");
+                    }
+                  }}
+                >
+                  Price
+                  {sortBy === "price" &&
+                    (sortOrder === "asc" ? (
+                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                    ) : (
+                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                    ))}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => {
+                    if (sortBy === "stock") {
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortBy("stock");
+                      setSortOrder("asc");
+                    }
+                  }}
+                >
+                  Stock
+                  {sortBy === "stock" &&
+                    (sortOrder === "asc" ? (
+                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                    ) : (
+                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                    ))}
+                </TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() => {
+                    if (sortBy === "createdAt") {
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortBy("createdAt");
+                      setSortOrder("desc");
+                    }
+                  }}
+                >
+                  Date Dated
+                  {sortBy === "createdAt" &&
+                    (sortOrder === "asc" ? (
+                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                    ) : (
+                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                    ))}
+                </TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedProducts.includes(product.id)}
+                      onCheckedChange={() => toggleProduct(product.id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-md overflow-hidden relative">
+                        {product.images[0] ? (
+                          <Image
+                            src={product.images[0]}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Icons.Image className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {product.description}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {product.Category?.name || "Uncategorized"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>{product.stock}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={product.stock > 0 ? "default" : "secondary"}
+                    >
+                      {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {format(product.createdAt.toLocaleString(), "do MMM, yyyy")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Icons.MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>
+                          <Icons.Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Icons.Copy className="mr-2 h-4 w-4" /> Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Icons.Eye className="mr-2 h-4 w-4" /> View
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleSingleDelete(product.id)}
+                        >
+                          <Icons.Trash className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {pagination && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {products.length} of {pagination.total} products
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <Icons.ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="text-sm">
+                Page {currentPage} of {pagination.pages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(pagination.pages, p + 1))
+                }
+                disabled={currentPage === pagination.pages}
+              >
+                Next
+                <Icons.ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </>
     );
   };
 
@@ -96,8 +362,8 @@ export function ProductsTable() {
             <Input
               placeholder="Search products..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-9 focus-visible:ring-offset-2 focus-visible:border-none bg-background"
             />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -119,7 +385,13 @@ export function ProductsTable() {
               <Icons.Archive className="h-4 w-4" />
               Archive
             </Button>
-            <Button variant="destructive" size="sm" className="gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={handleBulkDelete}
+              disabled={isMutating}
+            >
               <Icons.Trash2 className="h-4 w-4" />
               Delete
             </Button>
@@ -127,117 +399,41 @@ export function ProductsTable() {
         )}
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  checked={selectedProducts.length === MOCK_PRODUCTS.length}
-                  onCheckedChange={toggleAll}
-                />
-              </TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Variants</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {MOCK_PRODUCTS.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedProducts.includes(product.id)}
-                    onCheckedChange={() => toggleProduct(product.id)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-md overflow-hidden">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {product.description}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{product.category}</Badge>
-                </TableCell>
-                <TableCell>${product.price.toFixed(2)}</TableCell>
-                <TableCell>{product.totalStock}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {product.variants.slice(0, 2).map((variant, i) => (
-                      <Badge
-                        key={i}
-                        variant="outline"
-                        className="bg-secondary/50"
-                      >
-                        {Object.entries(variant.attributes)
-                          .map(([, value]) => `${value}`)
-                          .join(" / ")}
-                      </Badge>
-                    ))}
-                    {product.variants.length > 2 && (
-                      <Badge variant="outline" className="bg-secondary/50">
-                        +{product.variants.length - 2} more
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      product.status === "In Stock" ? "default" : "secondary"
-                    }
-                  >
-                    {product.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Icons.MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>
-                        <Icons.Edit className="mr-2 h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Icons.Copy className="mr-2 h-4 w-4" /> Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Icons.Eye className="mr-2 h-4 w-4" /> View
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
-                        <Icons.Trash className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {renderContent()}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {productToDelete
+                ? "This action cannot be undone. This will permanently delete the product."
+                : `This action cannot be undone. This will permanently delete ${selectedProducts.length} selected products.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                handleDelete(
+                  productToDelete ? [productToDelete] : selectedProducts
+                )
+              }
+              className={cn(buttonVariants({ variant: "destructive" }))}
+              disabled={isMutating}
+            >
+              {isMutating ? (
+                <>
+                  <Icons.Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

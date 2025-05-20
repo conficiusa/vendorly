@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SIDEBAR_ITEMS } from "@/lib/constants/mock";
 import SidebarProfile from "./sidebar-profile";
 import { authClient } from "@/lib/auth-client";
+import { Store } from "@/prisma/generated/prisma-client";
 
 type IconName = keyof typeof Icons;
 
@@ -55,7 +56,7 @@ const SidebarItem = ({
   );
 };
 
-export function Sidebar() {
+export function Sidebar({ store }: { store: Store }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
@@ -102,7 +103,11 @@ export function Sidebar() {
         </Button>
       </div>
 
-      <SidebarProfile session={session!} collapsed={isCollapsed} />
+      <SidebarProfile
+        session={session!}
+        collapsed={isCollapsed}
+        store={store}
+      />
 
       <div className={cn("space-y-2 px-2 py-2 flex-1")}>
         {SIDEBAR_ITEMS.map((item) => (
@@ -111,7 +116,11 @@ export function Sidebar() {
             title={item.title}
             href={item.href}
             icon={item.icon}
-            isActive={pathname === item.href}
+            isActive={
+              (item as any).exact
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(item.href + "/")
+            }
             isCollapsed={isCollapsed}
           />
         ))}

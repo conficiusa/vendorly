@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "prisma": {
-    "seedm": "tsx prisma/seeds/seedCategories.ts",
-    "seed": "tsx prisma/seeds/seedVariantAttributes.ts"
+    "seed": "tsx prisma/seeds/seedCategories.ts"
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -12,7 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier",
-    "check": "prettier --write . && eslint --fix"
+    "check": "prettier --write . && eslint --fix",
+    "seed:categories": "tsx prisma/seeds/seedCategories.ts",
+    "seed:variant-attributes": "tsx prisma/seeds/seedVariantAttributes.ts",
+    "seed:all": "npm run seed:categories && npm run seed:variant-attributes"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",

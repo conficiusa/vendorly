@@ -17,7 +17,7 @@ export const TextInput = <T extends ZodSchema<any, any, any>>({
   labelClassName,
 }: {
   control: Control<z.infer<T>>;
-  type?: "text" | "password" | "email" | "tel" |"number";
+  type?: "text" | "password" | "email" | "tel" | "number" | "time";
   placeholder?: string;
   required?: boolean;
   label?: string;
@@ -34,6 +34,18 @@ export const TextInput = <T extends ZodSchema<any, any, any>>({
   const inputType = () => {
     if (type === "password" && showPassword) return "text";
     return type;
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onChange: (value: any) => void
+  ) => {
+    if (type === "number") {
+      const value = e.target.value === "" ? undefined : Number(e.target.value);
+      onChange(value);
+    } else {
+      onChange(e.target.value);
+    }
   };
   return (
     <Controller
@@ -59,7 +71,7 @@ export const TextInput = <T extends ZodSchema<any, any, any>>({
                 aria-invalid={!!error}
                 type={inputType()}
                 onBlur={onBlur}
-                onChange={onChange}
+                onChange={(e) => handleChange(e, onChange)}
                 value={value}
                 id={name}
                 placeholder={placeholder}

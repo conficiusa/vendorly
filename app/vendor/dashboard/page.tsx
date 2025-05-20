@@ -2,10 +2,10 @@ import * as Icons from "lucide-react";
 import { StatsCard } from "@/components/stats-card";
 import { OverviewChart } from "@/components/overview-chart";
 import { RecentActivity } from "@/components/recent-activity";
-import { ProductCards } from "@/components/product-cards";
 import { RecentProductsTable } from "@/components/recent-products-table";
 import { Button } from "@/components/ui/button";
 import { MOCK_STORE } from "@/lib/constants/mock";
+import Link from "next/link";
 
 export default function DashboardPage() {
   return (
@@ -53,22 +53,14 @@ export default function DashboardPage() {
           <RecentActivity />
         </div>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4 mb-6">
-        {/* <div className="md:col-span-1 lg:col-span-1">
-          <StoreProfileCard />
-        </div> */}
-        <div className="md:col-span-2 lg:col-span-3">
-          <ProductCards />
-        </div>
-      </div>
-
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-0">
           <h2 className="text-xl font-semibold">Recent Products</h2>
-          <Button variant="link" className="gap-1 text-primary">
-            View All
-            <Icons.ChevronRight className="h-4 w-4" />
+          <Button variant="link" asChild>
+            <Link href={"/vendors/dashboard/products"} className="gap-1">
+              View All
+              <Icons.ChevronRight className="h-4 w-4" />
+            </Link>
           </Button>
         </div>
         <RecentProductsTable />

@@ -1,94 +1,94 @@
+import { CategoryType } from "../generated/prisma-client";
 import { prisma } from "../prisma-client";
 
+const productCategories = [
+  { name: "Clothing & Apparel", slug: "clothing-apparel", type: CategoryType.PRODUCT},
+  { name: "Electronics", slug: "electronics", type: CategoryType.PRODUCT},
+  { name: "Home & Kitchen", slug: "home-kitchen", type: CategoryType.PRODUCT},
+  {
+    name: "Beauty & Personal Care",
+    slug: "beauty-personal-care",
+    type: CategoryType.PRODUCT
+  },
+  { name: "Sports & Outdoors", slug: "sports-outdoors", type: CategoryType.PRODUCT},
+  { name: "Toys & Games", slug: "toys-games", type: CategoryType.PRODUCT},
+  { name: "Automotive", slug: "automotive", type: CategoryType.PRODUCT},
+  { name: "Books", slug: "books", type: CategoryType.PRODUCT},
+  { name: "Health & Wellness", slug: "health-wellness", type: CategoryType.PRODUCT},
+  {
+    name: "Jewelry & Accessories",
+    slug: "jewelry-accessories",
+    type: CategoryType.PRODUCT
+  },
+  { name: "Office Supplies", slug: "office-supplies", type: CategoryType.PRODUCT},
+  { name: "Pet Supplies", slug: "pet-supplies", type: CategoryType.PRODUCT},
+  { name: "Garden & Outdoor", slug: "garden-outdoor", type: CategoryType.PRODUCT},
+  { name: "Footwear", slug: "footwear", type: CategoryType.PRODUCT},
+  { name: "Baby Products", slug: "baby-products", type: CategoryType.PRODUCT},
+];
 
-const categories = [
-  //   // Fashion & Apparel
-  //   { name: "Men's Clothing", slug: "mens-clothing" },
-  //   { name: "Women's Clothing", slug: "womens-clothing" },
-  //   { name: "Kids & Baby", slug: "kids-baby" },
-  //   { name: "Footwear", slug: "footwear" },
-  //   { name: "Accessories", slug: "accessories" },
-  //   { name: "Jewelry", slug: "jewelry" },
-  //   { name: "Watches", slug: "watches" },
-
-  //   // Electronics
-  //   { name: "Smartphones", slug: "smartphones" },
-  //   { name: "Laptops & Computers", slug: "laptops-computers" },
-  //   { name: "Audio & Headphones", slug: "audio-headphones" },
-  //   { name: "Cameras & Photography", slug: "cameras-photography" },
-  //   { name: "Gaming", slug: "gaming" },
-
-  //   // Home & Living
-  //   { name: "Furniture", slug: "furniture" },
-  //   { name: "Home Decor", slug: "home-decor" },
-  //   { name: "Kitchen & Dining", slug: "kitchen-dining" },
-  //   { name: "Bedding & Bath", slug: "bedding-bath" },
-  //   { name: "Lighting", slug: "lighting" },
-
-  //   // Beauty & Personal Care
-  //   { name: "Skincare", slug: "skincare" },
-  //   { name: "Makeup", slug: "makeup" },
-  //   { name: "Hair Care", slug: "hair-care" },
-  //   { name: "Fragrances", slug: "fragrances" },
-
-  //   // Health & Wellness
-  //   { name: "Fitness & Exercise", slug: "fitness-exercise" },
-  //   { name: "Sports Equipment", slug: "sports-equipment" },
-  //   { name: "Yoga & Meditation", slug: "yoga-meditation" },
-
-  //   // Food & Beverages
-  //   { name: "Organic Foods", slug: "organic-foods" },
-  //   { name: "Beverages", slug: "beverages" },
-  //   { name: "Snacks & Confectionery", slug: "snacks-confectionery" },
-
-  //   // Arts & Crafts
-  //   { name: "Art Supplies", slug: "art-supplies" },
-  //   { name: "Craft Materials", slug: "craft-materials" },
-  //   { name: "Stationery", slug: "stationery" },
-
-  //   // Pet Supplies
-  //   { name: "Pet Food", slug: "pet-food" },
-  //   { name: "Pet Accessories", slug: "pet-accessories" },
-  //   { name: "Pet Care", slug: "pet-care" },
-
-  //   // Automotive
-  //   { name: "Car Accessories", slug: "car-accessories" },
-  //   { name: "Motorcycle Parts", slug: "motorcycle-parts" },
-  //   { name: "Auto Care", slug: "auto-care" },
-
-  //   // Books & Media
-  //   { name: "Books", slug: "books" },
-  //   { name: "Music", slug: "music" },
-  //   { name: "Movies & TV Shows", slug: "movies-tv-shows" },
-
-  //   // Toys & Games
-  //   { name: "Toys", slug: "toys" },
-  //   { name: "Board Games", slug: "board-games" },
-  //   { name: "Educational Toys", slug: "educational-toys" },
-
-  //   // Garden & Outdoor
-  //   { name: "Plants & Seeds", slug: "plants-seeds" },
-  //   { name: "Garden Tools", slug: "garden-tools" },
-  //   { name: "Outdoor Living", slug: "outdoor-living" },
-
-  //   // Office & Business
-  //   { name: "Office Supplies", slug: "office-supplies" },
-  //   { name: "Business Equipment", slug: "business-equipment" },
-  //   { name: "Printing & Paper", slug: "printing-paper" },
-
-  { name: "Clothing & Apparel", slug:"clothing-apparel"},
+const serviceCategories = [
+  { name: "Beauty & Grooming", slug: "beauty-grooming", type: CategoryType.SERVICE },
+  { name: "Home Services", slug: "home-services", type: CategoryType.SERVICE },
+  {
+    name: "Professional Services",
+    slug: "professional-services",
+    type: CategoryType.SERVICE,
+  },
+  { name: "Education & Tutoring", slug: "education-tutoring", type: CategoryType.SERVICE },
+  {
+    name: "Health & Wellness",
+    slug: "health-wellness-services",
+    type: CategoryType.SERVICE,
+  },
+  { name: "Automotive Services", slug: "automotive-services", type: CategoryType.SERVICE },
+  { name: "Event Services", slug: "event-services", type: CategoryType.SERVICE },
+  { name: "Cleaning Services", slug: "cleaning-services", type: CategoryType.SERVICE },
+  { name: "Tech Support", slug: "tech-support", type: CategoryType.SERVICE },
+  { name: "Moving & Storage", slug: "moving-storage", type: CategoryType.SERVICE },
+  { name: "Legal Services", slug: "legal-services", type: CategoryType.SERVICE },
+  { name: "Financial Services", slug: "financial-services", type: CategoryType.SERVICE },
+  {
+    name: "Photography & Videography",
+    slug: "photography-videography",
+    type: CategoryType.SERVICE,
+  },
+  { name: "Fitness & Training", slug: "fitness-training", type: CategoryType.SERVICE },
+  { name: "Pet Services", slug: "pet-services", type: CategoryType.SERVICE },
+  { name: "Repair & Maintenance", slug: "repair-maintenance", type: CategoryType.SERVICE },
+  { name: "Consulting", slug: "consulting", type: CategoryType.SERVICE },
+  { name: "Transportation", slug: "transportation", type: CategoryType.SERVICE },
+  { name: "Security Services", slug: "security-services", type: CategoryType.SERVICE },
+  { name: "Digital Services", slug: "digital-services", type: CategoryType.SERVICE },
 ];
 
 async function main() {
   console.log("🌱 Starting to seed categories...");
 
-  for (const category of categories) {
+  // Seed product categories
+  console.log("📦 Seeding product categories...");
+  for (const category of productCategories) {
     await prisma.category.upsert({
       where: { slug: category.slug },
-      update: {},
+      update: { type: category.type },
       create: {
         name: category.name,
         slug: category.slug,
+        type: category.type,
+      },
+    });
+  }
+
+  // Seed service categories
+  console.log("🔧 Seeding service categories...");
+  for (const category of serviceCategories) {
+    await prisma.category.upsert({
+      where: { slug: category.slug },
+      update: { type: category.type },
+      create: {
+        name: category.name,
+        slug: category.slug,
+        type: category.type,
       },
     });
   }

@@ -73,6 +73,7 @@ export function RecentActivity() {
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(activity.timestamp), {
                     addSuffix: true,
+                    includeSeconds:true
                   })}
                 </p>
               </div>

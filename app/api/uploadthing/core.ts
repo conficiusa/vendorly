@@ -91,8 +91,6 @@ export const uploadRouter = {
   })
     .input(z.object({ productId: z.string().min(1, "Required") }))
     .middleware(async ({ input }) => {
-      console.log("input", input);
-
       const session = await getSession();
       if (!session) throw new UploadThingError("Unauthorized");
       const user = session.user;
@@ -109,6 +107,32 @@ export const uploadRouter = {
         throw new UploadThingError("Product not found");
       }
 
+      return { uploadedBy: metadata.userId, urls: imageUrls };
+    }),
+  serviceImages: f({
+    image: {
+      minFileCount: 1,
+      maxFileCount: 5,
+      maxFileSize: "4MB",
+    },
+  })
+    .input(z.object({ serviceId: z.string().min(1, "Required") }))
+    .middleware(async ({ input }) => {
+      const session = await getSession();
+      if (!session) throw new UploadThingError("Unauthorized");
+      const user = session.user;
+      return { userId: user.id, serviceId: input.serviceId };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      const imageUrls = [file.ufsUrl];
+      const updatedService = await prisma.service.update({
+        where: { id: metadata.serviceId },
+        data: { images: { push: imageUrls } },
+      });
+
+      if (!updatedService) {
+        throw new UploadThingError("Service not found");
+      }
       return { uploadedBy: metadata.userId, urls: imageUrls };
     }),
 } satisfies FileRouter;

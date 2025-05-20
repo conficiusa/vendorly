@@ -28,3 +28,10 @@ export const pieChartConfig = {
     color: "var(--color-chart-4)",
   },
 } satisfies ChartConfig;
+
+export const AreaChartConfig = {
+  name: {
+    label: "name",
+    color: "var(--color-chart-1)",
+  },
+} satisfies ChartConfig;

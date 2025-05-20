@@ -21,6 +21,7 @@ export function ProductCards() {
             <Image
               src={product.image}
               alt={product.name}
+              fill
               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
             />
             <div className="absolute top-3 right-3 flex flex-col gap-2">

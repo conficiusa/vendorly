@@ -61,11 +61,9 @@ export default function CreateStoreForm() {
     },
   });
   const {
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = form;
 
-  console.log(errors);
-  console.log(form.getValues());
   const onSubmit = async (data: CreateStoreFormData) => {
     const { images, logo, ...storeData } = data;
     try {

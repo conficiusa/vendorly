@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Result } from "@/lib/types/app-types";
+import { cache } from "react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -47,3 +49,25 @@ export const formatCurrency = (amount: number) => {
     currency: "GHS",
   }).format(amount);
 };
+
+export const getStatusColor = (isActive: boolean) => {
+  switch (isActive) {
+    case true:
+      return "default";
+    case false:
+      return "secondary";
+    default:
+      return "default";
+  }
+};
+
+export const tryCatch = cache(async function tryCatch<T, E = Error>(
+  promise: Promise<T>
+): Promise<Result<T, E>> {
+  try {
+    const data = await promise;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: error as E };
+  }
+});

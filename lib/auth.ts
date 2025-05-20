@@ -2,11 +2,10 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { sendEmail } from "@/lib/emails/sendEmail";
 import { resetPasswordEmail } from "@/lib/emails/auth/reset-password";
-import { PrismaClient } from "@/prisma/generated/prisma-client";
 import { render } from "@react-email/components";
 import { VerificationEmail as VerificationEmailComponent } from "@/lib/emails/auth/verify-email";
 import { headers } from "next/headers";
-const prisma = new PrismaClient();
+import { prisma } from "@/prisma/prisma-client";
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -71,4 +70,4 @@ export const auth = betterAuth({
 });
 
 export const getSession = async () =>
-  auth.api.getSession({ headers: await headers() });
+  await auth.api.getSession({ headers: await headers() });

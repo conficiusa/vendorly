@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useVariants } from "@/lib/swr/useVariants";
 
 interface ProductVariantsProps {
@@ -27,6 +27,7 @@ export function ProductVariants({ form }: ProductVariantsProps) {
   const { setValue, watch } = form;
   const hasVariants = watch("hasVariants");
   const variants = watch("variants");
+  const category = watch("category");
   const {
     variants: availableAttributes,
     isLoading,
@@ -38,6 +39,19 @@ export function ProductVariants({ form }: ProductVariantsProps) {
     attribute: string;
     value: string;
   } | null>(null);
+
+  // Reset variants when category changes
+  const prevCategory = useRef(category);
+  useEffect(() => {
+    if (prevCategory.current !== category) {
+      setValue("variants", {
+        selectedAttributes: [],
+        attributeValues: {},
+        variantStock: {},
+      });
+      prevCategory.current = category;
+    }
+  }, [category, setValue]);
 
   if (isLoading) {
     return <div>Loading variants...</div>;
@@ -119,11 +133,11 @@ export function ProductVariants({ form }: ProductVariantsProps) {
     return (
       <div className="space-y-3">
         <Label>{attribute}</Label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 max-w-5xl">
           {values.map((value, index) => (
             <div
               key={index}
-              className="flex items-center gap-1 bg-secondary/50 rounded-lg p-1"
+              className="flex items-center gap-1 bg-secondary/50 rounded-lg p-1 shrink-0"
             >
               {editingValue?.attribute === attribute &&
               editingValue?.value === value ? (
@@ -144,7 +158,7 @@ export function ProductVariants({ form }: ProductVariantsProps) {
                 />
               ) : (
                 <div
-                  className="h-6 px-2 flex items-center cursor-pointer"
+                  className="h-6 px-2 flex items-center cursor-pointer whitespace-nowrap"
                   onClick={() => setEditingValue({ attribute, value })}
                 >
                   {value}
@@ -154,26 +168,91 @@ export function ProductVariants({ form }: ProductVariantsProps) {
                 variant="outline"
                 type="button"
                 size="icon"
-                className="h-6 w-6 rounded-full"
+                className="h-6 w-6 rounded-full shrink-0"
                 onClick={() => removeValue(attribute, value)}
               >
                 <Icons.X className="h-3 w-3 text-destructive" />
               </Button>
             </div>
           ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder={`Add new ${attribute.toLowerCase()}`}
-            value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === "Enter" && addValue(attribute, newValue)
-            }
-          />
-          <Button onClick={() => addValue(attribute, newValue)}>Add</Button>
+          <div className="flex items-center gap-1 bg-secondary/50 rounded-lg p-1 shrink-0">
+            <Input
+              placeholder={`Add new ${attribute.toLowerCase()}`}
+              value={newValue}
+              onChange={(e) => setNewValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addValue(attribute, newValue);
+                }
+              }}
+              className="h-6 text-sm placeholder:text-xs border-2 border-border w-24 bg-background pl-2 focus-visible:ring-1"
+            />
+            <Button
+              onClick={() => addValue(attribute, newValue)}
+              type="button"
+              size="icon"
+              className="h-6 w-6 rounded-full shrink-0"
+            >
+              <Icons.Plus className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </div>
+    );
+  };
+
+  const renderSingleVariantStock = () => {
+    if (
+      !variants?.selectedAttributes ||
+      variants.selectedAttributes.length !== 1
+    ) {
+      return null;
+    }
+    const attr = variants.selectedAttributes[0];
+    const values = variants.attributeValues?.[attr] || [];
+    if (values.length === 0) {
+      return (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Variant Stock Management</CardTitle>
+            <CardDescription className="text-destructive">
+              Please add values for {attr} to manage stock
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      );
+    }
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Variant Stock Management</CardTitle>
+          <CardDescription>
+            Enter the stock quantity for each {attr}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {values.map((val) => (
+              <div key={val} className="flex items-center gap-4">
+                <div className="min-w-[120px] font-medium">{val}</div>
+                <Input
+                  type="number"
+                  min="0"
+                  className="w-32"
+                  value={variants.variantStock?.[val] || 0}
+                  onChange={(e) => {
+                    setValue("variants.variantStock", {
+                      ...variants.variantStock,
+                      [val]: parseInt(e.target.value) || 0,
+                    });
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -273,6 +352,8 @@ export function ProductVariants({ form }: ProductVariantsProps) {
             checked={hasVariants}
             onCheckedChange={(checked) => {
               setValue("hasVariants", checked as boolean);
+              // Set stock to null when variants are enabled
+              setValue("stock", checked ? null : "");
               if (!checked) {
                 setValue("variants", {
                   selectedAttributes: [],
@@ -327,6 +408,7 @@ export function ProductVariants({ form }: ProductVariantsProps) {
             <div key={attribute}>{renderVariantValues(attribute)}</div>
           ))}
 
+          {renderSingleVariantStock()}
           {renderVariantMatrix()}
         </CardContent>
       )}

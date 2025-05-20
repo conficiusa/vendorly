@@ -1,30 +1,102 @@
 import { z } from "zod";
 
-export const createProductSchema = z.object({
-  name: z.string().min(1, "Product name is required"),
-  category: z.string().min(1, "Category is required"),
-  description: z.string().min(1, "Description is required"),
-  faults: z.string().optional(),
-  price: z
-    .string()
-    .min(1, "Price is required")
-    .regex(/^\d*\.?\d*$/, "Invalid price format"),
-  images: z
-    .array(z.instanceof(File))
-    .min(1, "At least one image is required")
-    .max(5, "Maximum 5 images allowed")
-    .refine(
-      (files) => files.every((file) => file.size <= 5 * 1024 * 1024),
-      "Each image must be less than 5MB"
-    ),
-  hasVariants: z.boolean().default(false),
-  variants: z
-    .object({
-      selectedAttributes: z.array(z.string()).default([]),
-      attributeValues: z.record(z.array(z.string())).default({}),
-      variantStock: z.record(z.number()).default({}),
-    })
-    .optional(),
-});
+export const createProductSchema = z
+  .object({
+    name: z.string().min(1, "Product name is required"),
+    category: z.string().min(1, "Category is required"),
+    description: z.string().min(1, "Description is required"),
+    faults: z.string().optional(),
+    price: z
+      .string()
+      .min(1, "Price is required")
+      .regex(/^\d*\.?\d*$/, "Invalid price format"),
+    hasVariants: z.boolean().default(false),
+    stock: z
+      .string()
+      .regex(/^\d*\.?\d*$/, "Invalid price format")
+      .nullable()
+      .refine(
+        (val) => {
+          // If hasVariants is true, stock should be null
+          // If hasVariants is false, stock should be a non-empty string
+          return val === null || val.length > 0;
+        },
+        { message: "Stock is required when product has no variants" }
+      ),
+    images: z
+      .array(z.instanceof(File))
+      .min(1, "At least one image is required")
+      .max(5, "Maximum 5 images allowed")
+      .refine(
+        (files) => files.every((file) => file.size <= 5 * 1024 * 1024),
+        "Each image must be less than 5MB"
+      ),
+    variants: z
+      .object({
+        selectedAttributes: z.array(z.string()).default([]),
+        attributeValues: z.record(z.array(z.string())).default({}),
+        variantStock: z.record(z.number()).default({}),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.hasVariants) {
+        return data.stock === null;
+      }
+      return data.stock !== null && data.stock.length > 0;
+    },
+    {
+      message:
+        "Stock must be null when product has variants, and required when it doesn't",
+      path: ["stock"],
+    }
+);
+  
+// find a more effecient way to omit the images 
+export const ServercreateProductSchema = z
+  .object({
+    name: z.string().min(1, "Product name is required"),
+    category: z.string().min(1, "Category is required"),
+    description: z.string().min(1, "Description is required"),
+    faults: z.string().optional(),
+    price: z
+      .string()
+      .min(1, "Price is required")
+      .regex(/^\d*\.?\d*$/, "Invalid price format"),
+    hasVariants: z.boolean().default(false),
+    stock: z
+      .string()
+      .regex(/^\d*\.?\d*$/, "Invalid price format")
+      .nullable()
+      .refine(
+        (val) => {
+          // If hasVariants is true, stock should be null
+          // If hasVariants is false, stock should be a non-empty string
+          return val === null || val.length > 0;
+        },
+        { message: "Stock is required when product has no variants" }
+      ),
+    variants: z
+      .object({
+        selectedAttributes: z.array(z.string()).default([]),
+        attributeValues: z.record(z.array(z.string())).default({}),
+        variantStock: z.record(z.number()).default({}),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.hasVariants) {
+        return data.stock === null;
+      }
+      return data.stock !== null && data.stock.length > 0;
+    },
+    {
+      message:
+        "Stock must be null when product has variants, and required when it doesn't",
+      path: ["stock"],
+    }
+  );
 
 export type CreateProductFormData = z.infer<typeof createProductSchema>;

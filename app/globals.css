@@ -87,7 +87,7 @@
 
 :root {
 	--radius: 0.5rem;
-	--background: oklch(1 0 0);
+	--background: hsl(0 0% 100%);
 	--foreground: oklch(0.141 0.005 285.823);
 	--card: oklch(1 0 0);
 	--card-foreground: oklch(0.141 0.005 285.823);
@@ -95,9 +95,9 @@
 	--popover-foreground: oklch(0.141 0.005 285.823);
 	--primary: oklch(0.645 0.246 16.439);
 	--primary-foreground: oklch(0.969 0.015 12.422);
-	--secondary: oklch(0.967 0.001 286.375);
-	--secondary-foreground: oklch(0.21 0.006 285.885);
-	--muted: oklch(0.967 0.001 286.375);
+	--secondary: hsl(340 70% 95%);
+	--secondary-foreground: hsl(342 89% 30%);
+	--muted: hsl(0 0% 96.1%);
 	--muted-foreground: oklch(0.552 0.016 285.938);
 	--accent: oklch(0.967 0.001 286.375);
 	--accent-foreground: oklch(0.21 0.006 285.885);
@@ -152,6 +152,49 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.645 0.246 16.439);
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes pulseGlow {
+
+	0%,
+	100% {
+		box-shadow: 0 0 0 rgba(236, 72, 153, 0);
+	}
+
+	50% {
+		box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
+	}
+}
+
+.animate-fade-in {
+	animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-pulse-glow {
+	animation: pulseGlow 2s infinite;
+}
+
+/* Custom card design */
+.card-gradient {
+	background: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--card)));
+	border: 1px solid rgba(236, 72, 153, 0.15);
+}
+
+.card-gradient-accent {
+	background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.7));
 }
 
 @layer base {

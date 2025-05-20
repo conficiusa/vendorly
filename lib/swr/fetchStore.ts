@@ -6,13 +6,16 @@ export const useStore = () => {
     const res = await fetch(url);
     return res.json();
   };
-  const { data, error, isLoading } = useSWR("/api/vendors/store", fetcher, {
-    revalidateOnFocus: false,
-  });
+  const { data, error, isLoading } = useSWR<{ data: Store }>(
+    "/api/vendors/store",
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
 
-  console.log(data);
   return {
-    store: data?.data as Store,
+    store: data?.data,
     error,
     isLoading,
   };

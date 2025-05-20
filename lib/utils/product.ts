@@ -1,3 +1,4 @@
+"use server";
 import { CreateProductFormData } from "@/lib/schemas/products/create";
 import { Prisma } from "@/prisma/generated/prisma-client";
 import { generateUniqueSlug } from "@/lib/utils";
@@ -20,7 +21,7 @@ export async function transformProductFormData(
     slug,
     description: formData.description,
     price: parseFloat(formData.price),
-    stock: 0, // Will be calculated from variants if hasVariants is true
+    stock: formData.hasVariants ? 0 : parseInt(formData.stock || "0"),
     faults: formData.faults,
     images: [], // Initialize with empty array, will be updated after image upload
     store: {
