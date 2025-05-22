@@ -8,18 +8,8 @@ export const createProductSchema = z
     faults: z.string().optional(),
     price: z.number().gt(0, "Price must be greater than 0"),
     hasVariants: z.boolean().default(false),
-    stock: z
-      .string()
-      .regex(/^\d*\.?\d*$/, "Invalid price format")
-      .nullable()
-      .refine(
-        (val) => {
-          // If hasVariants is true, stock should be null
-          // If hasVariants is false, stock should be a non-empty string
-          return val === null || val.length > 0;
-        },
-        { message: "Stock is required when product has no variants" }
-      ),
+    stock: z.number().gt(0, "Stock must be greater than 0").nullable(),
+
     images: z
       .array(z.instanceof(File))
       .min(1, "At least one image is required")
@@ -41,7 +31,7 @@ export const createProductSchema = z
       if (data.hasVariants) {
         return data.stock === null;
       }
-      return data.stock !== null && data.stock.length > 0;
+      return data.stock !== null;
     },
     {
       message:
@@ -59,18 +49,7 @@ export const ServercreateProductSchema = z
     faults: z.string().optional(),
     price: z.number().gt(0, "Price must be greater than 0"),
     hasVariants: z.boolean().default(false),
-    stock: z
-      .string()
-      .regex(/^\d*\.?\d*$/, "Invalid price format")
-      .nullable()
-      .refine(
-        (val) => {
-          // If hasVariants is true, stock should be null
-          // If hasVariants is false, stock should be a non-empty string
-          return val === null || val.length > 0;
-        },
-        { message: "Stock is required when product has no variants" }
-      ),
+    stock: z.number().gt(0, "Stock must be greater than 0").nullable(),
     variants: z
       .object({
         selectedAttributes: z.array(z.string()).default([]),
@@ -84,7 +63,7 @@ export const ServercreateProductSchema = z
       if (data.hasVariants) {
         return data.stock === null;
       }
-      return data.stock !== null && data.stock.length > 0;
+      return data.stock !== null;
     },
     {
       message:

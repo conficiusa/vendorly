@@ -49,6 +49,7 @@ export function useProducts({
     pagination: data?.pagination,
     isValidating,
     isLoading,
+
     error: error,
   };
 }

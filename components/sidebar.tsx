@@ -9,8 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SIDEBAR_ITEMS } from "@/lib/constants/mock";
 import SidebarProfile from "./sidebar-profile";
-import { authClient } from "@/lib/auth-client";
-import { Store } from "@/prisma/generated/prisma-client";
+import {Session } from "@/lib/types/better-auth.types";
 
 type IconName = keyof typeof Icons;
 
@@ -30,7 +29,7 @@ const SidebarItem = ({
   isCollapsed,
 }: SidebarItemProps) => {
   // Cast the icon name to IconName type
-  const Icon = Icons[icon as IconName] as typeof LucideIcon;
+const Icon = Icons[icon as IconName] as typeof LucideIcon;
 
   return (
     <Link
@@ -56,15 +55,14 @@ const SidebarItem = ({
   );
 };
 
-export function Sidebar({ store }: { store: Store }) {
+export function Sidebar({ session }: { session: Session }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
-
+  if (!session?.store) return;
   return (
     <div
       className={cn(
@@ -104,9 +102,8 @@ export function Sidebar({ store }: { store: Store }) {
       </div>
 
       <SidebarProfile
-        session={session!}
         collapsed={isCollapsed}
-        store={store}
+        session={session}
       />
 
       <div className={cn("space-y-2 px-2 py-2 flex-1")}>

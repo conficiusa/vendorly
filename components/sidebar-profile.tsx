@@ -2,25 +2,22 @@ import { Check, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import { Session } from "@/lib/types/better-auth.types";
-import { Store } from "@/prisma/generated/prisma-client";
 
 const SidebarProfile = ({
-  session,
   collapsed,
-  store,
+  session,
 }: {
-  session: Session;
   collapsed: boolean;
-  store: Store;
+session: Session;
 }) => {
   return collapsed ? (
     <div className="flex justify-center my-4">
       <div className="relative">
         <div className="relative h-8 w-8 rounded-full overflow-hidden border-2 border-primary">
-          {store?.logo ? (
+          {session.store?.logo ? (
             <Image
-              src={store.logo}
-              alt={store.name}
+              src={session?.store.logo}
+              alt={session?.store.name}
               className="object-cover rounded-full"
               fill
             />
@@ -37,10 +34,10 @@ const SidebarProfile = ({
     <div className="flex flex-col items-center p-4 mb-4">
       <div className="relative">
         <div className="h-16 w-16 relative rounded-full overflow-hidden border-2 border-primary">
-          {store?.logo ? (
+          {session?.store?.logo ? (
             <Image
-              src={store.logo}
-              alt={store.name}
+              src={session?.store.logo}
+              alt={session?.store.name}
               className="rounded-full object-cover"
               fill
             />
@@ -56,9 +53,9 @@ const SidebarProfile = ({
       </div>
       <div className="mt-3 text-center">
         <h3 className="font-semibold">
-          {session?.user.first_name} {session?.user.last_name}
+          {session?.user?.first_name} {session?.user?.last_name}
         </h3>
-        <p className="text-xs text-muted-foreground">{store.name}</p>
+        <p className="text-xs text-muted-foreground">{session?.store?.name}</p>
       </div>
     </div>
   );

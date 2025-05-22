@@ -31,6 +31,7 @@ export function AddProductForm() {
       category: "",
       description: "",
       price: 0,
+      stock:0,
       images: [],
       hasVariants: false,
       variants: {

@@ -41,6 +41,7 @@ const SignupForm = () => {
         email: formdata.email,
         password: formdata.password,
         name: `${formdata.first_name} ${formdata.last_name}`,
+        // @ts-expect-error Additional properties first_name, last_name, and phone are required by the API
         first_name: formdata.first_name,
         last_name: formdata.last_name,
         phone: formdata.phone,

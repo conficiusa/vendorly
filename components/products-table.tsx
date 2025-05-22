@@ -46,7 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export function ProductsTable() {
   const limit = 20;
@@ -108,8 +108,9 @@ export function ProductsTable() {
     setShowDeleteDialog(true);
   };
 
+  console.log(isLoading, isValidating);
   const renderContent = () => {
-    if (isLoading && !isValidating) {
+    if (isLoading) {
       return <ProductsTableSkeleton />;
     }
 
@@ -259,9 +260,6 @@ export function ProductsTable() {
                       </div>
                       <div>
                         <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {product.description}
-                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -270,7 +268,7 @@ export function ProductsTable() {
                       {product.Category?.name || "Uncategorized"}
                     </Badge>
                   </TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>{formatCurrency(product.price)}</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
                     <Badge

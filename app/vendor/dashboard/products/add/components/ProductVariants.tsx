@@ -353,7 +353,7 @@ export function ProductVariants({ form }: ProductVariantsProps) {
             onCheckedChange={(checked) => {
               setValue("hasVariants", checked as boolean);
               // Set stock to null when variants are enabled
-              setValue("stock", checked ? null : "");
+              setValue("stock", checked ? null : 0);
               if (!checked) {
                 setValue("variants", {
                   selectedAttributes: [],

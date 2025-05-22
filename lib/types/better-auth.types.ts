@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth"
+import { authClient } from "../auth-client";
 
-export type Session = typeof auth.$Infer.Session
-export type User = Session["user"] 
+export type Session = typeof authClient.$Infer.Session;
+export type User = Session["user"]

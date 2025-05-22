@@ -9,10 +9,11 @@ import {
 import * as Icons from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { getSession } from "@/lib/auth";
+import { User } from "@/lib/types/better-auth.types";
 
 const VendorUserDp = async () => {
   const session = await getSession();
-  const user = session?.user;
+  const user = session?.user as User;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center gap-2 overflow-hidden focus-visible:ring-0 focus-visible:ring-offset-0 group">
@@ -23,9 +24,7 @@ const VendorUserDp = async () => {
             {user?.last_name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <span className="font-medium text-sm hidden md:inline">
-          {user?.first_name}
-        </span>
+      
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>

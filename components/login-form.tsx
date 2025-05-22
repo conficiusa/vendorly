@@ -66,7 +66,7 @@ const LoginForm = () => {
             router.push("/auth/verify-email");
             return;
           }
-          if (!session?.user.onboarded) {
+        if (!session?.user.onboarded) {
             router.push("/onboarding");
           }
         },

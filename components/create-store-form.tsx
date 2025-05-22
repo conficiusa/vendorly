@@ -49,6 +49,7 @@ export default function CreateStoreForm() {
       name: "",
       bio: "",
       logo: undefined,
+      
       images: [],
       useExistingAddress: false,
       address: {

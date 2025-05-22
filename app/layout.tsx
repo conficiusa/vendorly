@@ -6,6 +6,8 @@ import { uploadRouter } from "./api/uploadthing/core";
 import { extractRouterConfig } from "uploadthing/server";
 import Footer from "@/components/footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Suspense } from "react";
+import Loader  from "@/components/loader";
 
 export const metadata: Metadata = {
   title: "Vendorly",
@@ -20,14 +22,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <TooltipProvider>
-          <div className="min-h-screen">
-            <NextSSRPlugin routerConfig={extractRouterConfig(uploadRouter)} />
-            {children}
-            <Toaster richColors />
-          </div>
-        </TooltipProvider>
-        <Footer />
+        <Suspense fallback={<Loader />}>
+          <TooltipProvider>
+            <div className="min-h-screen">
+              <NextSSRPlugin routerConfig={extractRouterConfig(uploadRouter)} />
+              {children}
+              <Toaster richColors />
+            </div>
+          </TooltipProvider>
+          <Footer />
+        </Suspense>
       </body>
     </html>
   );
