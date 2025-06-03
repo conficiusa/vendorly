@@ -9,6 +9,9 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+# /prisma/migrations
+/app/generated
+/prisma/generated
 
 # testing
 /coverage
