@@ -45,6 +45,7 @@ export const POST = async (req: NextRequest) => {
     const data = { phoneNumber, email };
     await QueueJob(jobUrl, data);
   } catch (error) {
+    console.log(error);
     return Response.error(error);
   }
 };
