@@ -4,11 +4,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Product } from "@/lib/types/product.types";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Star } from "lucide-react";
 import Image from "next/image";
+import { Product } from "@/prisma/generated/prisma-client";
 
 interface ProductDetailsProps {
 	product: Product | null;
@@ -34,7 +34,7 @@ export function ProductDetails({
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-4'>
 					<div className='relative aspect-square overflow-hidden rounded-lg'>
 						<Image
-							src={product.image}
+							src={product.images[0]}
 							alt={product.name}
 							fill
 							className='object-cover w-full h-full hover:scale-105 transition-transform duration-300'
@@ -43,7 +43,7 @@ export function ProductDetails({
 					<div className='space-y-4'>
 						<div className='flex items-center justify-between'>
 							<Badge variant='secondary' className='text-lg px-4 py-1'>
-								{product.category}
+								{product.categoryId}
 							</Badge>
 							<div className='flex items-center gap-1'>
 								<Star className='w-5 h-5 fill-yellow-400 stroke-yellow-400' />
@@ -56,13 +56,13 @@ export function ProductDetails({
 							<p className='text-sm text-gray-500'>
 								Vendor:{" "}
 								<span className='font-medium text-gray-900'>
-									{product.vendor}
+									{product.storeId}
 								</span>
 							</p>
 							<p className='text-sm text-gray-500'>
 								Location:{" "}
 								<span className='font-medium text-gray-900'>
-									{product.location}
+									{product.storeId}
 								</span>
 							</p>
 							<p className='text-sm text-gray-500'>

@@ -1,70 +1,82 @@
 "use client";
 
-import * as React from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
-import { Layout, Search, Clock } from "lucide-react";
+import { Layout, Search, Clock, AlertCircle } from "lucide-react";
 
-import {
-  mockProducts,
-  mockServices,
-  categories,
-  serviceCategories,
-} from "@/lib/data";
+import { mockServices, categories, serviceCategories } from "@/lib/data";
 import { ProductCard } from "@/components/product-card";
 import { ServiceCard } from "@/components/service-card";
 import { MarketplaceTabs } from "@/components/tabs";
 import { CategoryFilter } from "@/components/category-filter";
 import { SearchFilterBar } from "@/components/search-filter-bar";
-import { Loader } from "@/components/ui/loader";
 import { cn } from "@/lib/utils";
 import { useInfiniteProducts } from "@/lib/swr/useInfiniteProducts";
 import { ProductApiResponse } from "@/lib/swr/useProducts";
+import { useInView } from "react-intersection-observer";
+import { ProductsGridSkeleton } from "@/components/skeletons/products-grid-skeleton";
 
 const tabOptions = ["Products", "Services"];
 
 export default function MarketplacePage() {
+  const { ref, inView } = useInView();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") || "products";
 
-  const [activeTab, setActiveTab] = React.useState(
+  const [activeTab, setActiveTab] = useState(
     tabParam === "services" ? "Services" : "Products"
   );
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [gridView, setGridView] = React.useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [gridView, setGridView] = useState(true);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const getKey = (pageIndex: number, previousPageData: ProductApiResponse) => {
-    console.log("previous", previousPageData);
+  const getKey = (
+    pageIndex: number,
+    previousPageData: ProductApiResponse | null
+  ) => {
     if (previousPageData && previousPageData.pagination.hasMore === false) {
+      setIsFinished(true);
       return null;
     }
-
-    return `/api/products?page=${pageIndex + 1}&limit=1`;
+    let query = `/api/products?page=${pageIndex + 1}&limit=12`;
+    if (selectedCategory !== "All") {
+      query += `&category=${encodeURIComponent(selectedCategory)}`;
+    }
+    if (searchQuery) {
+      query += `&search=${encodeURIComponent(searchQuery)}`;
+    }
+    return query;
   };
 
-  const { data, setSize} = useInfiniteProducts(getKey);
+  const {
+    setSize,
+    isValidating,
+    data,
+    error,
+    isLoading: isLoadingProducts,
+  } = useInfiniteProducts(getKey);
 
-  React.useEffect(() => {
-    setSize((prev) => prev + 1);
-  },[setSize]);
+  const products = useMemo(
+    () => data?.map((response) => response.data).flat() || [],
+    [data]
+  );
 
-  console.log("data", data);
-  const filteredProducts = React.useMemo(() => {
-    return mockProducts.filter((product) => {
-      const matchesCategory =
-        selectedCategory === "All" || product.category === selectedCategory;
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    if (inView && !isValidating && !isFinished && products.length > 0) {
+      setSize((prevSize) => prevSize + 1);
+    }
+  }, [inView, isValidating, setSize, isFinished, products.length]);
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [selectedCategory, searchQuery]);
+  useEffect(() => {
+    setSize(1);
+    setIsFinished(false);
+  }, [activeTab, selectedCategory, searchQuery, setSize]);
 
-  const filteredServices = React.useMemo(() => {
+  const filteredServices = useMemo(() => {
     return mockServices.filter((service) => {
       const matchesCategory =
         selectedCategory === "All" || service.category === selectedCategory;
@@ -77,66 +89,76 @@ export default function MarketplacePage() {
   }, [selectedCategory, searchQuery]);
 
   const handleTabChange = (tab: string) => {
-    setIsLoading(true);
     setActiveTab(tab);
     setSelectedCategory("All");
-
+    setSearchQuery("");
     const newTab = tab === "Products" ? "products" : "services";
-    router.push(`/discover?tab=${newTab}`);
-
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    router.push(`/discover?tab=${newTab}`, { scroll: false });
   };
 
   const handleCategoryChange = (category: string) => {
-    setIsLoading(true);
     setSelectedCategory(category);
-
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 300);
   };
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
   };
 
+  const isInitialLoading = isLoadingProducts && products.length === 0 && !data;
+
+  if (isInitialLoading && activeTab === "Products") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-violet-100 dark:from-neutral-950 dark:to-purple-900/30">
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mb-6">
+            <div className="h-10 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3 animate-pulse mb-2"></div>
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3 animate-pulse"></div>
+          </div>
+          <div className="h-10 bg-neutral-200 dark:bg-neutral-700 rounded w-full animate-pulse mb-4"></div>
+          <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded w-full animate-pulse mb-6"></div>
+          <ProductsGridSkeleton count={12} />
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Today&apos;s Sale
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-violet-100 dark:from-neutral-950 dark:to-purple-900/30">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 dark:from-purple-400 dark:via-pink-400 dark:to-orange-300">
+            Discover Your Next Favorite
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            Browse and purchase products or book services from campus vendors
+          <p className="mt-3 text-lg sm:text-xl text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
+            Explore a universe of unique products and services, curated just for
+            you.
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           <MarketplaceTabs
             tabs={tabOptions}
             activeTab={activeTab}
             onChange={handleTabChange}
           />
 
-          <div className="flex flex-col space-y-4">
-            <div className="flex space-x-2 items-center justify-between">
+          <div className="flex flex-col space-y-6">
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-center justify-between">
               <SearchFilterBar
                 searchQuery={searchQuery}
                 onSearchChange={handleSearchChange}
                 onFilterClick={() => {}}
               />
 
-              <div className="hidden sm:flex items-center space-x-2">
+              <div className="flex items-center space-x-2 self-end sm:self-center">
                 <button
                   onClick={() => setGridView(true)}
+                  title="Grid View"
                   className={cn(
-                    "p-2 rounded-md transition-colors",
+                    "p-2.5 rounded-lg transition-all duration-200",
                     gridView
-                      ? "bg-secondary text-secondary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      ? "bg-primary/15 text-primary shadow-sm"
+                      : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   )}
                 >
                   <Layout className="h-5 w-5" />
@@ -144,11 +166,12 @@ export default function MarketplacePage() {
                 </button>
                 <button
                   onClick={() => setGridView(false)}
+                  title="List View"
                   className={cn(
-                    "p-2 rounded-md transition-colors",
+                    "p-2.5 rounded-lg transition-all duration-200",
                     !gridView
-                      ? "bg-secondary text-secondary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      ? "bg-primary/15 text-primary shadow-sm"
+                      : "text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   )}
                 >
                   <svg
@@ -180,78 +203,111 @@ export default function MarketplacePage() {
             />
           </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center min-h-[300px]">
-              <Loader />
-            </div>
-          ) : (
+          {activeTab === "Products" && (
             <>
-              {activeTab === "Products" && (
-                <>
-                  {filteredProducts.length === 0 ? (
-                    <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8">
-                      <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                      <h3 className="text-xl font-semibold">
-                        No products found
-                      </h3>
-                      <p className="text-muted-foreground mt-2">
-                        Try adjusting your search or filter to find what
-                        you&apos;re looking for
-                      </p>
-                    </div>
-                  ) : (
-                    <div
-                      className={cn(
-                        "grid gap-6 mt-6",
-                        gridView
-                          ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                          : "grid-cols-1"
-                      )}
-                    >
-                      <AnimatePresence>
-                        {filteredProducts.map((product) => (
-                          <ProductCard
-                            key={product.id}
-                            product={product}
-                            isListView={!gridView}
-                          />
-                        ))}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </>
+              {error && (
+                <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
+                  <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mb-6" />
+                  <h3 className="text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
+                    Oops! Something went wrong.
+                  </h3>
+                  <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
+                    {error.message ||
+                      "We couldn't load the products at this moment. Please try again in a bit."}
+                  </p>
+                </div>
               )}
-
-              {activeTab === "Services" && (
-                <>
-                  {filteredServices.length === 0 ? (
-                    <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8">
-                      <Clock className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                      <h3 className="text-xl font-semibold">
-                        No services found
-                      </h3>
-                      <p className="text-muted-foreground mt-2">
-                        Try adjusting your search or filter to find what
-                        you&apos;re looking for
-                      </p>
-                    </div>
-                  ) : (
-                    <div
-                      className={cn(
-                        "grid gap-6 mt-6",
-                        gridView
-                          ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                          : "grid-cols-1"
-                      )}
-                    >
-                      <AnimatePresence>
-                        {filteredServices.map((service) => (
-                          <ServiceCard key={service.id} service={service} />
-                        ))}
-                      </AnimatePresence>
-                    </div>
+              {!error && products.length === 0 && !isValidating && (
+                <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
+                  <Search className="h-16 w-16 text-neutral-400 dark:text-neutral-500 mb-6" />
+                  <h3 className="text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
+                    No Treasures Found
+                  </h3>
+                  <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
+                    It seems we couldn't find any products matching your search
+                    or filter. Try a different spell!
+                  </p>
+                </div>
+              )}
+              {(products.length > 0 || isValidating) && !error && (
+                <div
+                  className={cn(
+                    "grid gap-4 sm:gap-6 mt-6",
+                    gridView
+                      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                      : "grid-cols-1 space-y-4 sm:space-y-6"
                   )}
-                </>
+                >
+                  <AnimatePresence>
+                    {products.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        isListView={!gridView}
+                      />
+                    ))}
+                  </AnimatePresence>
+                  {isValidating && products.length > 0 && !isFinished && (
+                    <AnimatePresence>
+                      {[...Array(gridView ? 4 : 1)].map((_, i) => (
+                        <ProductsGridSkeleton
+                          key={`loading-${i}`}
+                          count={1}
+                          itemClassName="opacity-70"
+                        />
+                      ))}
+                    </AnimatePresence>
+                  )}
+                </div>
+              )}
+              <div
+                ref={ref}
+                className="h-10 mt-10 flex items-center justify-center"
+              >
+                {isValidating && products.length > 0 && !isFinished && (
+                  <div className="flex items-center space-x-2 text-neutral-500 dark:text-neutral-400">
+                    <div className="w-5 h-5 border-2 border-neutral-400 dark:border-neutral-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Conjuring more items...</span>
+                  </div>
+                )}
+                {isFinished && products.length > 0 && (
+                  <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
+                    You've reached the end of the scroll. No more ancient relics
+                    to uncover!
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {activeTab === "Services" && (
+            <>
+              {filteredServices.length === 0 ? (
+                <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
+                  <Clock className="h-16 w-16 text-neutral-400 dark:text-neutral-500 mb-6" />
+                  <h3 className="text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
+                    No Services Available
+                  </h3>
+                  <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
+                    Try adjusting your search or filter, or check back later for
+                    new service offerings.
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "grid gap-4 sm:gap-6 mt-6",
+                    gridView
+                      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                      : "grid-cols-1 space-y-4 sm:space-y-6"
+                  )}
+                >
+                  <AnimatePresence>
+                    {filteredServices.map((service) => (
+                      <ServiceCard key={service.id} service={service} />
+                    ))}
+                  </AnimatePresence>
+                </div>
               )}
             </>
           )}

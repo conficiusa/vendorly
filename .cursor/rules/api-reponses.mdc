@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This Rules is essential when writing Api routes. 
+
+
+-when writing api responses use [errors.ts](mdc:app/api/utils/errors.ts) for throwing api errors.
+
+-use [response.ts](mdc:app/api/utils/response.ts) for returning responses. 
+-use a try catch 
+-errors in try catch are thrown and handled in the catch block like return Response.error(error)
+
+- the [response.ts](mdc:app/api/utils/response.ts) is also used for seccuss reponses return Response.sucess()

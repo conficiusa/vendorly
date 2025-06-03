@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+all prisma types should be imported from [index.d.ts](mdc:prisma/generated/prisma-client/index.d.ts)

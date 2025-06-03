@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+this is be used when building a form.
+
+
+all text inputs should be with [text-input.tsx](mdc:components/text-input.tsx) and selectInputs should be with [select-component.tsx](mdc:components/select-component.tsx) use react hook form for all forms. use the useForm hook from react hook form and zod with the zod resolver . always reference how the form in [login-form.tsx](mdc:components/login-form.tsx) is build, where form is very long break it down into components

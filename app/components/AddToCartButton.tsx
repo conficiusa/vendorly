@@ -1,0 +1,108 @@
+"use client";
+import { MouseEvent, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, Check } from "lucide-react";
+
+interface AddToCartButtonProps {
+  productId: string;
+  variantId?: string;
+  className?: string;
+  disabled?: boolean;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+export default function AddToCartButton({
+  productId,
+  variantId,
+  className = "",
+  disabled = false,
+  onSuccess,
+  onError,
+}: AddToCartButtonProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleAddToCart = async (e: MouseEvent<HTMLButtonElement>) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          variantId,
+          quantity: 1,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add item to cart");
+      }
+
+      setIsSuccess(true);
+      onSuccess?.();
+
+      // Reset success state after 2 seconds
+      setTimeout(() => setIsSuccess(false), 2000);
+    } catch (error) {
+      onError?.(
+        error instanceof Error ? error.message : "Failed to add item to cart"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.button
+      whileTap={{ scale: 0.98 }}
+      onClick={(e) => handleAddToCart(e)}
+      disabled={disabled || isLoading}
+      className={`
+        relative flex items-center justify-center gap-2
+        px-6 py-3 rounded-lg font-medium
+        transition-colors duration-200
+        ${
+          disabled
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-primary text-white hover:bg-primary/70"
+        }
+        ${className}
+      `}
+    >
+      <span
+        className={`flex items-center gap-2 transition-opacity duration-200 ${isLoading || isSuccess ? "opacity-0" : "opacity-100"}`}
+      >
+        <ShoppingCart className="w-5 h-5" />
+        <span className="hidden sm:block">Add to Cart</span>
+      </span>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </motion.div>
+        ) : isSuccess ? (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <Check className="w-5 h-5" />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.button>
+  );
+}

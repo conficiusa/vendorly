@@ -10,38 +10,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enum for user roles
-enum UserRole {
-  CUSTOMER
-  VENDOR
-  ADMIN
-}
-
+// Core User/Auth Models
 model User {
-  id               String      @id @default(uuid())
-  name             String
-  email            String      @unique
-  onboarded        Boolean     @default(false) 
-  phone            String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  emailVerified    Boolean
-  image            String?
-  role             UserRole    @default(CUSTOMER)
-  sessions         Session[]
-  accounts         Account[]
-  twoFactorEnabled Boolean?
-  twofactors       TwoFactor[]
-  first_name       String
-  last_name        String
-  store            Store?
-  Review           Review[]
+  id                  String         @id @default(uuid())
+  name                String
+  email               String         @unique
+  onboarded           Boolean        @default(false)
+  phone               String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  emailVerified       Boolean
+  image               String?
+  role                UserRole       @default(CUSTOMER)
+  sessions            Session[]
+  accounts            Account[]
+  twoFactorEnabled    Boolean?
+  twofactors          TwoFactor[]
+  first_name          String
+  last_name           String
+  store               Store?
+  Review              Review[]
   phoneNumber         String?
   phoneNumberVerified Boolean?
   address             Address?
+  cart                Cart?
+  Order               Order[]
 
-  @@map("user")
   @@unique([phoneNumber])
+  @@map("user")
 }
 
 model Address {
@@ -57,170 +53,9 @@ model Address {
   user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeId         String?  @unique
   store           Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  Order           Order[]
 
   @@map("address")
-}
-
-model Store {
-  id        String    @id @default(uuid())
-  name      String
-  slug      String    @unique
-  bio       String?
-  logo      String?
-  images    String[]
-  userId    String    @unique
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
-  services  Service[]
-  createdAt DateTime  @default(now())
-  Review    Review[]
-  address   Address?
-
-  @@map("store")
-}
-
-model Product {
-  id                String                @id @default(uuid())
-  name              String
-  slug              String                @unique
-  images            String[]
-  description       String?
-  price             Float
-  stock             Int
-  storeId           String
-  store             Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  faults            String?
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  Review            Review[]
-  Category          Category?             @relation(fields: [categoryId], references: [id])
-  categoryId        String?
-  ProductCategory   ProductCategory[]
-  variantOptions    ProductVariantOption[]
-
-  @@map("product")
-}
-
-model Service {
-  id              String            @id @default(uuid())
-  slug            String            @unique
-  name            String
-  description     String?
-  rate            Float
-  unit            String
-  storeId         String
-  store           Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  Review          Review[]
-  images          String[]          @default([])
-  Category        Category?         @relation(fields: [categoryId], references: [id])
-  categoryId      String?
-  ServiceCategory ServiceCategory[]
-  workingDays     Json              
-  dailyMax        Int               
-  serviceDuration Int              
-  operatingHours  Json              
-  isActive        Boolean           @default(true)
-
-  @@map("service")
-}
-
-model ProductVariantOption {
-  id         String   @id @default(uuid())
-  productId  String
-  attributes Json     // e.g., { "Size": "M", "Color": "Red" }
-  stock      Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@map("product_variant_option")
-}
-
-model VariantAttribute {
-  id                String              @id @default(uuid())
-  name              String              @unique
-  values            String[]
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  categories        CategoryVariantAttribute[]
-
-  @@map("variant_attribute")
-}
-
-model CategoryVariantAttribute {
-  id                String   @id @default(uuid())
-  categoryId        String
-  variantAttributeId String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  category          Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  variantAttribute  VariantAttribute @relation(fields: [variantAttributeId], references: [id], onDelete: Cascade)
-
-  @@unique([categoryId, variantAttributeId])
-  @@map("category_variant_attribute")
-}
-
-model Review {
-  id        String   @id @default(uuid())
-  rating    Int
-  comment   String?
-  productId String?
-  serviceId String?
-  storeId   String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product? @relation(fields: [productId], references: [id])
-  service   Service? @relation(fields: [serviceId], references: [id])
-  store     Store    @relation(fields: [storeId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("review")
-}
-
-enum CategoryType { 
-  PRODUCT
-  SERVICE
-}
-
-model Category {
-  id                String              @id @default(uuid())
-  name              String
-  type              CategoryType        @default(PRODUCT)
-  slug              String              @unique
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  products          Product[]
-  services          Service[]
-  ProductCategory   ProductCategory[]
-  ServiceCategory   ServiceCategory[]
-  variantAttributes CategoryVariantAttribute[]
-
-  @@map("category")
-}
-
-model ProductCategory {
-  id         String   @id @default(uuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@map("product_category")
-}
-
-model ServiceCategory {
-  id         String   @id @default(uuid())
-  serviceId  String
-  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@map("service_category")
 }
 
 model Session {
@@ -257,6 +92,16 @@ model Account {
   @@map("account")
 }
 
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
+}
+
 model Verification {
   id         String    @id
   identifier String
@@ -268,16 +113,255 @@ model Verification {
   @@map("verification")
 }
 
-model TwoFactor {
-  id          String @id
-  secret      String
-  backupCodes String
-  userId      String
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+// Store & Inventory Models
+model Store {
+  id        String      @id @default(uuid())
+  name      String
+  slug      String      @unique
+  bio       String?
+  logo      String?
+  images    String[]
+  userId    String      @unique
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+  services  Service[]
+  createdAt DateTime    @default(now())
+  Review    Review[]
+  address   Address?
+  OrderItem OrderItem[]
 
-  @@map("twoFactor")
+  @@map("store")
 }
 
+model Product {
+  id              String                 @id @default(uuid())
+  name            String
+  slug            String                 @unique
+  images          String[]
+  description     String?
+  price           Float
+  stock           Int
+  storeId         String
+  rating          Float?
+  store           Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  faults          String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  Review          Review[]
+  Category        Category?              @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  ProductCategory ProductCategory[]
+  variantOptions  ProductVariantOption[]
+  cartItems       CartItem[]
+  OrderItem       OrderItem[]
+
+  @@map("product")
+}
+
+model Service {
+  id              String            @id @default(uuid())
+  slug            String            @unique
+  name            String
+  description     String?
+  rate            Float
+  unit            String
+  storeId         String
+  store           Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  Review          Review[]
+  images          String[]          @default([])
+  Category        Category?         @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  ServiceCategory ServiceCategory[]
+  workingDays     Json
+  dailyMax        Int
+  serviceDuration Int
+  operatingHours  Json
+  isActive        Boolean           @default(true)
+
+  @@map("service")
+}
+
+model ProductVariantOption {
+  id         String   @id @default(uuid())
+  productId  String
+  attributes Json // e.g., { "Size": "M", "Color": "Red" }
+  stock      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product   Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  OrderItem OrderItem[]
+
+  @@map("product_variant_option")
+}
+
+model VariantAttribute {
+  id         String                     @id @default(uuid())
+  name       String                     @unique
+  values     String[]
+  createdAt  DateTime                   @default(now())
+  updatedAt  DateTime                   @updatedAt
+  categories CategoryVariantAttribute[]
+
+  @@map("variant_attribute")
+}
+
+// Categorization Models
+model Category {
+  id                String                     @id @default(uuid())
+  name              String
+  type              CategoryType               @default(PRODUCT)
+  slug              String                     @unique
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  products          Product[]
+  services          Service[]
+  ProductCategory   ProductCategory[]
+  ServiceCategory   ServiceCategory[]
+  variantAttributes CategoryVariantAttribute[]
+
+  @@map("category")
+}
+
+model ProductCategory {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("product_category")
+}
+
+model ServiceCategory {
+  id         String   @id @default(uuid())
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@map("service_category")
+}
+
+model CategoryVariantAttribute {
+  id                 String   @id @default(uuid())
+  categoryId         String
+  variantAttributeId String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  category         Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variantAttribute VariantAttribute @relation(fields: [variantAttributeId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, variantAttributeId])
+  @@map("category_variant_attribute")
+}
+
+// Order & Cart Models
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String? // Null for guest carts
+  sessionId String? // For guest cart identification
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  cartItems CartItem[]
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId]) // Each authenticated user can only have one cart
+  @@unique([sessionId]) // Each guest session can only have one cart
+  @@map("cart")
+}
+
+model CartItem {
+  id                     String   @id @default(uuid())
+  cartId                 String
+  productId              String
+  productVariantOptionId String? // Null for non-variant products
+  quantity               Int      @default(1)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  cart                 Cart                  @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariantOption ProductVariantOption? @relation(fields: [productVariantOptionId], references: [id], onDelete: Cascade)
+
+  // Ensure unique combination of cart, product, and variant option
+  @@unique([cartId, productId, productVariantOptionId])
+  @@map("cart_item")
+}
+
+model Order {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  total        Float
+  deliveryFee  Float          @default(0)
+  subtotal     Float
+  orderItems   OrderItem[]
+  address      Address        @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId    String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Transaction  Transaction[]
+
+  @@map("order")
+}
+
+model OrderItem {
+  id                     String                @id @default(uuid())
+  orderId                String?
+  order                  Order?                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId              String
+  product                Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariantOptionId String?
+  productVariantOption   ProductVariantOption? @relation(fields: [productVariantOptionId], references: [id], onDelete: Cascade)
+  quantity               Int
+  price                  Float
+  total                  Float
+  storeId                String
+  store                  Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  status                 OrderStatus           @default(PENDING)
+
+  @@map("order_item")
+}
+// Transaction & Payment Models
+model Transaction {
+  id                  String               @id @default(uuid())
+  reference           String               @unique
+  mobileMoneyProvider MobileMoneyProvider?
+  receiptId           String?
+  amount              Float
+  paymentMethod       PaymentMethod
+  status              TransactionStatus    @default(PENDING)
+  orderId             String
+  order               Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+// Review Model
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  productId String?
+  serviceId String?
+  storeId   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+  service   Service? @relation(fields: [serviceId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("review")
+}
+
+// Utility/Misc Models
 model RateLimit {
   id          String  @id
   key         String?
@@ -285,4 +369,42 @@ model RateLimit {
   lastRequest BigInt?
 
   @@map("rateLimit")
+}
+
+// Enums
+enum UserRole {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT_CARD
+  MOBILE_MONEY
+}
+
+enum MobileMoneyProvider {
+  MTN
+  TELECEL
+  AIRTELTIGO
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum CategoryType {
+  PRODUCT
+  SERVICE
 }

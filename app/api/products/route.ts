@@ -45,13 +45,33 @@ export const GET = async (req: NextRequest) => {
 
     const products = await prisma.product.findMany({
       where: whereClause,
-      include: {
-        Category: true,
+      select: {
+        id: true,
+        slug: true,
+        rating: true,
+        name: true,
+        images: true,
+        price: true,
+        Category: {
+          select: {
+            name: true,
+            id: true,
+            slug: true,
+          },
+        },
         store: {
           select: {
+            id: true,
             name: true,
             slug: true,
             logo: true,
+          },
+        },
+        variantOptions: {
+          select: {
+            id: true,
+            attributes: true,
+            stock: true,
           },
         },
       },

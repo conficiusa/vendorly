@@ -1,3 +1,4 @@
+import { Address } from "@/prisma/generated/prisma-client";
 import useSWR from "swr";
 
 export const useAddress = () => {
@@ -6,12 +7,12 @@ export const useAddress = () => {
     return res.json();
   };
   const { data, error, isLoading } = useSWR("/api/user/address", fetcher, {
-    revalidateOnFocus: false,
-
     //set staletime to a long time
+    revalidateOnFocus: false,
+    
   });
   return {
-    addresses: data?.data,
+    addresses: data?.data?.data as Address[],
     error,
     isLoading,
   };

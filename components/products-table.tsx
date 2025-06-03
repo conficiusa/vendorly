@@ -143,180 +143,190 @@ export function ProductsTable() {
     return (
       <>
         <div className="rounded-md bg-background p-4 sm:p-6 md:p-8">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={selectedProducts.length === products.length}
-                    onCheckedChange={toggleAll}
-                  />
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => {
-                    if (sortBy === "name") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                    } else {
-                      setSortBy("name");
-                      setSortOrder("asc");
-                    }
-                  }}
-                >
-                  Product
-                  {sortBy === "name" &&
-                    (sortOrder === "asc" ? (
-                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
-                    ) : (
-                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
-                    ))}
-                </TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => {
-                    if (sortBy === "price") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                    } else {
-                      setSortBy("price");
-                      setSortOrder("asc");
-                    }
-                  }}
-                >
-                  Price
-                  {sortBy === "price" &&
-                    (sortOrder === "asc" ? (
-                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
-                    ) : (
-                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
-                    ))}
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => {
-                    if (sortBy === "stock") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                    } else {
-                      setSortBy("stock");
-                      setSortOrder("asc");
-                    }
-                  }}
-                >
-                  Stock
-                  {sortBy === "stock" &&
-                    (sortOrder === "asc" ? (
-                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
-                    ) : (
-                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
-                    ))}
-                </TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead
-                  className="cursor-pointer select-none"
-                  onClick={() => {
-                    if (sortBy === "createdAt") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                    } else {
-                      setSortBy("createdAt");
-                      setSortOrder("desc");
-                    }
-                  }}
-                >
-                  Date Dated
-                  {sortBy === "createdAt" &&
-                    (sortOrder === "asc" ? (
-                      <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
-                    ) : (
-                      <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
-                    ))}
-                </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedProducts.includes(product.id)}
-                      onCheckedChange={() => toggleProduct(product.id)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-md overflow-hidden relative">
-                        {product.images[0] ? (
-                          <Image
-                            src={product.images[0]}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-muted flex items-center justify-center">
-                            <Icons.Image className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-medium">{product.name}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {product.Category?.name || "Uncategorized"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatCurrency(product.price)}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={product.stock > 0 ? "default" : "secondary"}
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="min-w-[800px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40px]">
+                      <Checkbox
+                        checked={selectedProducts.length === products.length}
+                        onCheckedChange={toggleAll}
+                      />
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none w-[200px]"
+                      onClick={() => {
+                        if (sortBy === "name") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortBy("name");
+                          setSortOrder("asc");
+                        }
+                      }}
                     >
-                      {product.stock > 0 ? "In Stock" : "Out of Stock"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {format(product.createdAt.toLocaleString(), "do MMM, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Icons.MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                          <Icons.Edit className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Icons.Copy className="mr-2 h-4 w-4" /> Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Icons.Eye className="mr-2 h-4 w-4" /> View
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleSingleDelete(product.id)}
+                      Product
+                      {sortBy === "name" &&
+                        (sortOrder === "asc" ? (
+                          <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                        ) : (
+                          <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                        ))}
+                    </TableHead>
+                    <TableHead className="w-[120px]">Category</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none w-[100px]"
+                      onClick={() => {
+                        if (sortBy === "price") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortBy("price");
+                          setSortOrder("asc");
+                        }
+                      }}
+                    >
+                      Price
+                      {sortBy === "price" &&
+                        (sortOrder === "asc" ? (
+                          <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                        ) : (
+                          <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                        ))}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none w-[100px]"
+                      onClick={() => {
+                        if (sortBy === "stock") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortBy("stock");
+                          setSortOrder("asc");
+                        }
+                      }}
+                    >
+                      Stock
+                      {sortOrder === "asc" ? (
+                        <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                      ) : (
+                        <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                      )}
+                    </TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none w-[120px]"
+                      onClick={() => {
+                        if (sortBy === "createdAt") {
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                        } else {
+                          setSortBy("createdAt");
+                          setSortOrder("desc");
+                        }
+                      }}
+                    >
+                      Date Added
+                      {sortBy === "createdAt" &&
+                        (sortOrder === "asc" ? (
+                          <Icons.ChevronUp className="inline ml-1 h-4 w-4" />
+                        ) : (
+                          <Icons.ChevronDown className="inline ml-1 h-4 w-4" />
+                        ))}
+                    </TableHead>
+                    <TableHead className="text-right w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="w-[40px]">
+                        <Checkbox
+                          checked={selectedProducts.includes(product.id)}
+                          onCheckedChange={() => toggleProduct(product.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="w-[200px]">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-md overflow-hidden relative flex-shrink-0">
+                            {product.images[0] ? (
+                              <Image
+                                src={product.images[0]}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-muted flex items-center justify-center">
+                                <Icons.Image className="h-4 w-4 sm:h-6 sm:w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-medium truncate text-sm">
+                              {product.name}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="w-[120px]">
+                        <Badge variant="secondary" className="text-xs">
+                          {product.Category?.name || "Uncategorized"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="w-[100px] text-sm">
+                        {formatCurrency(product.price)}
+                      </TableCell>
+                      <TableCell className="w-[100px] text-sm">
+                        {product.stock}
+                      </TableCell>
+                      <TableCell className="w-[100px]">
+                        <Badge
+                          variant={product.stock > 0 ? "default" : "secondary"}
+                          className="text-xs"
                         >
-                          <Icons.Trash className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                          {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="w-[120px] text-sm">
+                        {format(product.createdAt.toLocaleString(), "do MMM, yyyy")}
+                      </TableCell>
+                      <TableCell className="text-right w-[80px]">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Icons.MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>
+                              <Icons.Edit className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Icons.Copy className="mr-2 h-4 w-4" /> Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Icons.Eye className="mr-2 h-4 w-4" /> View
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleSingleDelete(product.id)}
+                            >
+                              <Icons.Trash className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
 
         {pagination && (
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
               Showing {products.length} of {pagination.total} products
             </div>
@@ -326,9 +336,10 @@ export function ProductsTable() {
                 size="sm"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
+                className="flex-1 sm:flex-none"
               >
                 <Icons.ChevronLeft className="h-4 w-4" />
-                Previous
+                <span className="hidden sm:inline">Previous</span>
               </Button>
               <div className="text-sm">
                 Page {currentPage} of {pagination.pages}
@@ -340,8 +351,9 @@ export function ProductsTable() {
                   setCurrentPage((p) => Math.min(pagination.pages, p + 1))
                 }
                 disabled={currentPage === pagination.pages}
+                className="flex-1 sm:flex-none"
               >
-                Next
+                <span className="hidden sm:inline">Next</span>
                 <Icons.ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -353,19 +365,19 @@ export function ProductsTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="flex-1 flex items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
+          <div className="relative flex-1 w-full sm:max-w-sm">
             <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-9 focus-visible:ring-offset-2 focus-visible:border-none bg-background"
+              className="pl-9 focus-visible:ring-offset-2 focus-visible:border-none bg-background w-full"
             />
           </div>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -378,20 +390,24 @@ export function ProductsTable() {
         </div>
 
         {selectedProducts.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 flex-1 sm:flex-none"
+            >
               <Icons.Archive className="h-4 w-4" />
-              Archive
+              <span className="hidden sm:inline">Archive</span>
             </Button>
             <Button
               variant="destructive"
               size="sm"
-              className="gap-2"
+              className="gap-2 flex-1 sm:flex-none"
               onClick={handleBulkDelete}
               disabled={isMutating}
             >
               <Icons.Trash2 className="h-4 w-4" />
-              Delete
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           </div>
         )}
@@ -400,7 +416,7 @@ export function ProductsTable() {
       {renderContent()}
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>

@@ -83,8 +83,6 @@ export const auth = betterAuth({
   plugins: [
     customSession(async ({ session, user }) => {
       const { data } = await tryCatch(getUser(session.userId));
-
-      console.log(data);
       return {
         user: {
           ...user,

@@ -1,25 +1,31 @@
-export interface Product {
-    id: string;
+import { Product, ProductVariantOption } from "@/prisma/generated/prisma-client";
+
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  provider: string;
+  rating: number;
+  availability: boolean;
+  location: string;
+}
+
+export interface ProductCard extends Product {
+  Category: {
     name: string;
-    description: string;
-    price: number;
-    image: string;
-    category: string;
-    vendor: string;
-    rating: number;
-    stock: number;
-    location: string;
-  }
-  
-  export interface Service {
     id: string;
-    name: string;
-    description: string;
-    price: number;
-    image: string;
-    category: string;
-    provider: string;
+    slug: string;
     rating: number;
-    availability: boolean;
-    location: string;
-  }
+    };
+    store: {
+      name: string;
+      id: string;
+      slug: string;
+      logo: string;
+    };
+    variantOptions: ProductVariantOption[];
+  };
+

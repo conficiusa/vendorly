@@ -3,141 +3,203 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, ShoppingCart } from "lucide-react";
+import { Star, Eye, Heart } from "lucide-react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { type Product } from "@/lib/data";
+import { cn, formatCurrency } from "@/lib/utils";
+import { ProductCard as ProductCardType } from "@/lib/types/product.types";
+import AddToCartButton from "@/app/components/AddToCartButton";
 
 interface ProductCardProps {
-	product: Product;
-	className?: string;
-	isListView?: boolean;
+  product: ProductCardType;
+  className?: string;
+  isListView?: boolean;
 }
 
 export function ProductCard({
-	product,
-	className,
-	isListView = false,
+  product,
+  className,
+  isListView = false,
 }: ProductCardProps) {
-	const defaultVariant = product.variantProducts.find(
-		(v) => v.id === product.defaultVariantId
-	);
+  const [isHovered, setIsHovered] = React.useState(false);
 
-	return (
-		<motion.div
-			initial={{ opacity: 0, y: 10 }}
-			animate={{ opacity: 1, y: 0 }}
-			exit={{ opacity: 0, y: -10 }}
-			whileHover={{ y: -5 }}
-			transition={{ duration: 0.2 }}
-			className={cn(
-				"group relative overflow-hidden rounded-xl border bg-card shadow-sm",
-				isListView ? "flex gap-4" : "",
-				className
-			)}
-		>
-			<Link
-				href={`/discover/${product.id}`}
-				className={cn(isListView ? "flex flex-row items-start w-full" : "")}
-			>
-				<div
-					className={cn(
-						"relative overflow-hidden",
-						isListView ? "w-48 h-48" : "aspect-[4/3]"
-					)}
-				>
-					<Image
-						src={product.images[0]}
-						alt={product.name}
-						className='object-cover transition-transform duration-300 group-hover:scale-105'
-						fill
-						sizes={
-							isListView
-								? "192px"
-								: "(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-						}
-					/>
-					<div className='absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
-					<div className='absolute bottom-0 left-0 p-4'>
-						<p className='rounded-full bg-primary/90 px-3 py-1 text-xs font-medium text-primary-foreground backdrop-blur-sm'>
-							{product.category}
-						</p>
-					</div>
-				</div>
+  const imageUrl = product.images?.[1] || "/bag.jpg";
 
-				<div className={cn("flex-1", isListView ? "p-4" : "p-4")}>
-					<div className='flex items-start justify-between'>
-						<div>
-							<h3 className='font-medium text-card-foreground line-clamp-2'>
-								{product.name}
-							</h3>
-							<p className='text-xs text-muted-foreground line-clamp-1'>
-								{product.vendor.name}
-							</p>
-						</div>
-						<p className='text-lg font-semibold text-primary'>
-							${defaultVariant?.price.toFixed(2)}
-							{product.variants && (
-								<span className='text-xs text-muted-foreground ml-1'>+</span>
-							)}
-						</p>
-					</div>
+  const cardVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } },
+  };
 
-					{isListView && (
-						<>
-							<p className='mt-2 text-sm text-muted-foreground line-clamp-2'>
-								{product.description}
-							</p>
-							{product.variants && (
-								<div className='mt-2 flex flex-wrap gap-2'>
-									{product.variants.map((variant) => (
-										<div
-											key={variant.name}
-											className='text-xs text-muted-foreground'
-										>
-											{variant.name}: {variant.options.join(", ")}
-										</div>
-									))}
-								</div>
-							)}
-						</>
-					)}
+  const hoverEffect = {
+    y: -8,
+    boxShadow: "0px 20px 30px -10px rgba(0, 0, 0, 0.2)",
+    transition: { type: "spring", stiffness: 300, damping: 15 },
+  };
 
-					<div className='mt-4 flex items-center justify-between'>
-						<div className='flex items-center'>
-							<div className='flex items-center'>
-								<Star className='h-3.5 w-3.5 fill-current text-yellow-500 mr-1' />
-								<span className='text-xs font-medium'>{product.rating}</span>
-							</div>
-							<span className='mx-1.5 text-xs text-muted-foreground'>·</span>
-							<span className='text-xs text-muted-foreground'>
-								{product.reviewCount} reviews
-							</span>
-						</div>
-						<div className='flex items-center gap-2'>
-							<span
-								className={cn(
-									"text-xs",
-									(defaultVariant?.stock || 0) > 10
-										? "text-green-600"
-										: "text-orange-600"
-								)}
-							>
-								{defaultVariant?.stock} left
-							</span>
-							<button
-								onClick={(e) => {
-									e.preventDefault();
-									// Add to cart logic here
-								}}
-								className='rounded-full bg-primary p-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors'
-							>
-								<ShoppingCart className='h-4 w-4' />
-							</button>
-						</div>
-					</div>
-				</div>
-			</Link>
-		</motion.div>
-	);
+  if (isListView) {
+    return (
+      <div
+        className={cn(
+          "flex gap-4 p-4 border rounded-lg bg-card shadow-sm hover:shadow-md transition-shadow",
+          className
+        )}
+      >
+        <div className="relative w-32 h-32 sm:w-36 sm:h-36 overflow-hidden rounded-md flex-shrink-0">
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+        <div className="flex-1 flex flex-col">
+          <div>
+            <Link href={`/discover/${product.slug}`}>
+              <h3 className="font-semibold text-base sm:text-lg hover:text-primary transition-colors line-clamp-2">
+                {product.name}
+              </h3>
+            </Link>
+            {product.store?.name && (
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                {product.store.name}
+              </p>
+            )}
+            {product.description && (
+              <p className="text-xs text-muted-foreground mt-2 line-clamp-2 sm:line-clamp-3">
+                {product.description}
+              </p>
+            )}
+          </div>
+          <div className="mt-auto pt-2 flex items-end justify-between">
+            <div className="min-w-0 mr-2">
+              <p className="font-bold text-primary text-base sm:text-lg truncate">
+                {formatCurrency(product.price)}
+              </p>
+              {product.rating && (
+                <div className="flex items-center mt-0.5">
+                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 mr-1" />
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    {product.rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <AddToCartButton
+              productId={product.id}
+              className="text-xs px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 flex-shrink-0"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      whileHover={hoverEffect}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 transition-all duration-300 flex flex-col justify-between",
+        className
+      )}
+      style={{ boxShadow: "0px 10px 20px -10px rgba(0, 0, 0, 0.1)" }}
+    >
+      <Link href={`/discover/${product.slug}`} className="block">
+        <div className="relative aspect-[16/9] w-full overflow-hidden">
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-70 group-hover:opacity-50 transition-opacity duration-300"></div>
+
+          {product.Category?.name && (
+            <div className="absolute top-3 left-3">
+              <span className="inline-block rounded-full bg-white/90 dark:bg-black/70 px-3 py-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-200 shadow-md backdrop-blur-sm">
+                {product.Category.name}
+              </span>
+            </div>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          >
+            <div className="flex space-x-3">
+              <button
+                title="Quick View"
+                className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
+              >
+                <Eye size={20} />
+                <span className="sr-only">Quick View</span>
+              </button>
+              <button
+                title="Add to Wishlist"
+                className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
+              >
+                <Heart size={20} />
+                <span className="sr-only">Add to Wishlist</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </Link>
+
+      <div className="p-4 sm:p-5 flex flex-col flex-grow">
+        <div className="flex-grow">
+          <h3 className="font-semibold text-base sm:text-lg text-neutral-800 dark:text-neutral-100 group-hover:text-primary dark:group-hover:text-primary-dark transition-colors duration-300 line-clamp-2">
+            <Link href={`/discover/${product.slug}`}>{product.name}</Link>
+          </h3>
+          {product.store?.name && (
+            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1">
+              By {product.store.name}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-3 sm:mt-4 flex items-end justify-between gap-2">
+          <div className="flex flex-col min-w-0">
+            <p className="text-lg sm:text-xl font-bold text-primary dark:text-primary-dark whitespace-nowrap overflow-hidden text-ellipsis">
+              {formatCurrency(product.price)}
+            </p>
+            {product.rating && (
+              <div className="flex items-center mt-0.5 sm:mt-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    size={14}
+                    className={cn(
+                      i < Math.round(product.rating || 0)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-neutral-300 dark:fill-neutral-600 text-neutral-300 dark:text-neutral-600"
+                    )}
+                  />
+                ))}
+                <span className="ml-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                  ({product.rating.toFixed(1)})
+                </span>
+              </div>
+            )}
+          </div>
+          <AddToCartButton
+            productId={product.id}
+            className="text-xs px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 bg-neutral-700 text-white hover:bg-neutral-600 dark:bg-neutral-300 dark:text-black dark:hover:bg-neutral-400 flex-shrink-0"
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
 }

@@ -14,3 +14,4 @@ export const onboardingSchema = z.object({
 });
 
 export type OnboardingFormData = z.infer<typeof onboardingSchema>;
+export type AddressFormData = z.infer<typeof addressSchema>;
