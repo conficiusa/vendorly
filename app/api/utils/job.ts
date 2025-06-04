@@ -1,3 +1,4 @@
+"use server";
 import { Client } from "@upstash/qstash";
 
 if (!process.env.QSTASH_TOKEN) {
