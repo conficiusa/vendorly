@@ -14,9 +14,9 @@ export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
       };
     };
     await addProductToRecombee(product);
-    return Response.success("SMS notification sent");
+    return Response.success("Product added to recombee");
   } catch (error) {
-    console.error("Error sending SMS notification:", error);
+    console.error("Error adding product to recombee:", error);
     return Response.error(error);
   }
 });
