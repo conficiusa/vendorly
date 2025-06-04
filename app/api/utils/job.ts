@@ -9,6 +9,7 @@ export const QueueJob = async (url: string, body: any) => {
     const result = await client.publishJSON({
       url,
       body,
+      method:"POST",
     });
     return result;
   } catch (error: any) {
