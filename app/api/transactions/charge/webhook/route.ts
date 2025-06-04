@@ -1,8 +1,9 @@
 import { AuthorizationError } from "@/app/api/utils/errors";
 import Response from "@/app/api/utils/response";
-import { OrderConfirmation } from "@/lib/sms/messages";
+import { OrderConfirmation, OrderFailed } from "@/lib/sms/messages";
 import { sendSMS } from "@/lib/sms/send-sms";
 import { prisma } from "@/prisma/prisma-client";
+import { PaystackWebhookEvent } from "@/types/paystack";
 import { createHmac } from "crypto";
 import { NextRequest } from "next/server";
 
@@ -22,27 +23,38 @@ export const POST = async (req: NextRequest) => {
       throw new AuthorizationError();
 
     // early response
-    Response.success("webhook received");
-    const event = JSON.parse(body);
+    const event = JSON.parse(body) as PaystackWebhookEvent;
     console.log("event", event);
     const {
       data: {
         reference,
-        receiptId,
         metadata: { phoneNumber, orderId },
       },
     } = event;
-    await prisma.transaction.update({
-      where: {
-        reference,
-      },
-      data: {
-        status: "SUCCESS",
-        receiptId: receiptId,
-      },
-    });
+    if (event.event === "charge.success") {
+      await prisma.transaction.update({
+        where: {
+          reference,
+        },
+        data: {
+          status: "SUCCESS",
+        },
+      });
 
-    await sendSMS(phoneNumber, OrderConfirmation({ orderId }));
+      await sendSMS(phoneNumber, OrderConfirmation({ orderId }));
+    } else {
+      await prisma.transaction.update({
+        where: {
+          reference,
+        },
+        data: {
+          status: "FAILED",
+        },
+      });
+      await sendSMS(phoneNumber, OrderFailed({ orderId }));
+    }
+
+    return Response.success("webhook received");
   } catch (error) {
     console.log(error);
     return Response.error(error);
