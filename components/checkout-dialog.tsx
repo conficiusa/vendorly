@@ -162,13 +162,6 @@ export function CheckoutDialog({
         setPaymentStatus(status);
         setPaymentMessage(response.data.data.display_text);
         setReference(response.data.data.reference);
-
-        if (status === "pay_offline") {
-          // Close dialog after 3 seconds for offline payment
-          setTimeout(() => {
-            onClose();
-          }, 3000);
-        }
       }
     } catch (error) {
       console.error("Payment error:", error);
