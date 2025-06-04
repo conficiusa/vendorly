@@ -133,6 +133,10 @@ export const POST = async (req: NextRequest) => {
 
     const product = await prisma.product.create({
       data: productData,
+      include: {
+        Category: true,
+        store: true,
+      },
     });
 
     const queueurl = `${process.env.BASE_URL}/api/queues/recombee/addproduct`;

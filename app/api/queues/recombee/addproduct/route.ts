@@ -13,6 +13,7 @@ export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
         store: Store;
       };
     };
+    console.log("Adding product to recombee", product);
     await addProductToRecombee(product);
     return Response.success("Product added to recombee");
   } catch (error) {
