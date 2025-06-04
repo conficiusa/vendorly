@@ -1,9 +1,11 @@
 import { AuthorizationError } from "@/app/api/utils/errors";
-import { QueueJob } from "@/app/api/utils/job";
 import Response from "@/app/api/utils/response";
+import { OrderConfirmation } from "@/lib/sms/messages";
+import { sendSMS } from "@/lib/sms/send-sms";
 import { prisma } from "@/prisma/prisma-client";
 import { createHmac } from "crypto";
 import { NextRequest } from "next/server";
+
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
 function verifySignature(body: string, signature: string): boolean {
   const hash = createHmac("sha512", PAYSTACK_SECRET_KEY)
@@ -22,11 +24,12 @@ export const POST = async (req: NextRequest) => {
     // early response
     Response.success("webhook received");
     const event = JSON.parse(body);
+    console.log("event", event);
     const {
       data: {
         reference,
         receiptId,
-        metadata: { phoneNumber, email },
+        metadata: { phoneNumber, orderId },
       },
     } = event;
     await prisma.transaction.update({
@@ -39,11 +42,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    const jobUrl =
-      process.env.NEXT_PUBLIC_APP_URL +
-      "/api/transactions/charge/notifications/sms";
-    const data = { phoneNumber, email };
-    await QueueJob(jobUrl, data);
+    await sendSMS(phoneNumber, OrderConfirmation({ orderId }));
   } catch (error) {
     console.log(error);
     return Response.error(error);
