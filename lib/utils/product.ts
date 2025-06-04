@@ -21,7 +21,12 @@ export async function transformProductFormData(
     slug,
     description: formData.description,
     price: formData.price,
-    stock: formData.hasVariants ? 0 : formData.stock ?? 0,
+    stock: formData.hasVariants
+      ? Object.values(formData.variants?.variantStock || {}).reduce(
+          (sum, stock) => sum + stock,
+          0
+        )
+      : (formData.stock ?? 0),
     faults: formData.faults,
     images: [], // Initialize with empty array, will be updated after image upload
     store: {

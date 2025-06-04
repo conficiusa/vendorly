@@ -7,6 +7,7 @@ import { Prisma } from "@/prisma/generated/prisma-client";
 import Response from "../utils/response";
 import { BadRequestError, DatabaseError, NotFoundError } from "../utils/errors";
 import { revalidateTag } from "next/cache";
+import { addToCart } from "@/lib/utils/recombee";
 
 // Schema for adding items to cart
 const addToCartSchema = z.object({
@@ -93,6 +94,7 @@ export async function POST(req: NextRequest) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: {
+        Category: true,
         variantOptions: variantId
           ? {
               where: { id: variantId },
@@ -159,6 +161,14 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      await addToCart(
+        session?.user.id || sessionId,
+        productId,
+        undefined,
+        product
+      );
+      revalidateTag("cartCount");
+
       return NextResponse.json(updatedItem);
     } else {
       // Create new cart item
@@ -174,6 +184,12 @@ export async function POST(req: NextRequest) {
           productVariantOption: true,
         },
       });
+      await addToCart(
+        session?.user.id || sessionId,
+        productId,
+        undefined,
+        product
+      );
       revalidateTag("cartCount");
       return NextResponse.json(newItem);
     }
@@ -210,6 +226,8 @@ export async function DELETE(req: NextRequest) {
         cartId: cart.id,
       },
     });
+
+    revalidateTag("cardCount");
 
     return Response.success({ message: "Item removed from cart" });
   } catch (error) {
