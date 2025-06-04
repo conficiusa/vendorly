@@ -22,7 +22,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = React.useState(false);
 
-  const imageUrl = product.images?.[1] || "/bag.jpg";
+  const imageUrl = product.images?.[0] || "/bag.jpg";
 
   const cardVariants = {
     initial: { opacity: 0, y: 20 },

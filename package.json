@@ -14,7 +14,8 @@
     "check": "prettier --write . && eslint --fix",
     "seed:categories": "tsx prisma/seeds/seedCategories.ts",
     "seed:variant-attributes": "tsx prisma/seeds/seedVariantAttributes.ts",
-    "seed:all": "npm run seed:categories && npm run seed:variant-attributes"
+    "seed:all": "npm run seed:categories && npm run seed:variant-attributes",
+    "sync-recombee": "tsx scripts/sync-recombee.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
@@ -67,6 +68,7 @@
     "react-resizable-panels": "^2.1.7",
     "react-swipeable": "^7.0.2",
     "recharts": "^2.15.3",
+    "recombee-api-client": "^5.0.2",
     "sonner": "^2.0.1",
     "swr": "^2.3.3",
     "tailwind-merge": "^3.0.2",

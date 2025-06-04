@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { transformProductFormData } from "@/lib/utils/product";
 import { handlePrismaError } from "@/lib/utils/error";
 import { Prisma } from "@/prisma/generated/prisma-client";
+import { QueueJob } from "../../utils/job";
 
 export const GET = async (req: NextRequest) => {
   try {
@@ -134,6 +135,8 @@ export const POST = async (req: NextRequest) => {
       data: productData,
     });
 
+    const queueurl = `${process.env.BASE_URL}/api/queues/recombee/addproduct`;
+    await QueueJob(queueurl, { product });  
     return NextResponse.json({ data: product, status: "success" });
   } catch (error: any) {
     console.error("Error creating product:", error);
