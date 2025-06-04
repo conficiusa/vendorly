@@ -3,11 +3,13 @@ import { Client } from "@upstash/qstash";
 const client = new Client({ token: process.env.QSTASH_TOKEN! });
 export const QueueJob = async (url: string, body: any) => {
   try {
-    return await client.publishJSON({
+    const result = await client.publishJSON({
       url,
       body,
     });
+    return result;
   } catch (error: any) {
+    console.log("error", error);
     throw error;
   }
 };

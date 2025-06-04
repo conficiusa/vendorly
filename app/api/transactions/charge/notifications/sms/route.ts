@@ -5,8 +5,16 @@ import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { NextRequest } from "next/server";
 
 export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
-  const body = await req.json();
-  const { phoneNumber, orderId } = body;
-  await sendSMS(phoneNumber, OrderConfirmation(orderId));
-  return Response.success("smessage sent");
+  try {
+    const body = await req.json();
+    const { phoneNumber } = body;
+
+    // Send SMS notification
+    await sendSMS(phoneNumber, OrderConfirmation({ orderId: body.orderId }));
+
+    return Response.success("SMS notification sent");
+  } catch (error) {
+    console.error("Error sending SMS notification:", error);
+    return Response.error(error);
+  }
 });
