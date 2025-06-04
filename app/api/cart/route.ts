@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@/prisma/generated/prisma-client";
 import Response from "../utils/response";
 import { BadRequestError, DatabaseError, NotFoundError } from "../utils/errors";
+import { revalidateTag } from "next/cache";
 
 // Schema for adding items to cart
 const addToCartSchema = z.object({
@@ -173,7 +174,7 @@ export async function POST(req: NextRequest) {
           productVariantOption: true,
         },
       });
-
+      revalidateTag("cartCount");
       return NextResponse.json(newItem);
     }
   } catch (error) {

@@ -90,7 +90,13 @@ const WishlistIcon = ({ itemCount = 0 }: { itemCount?: number }) => (
   </Link>
 );
 
-const Navbar = ({ session }: { session: Session | null }) => {
+const Navbar = ({
+  session,
+  cartCount,
+}: {
+  session: Session | null;
+  cartCount: number;
+}) => {
   // const session = await getSession(); // This needs to be handled client-side if Navbar is a client component
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -214,7 +220,7 @@ const Navbar = ({ session }: { session: Session | null }) => {
             <Search size={24} strokeWidth={2} />
           </button>
           <WishlistIcon itemCount={3} /> {/* Example: 3 items in wishlist */}
-          <CartIcon itemCount={2} /> {/* Example: 2 items in cart */}
+          <CartIcon itemCount={cartCount} /> {/* Example: 2 items in cart */}
           {/* User Authentication / Menu */}
           {!session?.user ? (
             <div className="hidden sm:flex gap-2 items-center">
