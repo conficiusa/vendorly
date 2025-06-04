@@ -6,10 +6,6 @@ const RECOMBEE_DB = process.env.RECOMBEE_DB;
 const RECOMBEE_PRIVATE_TOKEN = process.env.RECOMBEE_PRIVATE_TOKEN;
 const RECOMBEE_REGION = process.env.RECOMBEE_REGION;
 
-console.log("RECOMBEE_DB", RECOMBEE_DB);
-console.log("RECOMBEE_PRIVATE_TOKEN", RECOMBEE_PRIVATE_TOKEN);
-console.log("RECOMBEE_REGION", RECOMBEE_REGION);
-
 if (!RECOMBEE_DB || !RECOMBEE_PRIVATE_TOKEN || !RECOMBEE_REGION) {
   throw new Error("Recombee credentials are not properly configured");
 }
