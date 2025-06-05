@@ -1,7 +1,6 @@
 import { AuthorizationError } from "@/app/api/utils/errors";
+import { QueueJob } from "@/app/api/utils/job";
 import Response from "@/app/api/utils/response";
-import { OrderConfirmation, OrderFailed } from "@/lib/sms/messages";
-import { sendSMS } from "@/lib/sms/send-sms";
 import { prisma } from "@/prisma/prisma-client";
 import { PaystackWebhookEvent } from "@/types/paystack";
 import { createHmac } from "crypto";
@@ -41,7 +40,8 @@ export const POST = async (req: NextRequest) => {
         },
       });
 
-      await sendSMS(phoneNumber, OrderConfirmation({ orderId }));
+      const queueurl = `${process.env.BASE_URL}/api/transactions/charge/notifications/sms`;
+      await QueueJob(queueurl, { phoneNumber, orderId });
     } else {
       await prisma.transaction.update({
         where: {
@@ -51,7 +51,8 @@ export const POST = async (req: NextRequest) => {
           status: "FAILED",
         },
       });
-      await sendSMS(phoneNumber, OrderFailed({ orderId }));
+      const queueurl = `${process.env.BASE_URL}/api/transactions/charge/notifications/sms`;
+      await QueueJob(queueurl, { phoneNumber, orderId });
     }
 
     return Response.success("webhook received");
