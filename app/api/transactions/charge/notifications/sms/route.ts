@@ -7,10 +7,10 @@ import { NextRequest } from "next/server";
 export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const { phoneNumber } = body;
+    const { phoneNumber, orderId } = body;
 
     // Send SMS notification
-    await sendSMS(phoneNumber, OrderConfirmation({ orderId: body.orderId }));
+    await sendSMS(phoneNumber, OrderConfirmation({ orderId }));
 
     return Response.success("SMS notification sent");
   } catch (error) {
