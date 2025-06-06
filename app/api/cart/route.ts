@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
       where: { id: productId },
       include: {
         Category: true,
+        store: true,
         variantOptions: variantId
           ? {
               where: { id: variantId },
@@ -156,7 +157,11 @@ export async function POST(req: NextRequest) {
         where: { id: existingItem.id },
         data: { quantity: newQuantity },
         include: {
-          product: true,
+          product: {
+            include: {
+              store: true,
+            },
+          },
           productVariantOption: true,
         },
       });
