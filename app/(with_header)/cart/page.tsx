@@ -348,6 +348,7 @@ function CartSummary({ subtotal, items }: CartSummaryProps) {
         isOpen={showCheckout}
         onClose={() => setShowCheckout(false)}
         total={total}
+        from="cart"
       />
     </div>
   );
