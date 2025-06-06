@@ -60,7 +60,7 @@ export const addToCart = async (
   userId: string,
   productId: string,
   recommId?: string,
-  product?: Product & { Category: Category | null }
+  product?: Product & { Category: Category | null; store: Store | null }
 ) => {
   try {
     if (!userId || !productId) {
@@ -86,7 +86,19 @@ export const addToCart = async (
       cascadeCreate: true,
       timestamp: new Date().toISOString(),
       price: product?.price,
-      additionalData,
+      additionalData: {
+        name: product?.name,
+        price: product?.price,
+        description: product?.description,
+        category: product?.Category?.name,
+        images: product?.images[0],
+        store: product?.store?.name,
+        storeId: product?.store?.id,
+        storeDescription: product?.store?.bio,
+        faults: product?.faults,
+        rating: product?.rating,
+        slug: product?.slug,
+      },
     });
 
     await client.send(request);
@@ -109,6 +121,7 @@ export const addItemPropertiesToRecombee = async () => {
     new rqs.AddItemProperty("rating", "double"),
     new rqs.AddItemProperty("storeId", "string"),
     new rqs.AddItemProperty("storeDescription", "string"),
+    new rqs.AddItemProperty("slug", "string"),
   ];
 
   let count = 0;
@@ -126,4 +139,21 @@ export const addItemPropertiesToRecombee = async () => {
     }
   }
   console.log(`${count} new properties added`);
+};
+
+export const addPurchaseToRecombee = async (
+  userId: string,
+  productId: string,
+  recommId?: string,
+  quantity?: number,
+  price?: number,
+) => {
+  const request = new rqs.AddPurchase(userId, productId, {
+    timestamp: new Date().toISOString(),
+    recommId,
+    price,
+    amount: quantity,
+  });
+
+  await client.send(request);
 };

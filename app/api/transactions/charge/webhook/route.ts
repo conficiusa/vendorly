@@ -53,6 +53,8 @@ export const POST = async (req: NextRequest) => {
       });
       const queueurl = `${process.env.BASE_URL}/api/transactions/charge/notifications/sms`;
       await QueueJob(queueurl, { phoneNumber, orderId });
+      const queueurl2 = `${process.env.BASE_URL}/api/queues/recombee/addPurchase`;
+      await QueueJob(queueurl2, { orderId });
     }
 
     return Response.success("webhook received");
