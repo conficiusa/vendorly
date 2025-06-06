@@ -37,7 +37,7 @@ export const addProductToRecombee = async (
           store: product.store.name,
           storeId: product.store.id,
           storeDescription: product.store.bio,
-          storeImage: product.store.logo
+          storeImage: product.store.logo,
         },
         {
           cascadeCreate: true,
@@ -94,4 +94,36 @@ export const addToCart = async (
     console.error("Error adding to cart:", error);
     throw error;
   }
+};
+
+export const addItemPropertiesToRecombee = async () => {
+  const itemProperties = [
+    new rqs.AddItemProperty("name", "string"),
+    new rqs.AddItemProperty("images", "imageList"),
+    new rqs.AddItemProperty("price", "double"),
+    new rqs.AddItemProperty("description", "string"),
+    new rqs.AddItemProperty("category", "string"),
+    new rqs.AddItemProperty("available", "boolean"),
+    new rqs.AddItemProperty("store", "string"),
+    new rqs.AddItemProperty("faults", "string"),
+    new rqs.AddItemProperty("rating", "double"),
+    new rqs.AddItemProperty("storeId", "string"),
+    new rqs.AddItemProperty("storeDescription", "string"),
+  ];
+
+  let count = 0;
+  for (const property of itemProperties) {
+    try {
+      await client.send(property);
+      count++;
+    } catch (error) {
+      // Ignore if property already exists
+      if (
+        !(error instanceof Error && error.message.includes("already exists"))
+      ) {
+        throw error;
+      }
+    }
+  }
+  console.log(`${count} new properties added`);
 };

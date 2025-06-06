@@ -25,6 +25,17 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
 import { PaystackStatus } from "@/lib/types/transactions";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { toast } from "sonner";
+import mtn from "@/public/mtn.png";
+import telecel from "@/public/telecel.png";
+import airtel from "@/public/airtel.png";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+const providersImages = [
+  { src: mtn, alt: "mtn logo", value: MobileMoneyProvider.MTN },
+  { src: telecel, alt: "telecel logo", value: MobileMoneyProvider.TELECEL },
+  { src: airtel, alt: "airtel logo", value: MobileMoneyProvider.AIRTELTIGO },
+];
 
 interface CheckoutDialogProps {
   isOpen: boolean;
@@ -33,6 +44,7 @@ interface CheckoutDialogProps {
   cartId?: string;
   productId?: string;
   variantId?: string;
+  from?: "cart" | "product";
 }
 
 function AddressForm({ form }: { form: UseFormReturn<ChargeSchemaData> }) {
@@ -89,6 +101,7 @@ export function CheckoutDialog({
   onClose,
   productId,
   variantId,
+  from,
   total,
 }: CheckoutDialogProps) {
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
@@ -112,12 +125,20 @@ export function CheckoutDialog({
       saveForFuture: false,
     },
   });
-
+  const {
+    formState: { errors },
+  } = form;
   const {
     addresses,
     isLoading: isLoadingAddresses,
     error: addressesError,
   } = useAddress();
+
+  useEffect(() => {
+    if (errors.provider) {
+      toast.error(errors.provider.message);
+    }
+  }, [errors.provider]);
 
   useEffect(() => {
     if (!isLoadingAddresses && addresses) {
@@ -148,13 +169,16 @@ export function CheckoutDialog({
 
   const onSubmit = async (data: ChargeSchemaData) => {
     try {
-      const res = await fetch("/api/transactions/charge?from=cart", {
+      const res = await fetch(`/api/transactions/charge?from=${from}`, {
         method: "POST",
         body: JSON.stringify(data),
       });
       const response = await res.json();
 
-      console.log(response);
+      if (!res.ok) {
+        toast.error(response.error.message);
+        return;
+      }
 
       if (response.success) {
         const status = response.data.data.status as PaystackStatus;
@@ -169,19 +193,25 @@ export function CheckoutDialog({
     }
   };
 
+  const handleProviderChange = async (value: MobileMoneyProvider) => {
+    form.setValue("provider", value);
+    if (form.getValues("phoneNumber")) {
+      await form.trigger("phoneNumber");
+    }
+  };
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-lg bg-card rounded-xl shadow-2xl border-border p-0">
-        <DialogHeader className="px-6 py-2">
+        <DialogHeader className="px-6 py-4 border-b border-border">
           <DialogTitle className="text-xl font-bold">Checkout</DialogTitle>
         </DialogHeader>
 
         {paymentStatus === "pay_offline" ? (
-          <div className="px-6 py-8 flex flex-col items-center justify-center space-y-4">
+          <div className="px-6 py-12 flex flex-col items-center justify-center space-y-6">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-primary animate-spin [animation-duration:4s]" />
             </div>
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-3">
               <h3 className="text-lg font-semibold">
                 Awaiting Payment Confirmation
               </h3>
@@ -191,9 +221,9 @@ export function CheckoutDialog({
             </div>
           </div>
         ) : paymentStatus === "send_otp" ? (
-          <div className="px-6 space-y-4 py-8 gap-4 flex flex-col justify-center items-center">
-            <div className="space-y-5 mx-auto flex flex-col justify-between items-center">
-              <div className="text-center">
+          <div className="px-6 py-12 space-y-6 flex flex-col justify-center items-center">
+            <div className="space-y-6 mx-auto flex flex-col justify-between items-center">
+              <div className="text-center space-y-3">
                 <h3 className="text-lg font-semibold">
                   Awaiting Payment Confirmation
                 </h3>
@@ -224,9 +254,9 @@ export function CheckoutDialog({
         ) : (
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="px-6 space-y-5 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/50 scrollbar-track-secondary/30"
+            className="px-6  space-y-8 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/50 scrollbar-track-secondary/30"
           >
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Label
                 htmlFor="address"
                 className="text-md font-semibold text-foreground"
@@ -244,7 +274,7 @@ export function CheckoutDialog({
                 </p>
               )}
               {!isAddingNewAddress && addresses?.length === 0 && (
-                <p className="text-muted-foreground text-sm ">
+                <p className="text-muted-foreground text-sm">
                   You do not have any saved addresses;{" "}
                   <span
                     className="text-primary cursor-default"
@@ -262,7 +292,7 @@ export function CheckoutDialog({
                     form.setValue("addressId", id);
                     setIsAddingNewAddress(false);
                   }}
-                  className="space-y-2"
+                  className="space-y-3"
                 >
                   {addresses.map((address: Address) => (
                     <Label
@@ -303,9 +333,9 @@ export function CheckoutDialog({
               )}
             </div>
             {isAddingNewAddress && (
-              <div>
+              <div className="space-y-4">
                 {addresses.length > 0 && (
-                  <p className="text-muted-foreground text-sm ">
+                  <p className="text-muted-foreground text-sm">
                     You have {addresses.length} saved addresses{" "}
                     <span
                       className="text-primary cursor-default"
@@ -319,27 +349,48 @@ export function CheckoutDialog({
               </div>
             )}
 
-            <h3 className="text-xl font-bold">Payment Details</h3>
-            <TextInput
-              control={form.control}
-              name="phoneNumber"
-              label="Phone Number"
-              placeholder="Enter your phone number"
-              error={form.formState.errors.phoneNumber?.message}
-            />
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold">Payment Details</h3>
 
-            <SelectComponent
-              name="provider"
-              label="Mobile money provider"
-              control={form.control}
-              error={form.formState.errors?.provider?.message}
-              items={Object.values(MobileMoneyProvider).map((p) => ({
-                value: p,
-                label: p.toLowerCase().replace(/_/g, " "),
-              }))}
-              placeholder="Choose provider"
-            />
-
+              <div className="space-y-4">
+                <p className="font-medium">
+                  Choose your mobile money provider:
+                </p>
+                <div className="flex items-center gap-4">
+                  {providersImages.map((provider, index) => (
+                    <button
+                      type="button"
+                      key={index}
+                      onClick={() => handleProviderChange(provider.value)}
+                      className={cn(
+                        "p-2 rounded-lg border-2 border-muted-foreground/50 transition-all duration-200 hover:border-primary/50",
+                        form.watch("provider") === provider.value &&
+                          "border-primary bg-primary/20 shadow-md scale-105 [&>img]:mix-blend-multiply"
+                      )}
+                    >
+                      <Image
+                        key={index}
+                        src={provider.src}
+                        alt={provider.alt}
+                        width={100}
+                        height={100}
+                        className="aspect-video object-cover rounded-lg sm:block h-auto"
+                      />
+                    </button>
+                  ))}
+                </div>
+                {form.watch("provider") && (
+                  <TextInput
+                    control={form.control}
+                    name="phoneNumber"
+                    label={`Mobile Money Number`}
+                    placeholder="Enter your mobile money number"
+                    error={form.formState.errors.phoneNumber?.message}
+                    labelClassName="capitalize"
+                  />
+                )}
+              </div>
+            </div>
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -354,7 +405,7 @@ export function CheckoutDialog({
               </Label>
             </div>
 
-            <div className="pt-4 border-t border-border/50">
+            <div className="pt-6 border-t border-border/50">
               <div className="flex justify-between items-center">
                 <p className="text-lg font-semibold text-foreground">
                   Total Amount:
@@ -362,18 +413,70 @@ export function CheckoutDialog({
                 <p className="text-xl font-bold">GHS {total.toFixed(2)}</p>
               </div>
             </div>
-            <DialogFooter className="py-4 border-t border-border rounded-b-xl">
-              <Button
-                type="submit"
-                disabled={form.formState.isSubmitting}
-                className="w-full sm:w-[300px] mx-auto border-input"
-              >
-                {form.formState.isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "Pay"
-                )}
-              </Button>
+            <DialogFooter className="py-6 px-6 border-t border-border rounded-b-xl bg-muted/5">
+              <div className="w-full space-y-4">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Secure payment powered by</span>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src="/mtn.png"
+                      alt="MTN Mobile Money"
+                      width={24}
+                      height={24}
+                      className="object-contain"
+                    />
+                    <Image
+                      src="/airtel.png"
+                      alt="AirtelTigo Money"
+                      width={24}
+                      height={24}
+                      className="object-contain"
+                    />
+                    <Image
+                      src="/telecel.png"
+                      alt="Telecel Money"
+                      width={24}
+                      height={24}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 transition-colors duration-200"
+                >
+                  {form.formState.isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Processing Payment...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <span>Pay GHS {total.toFixed(2)}</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="ml-1"
+                      >
+                        <path d="M5 12h14" />
+                        <path d="m12 5 7 7-7 7" />
+                      </svg>
+                    </div>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  By clicking Pay, you agree to our Terms of Service and Privacy
+                  Policy
+                </p>
+              </div>
             </DialogFooter>
           </form>
         )}

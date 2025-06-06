@@ -58,7 +58,7 @@ export const TextInput = <T extends ZodSchema<any, any, any>>({
               <label
                 htmlFor={name}
                 className={cn(
-                  `block text-sm font-medium text-foreground `,
+                  `block text-sm font-medium text-foreground`,
                   labelClassName
                 )}
               >
