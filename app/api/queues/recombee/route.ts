@@ -9,7 +9,12 @@ import {
   modifyRecombeeUser,
   mergeRecombeeUsers,
 } from "@/lib/utils/recombee";
-import { Category, Product, Store } from "@/prisma/generated/prisma-client";
+import {
+  Category,
+  GENDERTYPE,
+  Product,
+  Store,
+} from "@/prisma/generated/prisma-client";
 import { prisma } from "@/prisma/prisma-client";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { NextRequest } from "next/server";
@@ -31,6 +36,7 @@ interface RecombeePayload {
   sessionId?: string;
   productId?: string;
   rating?: number;
+  gender?: GENDERTYPE;
   recommId?: string;
   quantity?: number;
   price?: number;
@@ -179,6 +185,7 @@ async function handleModifyUser(params: Omit<RecombeePayload, "type">) {
       name: params.name || "",
       email: params.email || "",
       role: params.role || "",
+      gender: params.gender || "",
     },
     params.userId,
     params.sessionId

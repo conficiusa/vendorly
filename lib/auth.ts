@@ -33,7 +33,18 @@ const options = {
             userId: newSession.user.id,
             sessionId,
           }).catch((err) => {
-            console.error(err)
+            console.error(err);
+          });
+          await QueueJob(QUEUE_URLS.RECOMBEE, {
+            type: "modifyUser",
+            userId: newSession.user.id,
+            gender: newSession.user.gender,
+            email: newSession.user.email,
+            name: newSession.user.name,
+            role: newSession.user.role,
+            sessionId,
+          }).catch((err) => {
+            console.error(err);
           });
         }
       }
@@ -47,7 +58,18 @@ const options = {
             sessionId,
           }).catch((err) => {
             console.error(err);
-          });;
+          });
+          await QueueJob(QUEUE_URLS.RECOMBEE, {
+            type: "modifyUser",
+            userId: newSession.user.id,
+            name: newSession.user.name,
+            gender: newSession.user.gender,
+            email: newSession.user.email,
+            role: newSession.user.role,
+            sessionId,
+          }).catch((err) => {
+            console.error(err);
+          });
         }
       }
     }),
@@ -69,7 +91,6 @@ const options = {
     },
   },
   emailAndPassword: {
-  
     resetPasswordTokenExpiresIn: 10 * 60, // 10 minutes
     enabled: true,
     sendResetPassword: async ({ url, user }) => {
@@ -87,7 +108,6 @@ const options = {
     },
   },
   user: {
-
     additionalFields: {
       onboarded: {
         type: "boolean",
@@ -102,6 +122,10 @@ const options = {
         required: true,
       },
       last_name: {
+        type: "string",
+        required: true,
+      },
+      gender: {
         type: "string",
         required: true,
       },
@@ -125,6 +149,7 @@ export const auth = betterAuth({
           last_name: data?.last_name ?? "",
           phone: data?.phone ?? "",
           role: data?.role ?? "CUSTOMER",
+          gender: data?.gender ?? "",
           onboarded: data?.onboarded ?? false,
         },
         store: data?.store,

@@ -14,6 +14,7 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ErrorContext } from "better-auth/react";
+import SelectComponent from "./select-component";
 
 const SignupForm = () => {
   const router = useRouter();
@@ -28,6 +29,7 @@ const SignupForm = () => {
       email: "",
       password: "",
       confirmPassword: "",
+      gender: undefined,
       first_name: "",
       last_name: "",
       phone: "",
@@ -44,6 +46,7 @@ const SignupForm = () => {
         // @ts-expect-error Additional properties first_name, last_name, and phone are required by the API
         first_name: formdata.first_name,
         last_name: formdata.last_name,
+        gender: formdata.gender,
         phone: formdata.phone,
         callbackURL: "/discover",
       },
@@ -102,6 +105,19 @@ const SignupForm = () => {
           placeholder="your@email.com"
           label="Email"
           error={errors.email?.message}
+        />
+      </div>
+      <div className="space-y-2">
+        <SelectComponent
+          label="Select your gender"
+          control={control}
+          items={[
+            { label: "Male", value: "MALE" },
+            { label: "Female", value: "FEMALE" },
+          ]}
+          name="gender"
+          placeholder="Select your gender"
+          error={errors.gender?.message}
         />
       </div>
       <div className="space-y-2">

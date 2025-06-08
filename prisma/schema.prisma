@@ -20,6 +20,7 @@ model User {
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
   emailVerified       Boolean
+  gender              GENDERTYPE?
   image               String?
   role                UserRole       @default(CUSTOMER)
   sessions            Session[]
@@ -407,4 +408,9 @@ enum OrderStatus {
 enum CategoryType {
   PRODUCT
   SERVICE
+}
+
+enum GENDERTYPE {
+  MALE
+  FEMALE
 }

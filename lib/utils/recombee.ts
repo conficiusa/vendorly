@@ -145,6 +145,7 @@ export const addUserPropertiesToRecombee = async () => {
     new rqs.AddUserProperty("name", "string"),
     new rqs.AddUserProperty("email", "string"),
     new rqs.AddUserProperty("role", "string"),
+    new rqs.AddUserProperty("gender", "string"),
   ];
   let count = 0;
   for (const property of userProperties) {
@@ -168,10 +169,12 @@ export const modifyRecombeeUser = async (
     name,
     email,
     role,
+    gender,
   }: {
     name: string;
     email: string;
     role: string;
+    gender: string;
   },
   userId?: string,
   sessionId?: string
@@ -180,6 +183,7 @@ export const modifyRecombeeUser = async (
     name,
     email,
     role,
+    gender,
   });
   await client.send(request);
 };

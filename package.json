@@ -15,6 +15,7 @@
     "seed:categories": "tsx prisma/seeds/seedCategories.ts",
     "seed:variant-attributes": "tsx prisma/seeds/seedVariantAttributes.ts",
     "seed:all": "npm run seed:categories && npm run seed:variant-attributes",
+    "add-user-properties": "tsx lib/scripts/add-user-properties.ts",
     "addProperties-recombee": "tsx lib/scripts/addProperties-recombee.ts",
     "test:get-user-recombee": "tsx lib/scripts/testGetRecombeeUser.ts"
   },
