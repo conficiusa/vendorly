@@ -63,7 +63,7 @@ export default function MarketplacePage() {
   const products = useMemo(
     () => data?.map((response) => response.data).flat() || [],
     [data]
-  );
+  )
 
   useEffect(() => {
     if (inView && !isValidating && !isFinished && products.length > 0) {

@@ -6,9 +6,12 @@ import { render } from "@react-email/components";
 import { VerificationEmail as VerificationEmailComponent } from "@/lib/emails/auth/verify-email";
 import { headers } from "next/headers";
 import { prisma } from "@/prisma/prisma-client";
-import { customSession } from "better-auth/plugins";
+import { createAuthMiddleware, customSession } from "better-auth/plugins";
 import { tryCatch } from "./utils";
 import { getUser } from "./queries/user/me";
+import { QUEUE_URLS } from "@/app/api/utils/constants";
+import { fetchSessionId } from "./utils/session";
+import { QueueJob } from "@/app/api/utils/job";
 
 const options = {
   database: prismaAdapter(prisma, {
@@ -18,6 +21,36 @@ const options = {
   rateLimit: {
     storage: "database",
     modelName: "rateLimit",
+  },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          const sessionId = await fetchSessionId();
+          await QueueJob(QUEUE_URLS.RECOMBEE, {
+            type: "mergeUsers",
+            userId: newSession.user.id,
+            sessionId,
+          }).catch((err) => {
+            console.error(err)
+          });
+        }
+      }
+      if (ctx.path.startsWith("/sign-in")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          const sessionId = await fetchSessionId();
+          await QueueJob(QUEUE_URLS.RECOMBEE, {
+            type: "mergeUsers",
+            userId: newSession.user.id,
+            sessionId,
+          }).catch((err) => {
+            console.error(err);
+          });;
+        }
+      }
+    }),
   },
   emailVerification: {
     expiresIn: 60 * 60 * 24, // 1 day
@@ -36,6 +69,7 @@ const options = {
     },
   },
   emailAndPassword: {
+  
     resetPasswordTokenExpiresIn: 10 * 60, // 10 minutes
     enabled: true,
     sendResetPassword: async ({ url, user }) => {
@@ -53,6 +87,7 @@ const options = {
     },
   },
   user: {
+
     additionalFields: {
       onboarded: {
         type: "boolean",

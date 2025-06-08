@@ -8,8 +8,10 @@ const SESSION_EXPIRY_DAYS = 30;
 export async function getSessionId(): Promise<string> {
   const cookieStore = await cookies();
   let sessionId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  console.table(cookieStore.getAll())
 
   if (!sessionId) {
+    console.log("not there")
     sessionId = uuid();
     cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
       expires: new Date(Date.now() + SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
@@ -27,3 +29,8 @@ export async function clearSessionId() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
+
+export const fetchSessionId = async () => {
+  const cookieStore = await cookies();
+  return cookieStore.get(SESSION_COOKIE_NAME)?.value;
+};

@@ -59,46 +59,17 @@ export const addProductToRecombee = async (
 export const addToCart = async (
   userId: string,
   productId: string,
-  recommId?: string,
-  product?: Product & { Category: Category | null; store: Store | null }
+  recommId?: string
 ) => {
   try {
     if (!userId || !productId) {
       throw new Error("userId and productId are required");
     }
 
-    const additionalData: Record<string, any> = {};
-
-    if (product) {
-      additionalData.title = product.name;
-      additionalData.price = product.price;
-      additionalData.quantity = 1;
-      additionalData.description = product.description;
-      additionalData.category = product.Category?.name;
-
-      if (Array.isArray(product.images) && product.images.length > 0) {
-        additionalData.image = product.images[0];
-      }
-    }
-
     const request = new rqs.AddCartAddition(userId, productId, {
       recommId,
       cascadeCreate: true,
       timestamp: new Date().toISOString(),
-      price: product?.price,
-      additionalData: {
-        name: product?.name,
-        price: product?.price,
-        description: product?.description,
-        category: product?.Category?.name,
-        images: product?.images[0],
-        store: product?.store?.name,
-        storeId: product?.store?.id,
-        storeDescription: product?.store?.bio,
-        faults: product?.faults,
-        rating: product?.rating,
-        slug: product?.slug,
-      },
     });
 
     await client.send(request);
@@ -146,7 +117,7 @@ export const addPurchaseToRecombee = async (
   productId: string,
   recommId?: string,
   quantity?: number,
-  price?: number,
+  price?: number
 ) => {
   const request = new rqs.AddPurchase(userId, productId, {
     timestamp: new Date().toISOString(),
@@ -156,4 +127,93 @@ export const addPurchaseToRecombee = async (
   });
 
   await client.send(request);
+};
+
+export const addDetailViewToRecombee = async (
+  userId: string,
+  productId: string
+) => {
+  const request = new rqs.AddDetailView(userId, productId, {
+    timestamp: new Date().toISOString(),
+  });
+
+  await client.send(request);
+};
+
+export const addUserPropertiesToRecombee = async () => {
+  const userProperties = [
+    new rqs.AddUserProperty("name", "string"),
+    new rqs.AddUserProperty("email", "string"),
+    new rqs.AddUserProperty("role", "string"),
+  ];
+  let count = 0;
+  for (const property of userProperties) {
+    try {
+      await client.send(property);
+      count++;
+    } catch (error) {
+      // Ignore if property already exists
+      if (
+        !(error instanceof Error && error.message.includes("already exists"))
+      ) {
+        throw error;
+      }
+    }
+  }
+  console.log(`${count} new properties added`);
+};
+
+export const modifyRecombeeUser = async (
+  {
+    name,
+    email,
+    role,
+  }: {
+    name: string;
+    email: string;
+    role: string;
+  },
+  userId?: string,
+  sessionId?: string
+) => {
+  const request = new rqs.SetUserValues((userId || sessionId) as string, {
+    name,
+    email,
+    role,
+  });
+  await client.send(request);
+};
+
+export const addUserToRecombee = async (
+  userId?: string,
+  sessionId?: string
+) => {
+  const request = new rqs.AddUser((userId || sessionId) as string);
+  await client.send(request);
+};
+
+export const addRatingToRecombee = async (
+  userId: string,
+  productId: string,
+  rating: number
+) => {
+  const request = new rqs.AddRating(userId, productId, rating);
+  await client.send(request);
+};
+export const mergeRecombeeUsers = async (userId: string, sessionId: string) => {
+  const request = new rqs.MergeUsers(userId, sessionId, {
+    cascadeCreate: true,
+  });
+  await client.send(request);
+};
+
+export const getRecombeeUser = async (userId?: string, sessionId?: string) => {
+  try {
+    const request = new rqs.GetUserValues(userId || (sessionId as string));
+    const response = await client.send(request);
+    return response;
+  } catch (error) {
+    console.error("Error getting Recombee user:", error);
+    return null;
+  }
 };

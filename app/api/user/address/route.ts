@@ -1,11 +1,10 @@
 import { getSession } from "@/lib/auth";
-import { PrismaClient } from "@/prisma/generated/prisma-client";
 import { AuthorizationError, DatabaseError } from "../../utils/errors";
 import Response from "../../utils/response";
 import { NextRequest } from "next/server";
 import { addressSchema } from "@/lib/schemas/auth-schemas/address-schema";
+import { prisma } from "@/prisma/prisma-client";
 
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {

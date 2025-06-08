@@ -7,7 +7,8 @@ import { Prisma } from "@/prisma/generated/prisma-client";
 import Response from "../utils/response";
 import { BadRequestError, DatabaseError, NotFoundError } from "../utils/errors";
 import { revalidateTag } from "next/cache";
-import { addToCart } from "@/lib/utils/recombee";
+import { QueueJob } from "../utils/job";
+import { QUEUE_URLS } from "../utils/constants";
 
 // Schema for adding items to cart
 const addToCartSchema = z.object({
@@ -166,14 +167,12 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      await addToCart(
-        session?.user.id || sessionId,
+      await QueueJob(QUEUE_URLS.RECOMBEE, {
+        type: "addToCart",
+        userId: session?.user.id || sessionId,
         productId,
-        undefined,
-        product
-      );
+      });
       revalidateTag("cartCount");
-
       return NextResponse.json(updatedItem);
     } else {
       // Create new cart item
@@ -189,12 +188,11 @@ export async function POST(req: NextRequest) {
           productVariantOption: true,
         },
       });
-      await addToCart(
-        session?.user.id || sessionId,
+      await QueueJob(QUEUE_URLS.RECOMBEE, {
+        type: "addToCart",
+        userId: session?.user.id || sessionId,
         productId,
-        undefined,
-        product
-      );
+      });
       revalidateTag("cartCount");
       return NextResponse.json(newItem);
     }

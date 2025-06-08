@@ -11,16 +11,18 @@ type PaginationData = {
 
 export type ProductApiResponse = {
   status: string;
-  data: ProductCard
+  data: ProductCard;
   pagination: PaginationData;
 };
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 export const useInfiniteProducts = (
-    getKey: (pageIndex: number, previousPageData: any) => string | null
+  getKey: (pageIndex: number, previousPageData: any) => string | null
 ) => {
   const { data, error, isLoading, isValidating, setSize, size } =
-    useSWRInfinite<ProductApiResponse>(getKey, fetcher);
+    useSWRInfinite<ProductApiResponse>(getKey, fetcher, {
+      revalidateOnFocus: false,
+    });
 
   return { data, error, isLoading, isValidating, setSize, size };
 };
