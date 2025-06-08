@@ -16,28 +16,27 @@ const client = new recombee.ApiClient(RECOMBEE_DB, RECOMBEE_PRIVATE_TOKEN, {
 
 export const addProductToRecombee = async (
   product: Product & {
-    category: Category | null;
+    Category: Category | null;
     store: Store;
   }
 ) => {
   try {
-    client.send(
+    console.log("product", product);
+    await client.send(
       new rqs.SetItemValues(
         product.id,
         {
           name: product.name,
           description: product.description,
           price: product.price,
-          image: product.images,
-          category: product.category?.name,
-          stock: product.stock,
+          images: product.images,
+          category: product.Category?.name,
           slug: product.slug,
           faults: product.faults,
           rating: product.rating,
           store: product.store.name,
           storeId: product.store.id,
           storeDescription: product.store.bio,
-          storeImage: product.store.logo,
         },
         {
           cascadeCreate: true,

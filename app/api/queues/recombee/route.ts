@@ -44,7 +44,7 @@ interface RecombeePayload {
   email?: string;
   role?: string;
   product?: Product & {
-    category: Category | null;
+    Category: Category | null;
     store: Store;
   };
   orderId?: string;
