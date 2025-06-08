@@ -9,7 +9,7 @@
 CREATE TYPE "GENDERTYPE" AS ENUM ('MALE', 'FEMALE');
 
 -- AlterTable
-ALTER TABLE "user" ADD COLUMN     "gender" "GENDERTYPE" NOT NULL;
+ALTER TABLE "user" ADD COLUMN     "gender" "GENDERTYPE";
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Transaction_reference_key" ON "Transaction"("reference");
