@@ -5,10 +5,18 @@ import ProductImages from "./components/product-images";
 import ProductDetails from "./components/product-details";
 import { tryCatch } from "@/lib/utils";
 import { fetchProduct } from "@/lib/queries/products/fetchProduct";
+import { fetchSessionId } from "@/lib/utils/session";
+import { getSession } from "@/lib/auth";
 
 export default async function Page({ params }: { params: Promise<any> }) {
-  const { slug } = await params;
-  const { data: product, error } = await tryCatch(fetchProduct(slug));
+  const [{ slug }, sessionId, session] = await Promise.all([
+    params,
+    fetchSessionId(),
+    getSession(),
+  ]);
+  const { data: product, error } = await tryCatch(
+    fetchProduct(slug, session?.user?.id, sessionId)
+  );
 
   if (!product || error) {
     return (

@@ -208,12 +208,7 @@ export const mergeRecombeeUsers = async (userId: string, sessionId: string) => {
 };
 
 export const getRecombeeUser = async (userId?: string, sessionId?: string) => {
-  try {
-    const request = new rqs.GetUserValues(userId || (sessionId as string));
-    const response = await client.send(request);
-    return response;
-  } catch (error) {
-    console.error("Error getting Recombee user:", error);
-    return null;
-  }
+  const request = new rqs.GetUserValues(userId || (sessionId as string));
+  const response = await client.send(request);
+  return response;
 };

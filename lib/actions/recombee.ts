@@ -5,12 +5,13 @@ import { QueueJob } from "@/app/api/utils/job";
 import { getRecombeeUser } from "../utils/recombee";
 
 export const queueAddUser = async (userId: string) => {
-  const user = await getRecombeeUser(userId);
-  console.log("user", user);
-    if (user) return;
-    
-  await QueueJob(QUEUE_URLS.RECOMBEE, {
-    type: "addUser",
-    userId,
+  await getRecombeeUser(userId).catch(async (err) => {
+    if (err.statusCode === 404) {
+      console.log("User not found, adding user to Recombee");
+      await QueueJob(QUEUE_URLS.RECOMBEE, {
+        type: "addUser",
+        userId,
+      });
+    }
   });
 };
