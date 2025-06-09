@@ -17,6 +17,7 @@ const options = {
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  baseURL: process.env.BASE_URL,
   appName: "Vendorly",
   rateLimit: {
     storage: "database",
@@ -32,17 +33,12 @@ const options = {
             type: "mergeUsers",
             userId: newSession.user.id,
             sessionId,
-          }).catch((err) => {
-            console.error(err);
-          });
-          await QueueJob(QUEUE_URLS.RECOMBEE, {
-            type: "modifyUser",
-            userId: newSession.user.id,
-            gender: newSession.user.gender,
-            email: newSession.user.email,
-            name: newSession.user.name,
-            role: newSession.user.role,
-            sessionId,
+            newUser: {
+              name: newSession.user.name,
+              email: newSession.user.email,
+              role: newSession.user.role,
+              gender: newSession.user.gender,
+            },
           }).catch((err) => {
             console.error(err);
           });
@@ -56,17 +52,12 @@ const options = {
             type: "mergeUsers",
             userId: newSession.user.id,
             sessionId,
-          }).catch((err) => {
-            console.error(err);
-          });
-          await QueueJob(QUEUE_URLS.RECOMBEE, {
-            type: "modifyUser",
-            userId: newSession.user.id,
-            name: newSession.user.name,
-            gender: newSession.user.gender,
-            email: newSession.user.email,
-            role: newSession.user.role,
-            sessionId,
+            newUser: {
+              name: newSession.user.name,
+              email: newSession.user.email,
+              role: newSession.user.role,
+              gender: newSession.user.gender,
+            },
           }).catch((err) => {
             console.error(err);
           });
@@ -109,10 +100,6 @@ const options = {
   },
   user: {
     additionalFields: {
-      onboarded: {
-        type: "boolean",
-        defaultValue: false,
-      },
       role: {
         type: "string",
         defaultValue: "CUSTOMER",
@@ -150,7 +137,6 @@ export const auth = betterAuth({
           phone: data?.phone ?? "",
           role: data?.role ?? "CUSTOMER",
           gender: data?.gender ?? "",
-          onboarded: data?.onboarded ?? false,
         },
         store: data?.store,
         session,

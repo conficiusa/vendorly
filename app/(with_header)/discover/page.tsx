@@ -63,7 +63,7 @@ export default function MarketplacePage() {
   const products = useMemo(
     () => data?.map((response) => response.data).flat() || [],
     [data]
-  )
+  );
 
   useEffect(() => {
     if (inView && !isValidating && !isFinished && products.length > 0) {
@@ -204,49 +204,49 @@ export default function MarketplacePage() {
           </div>
 
           {activeTab === "Products" && (
-            <>
+                <>
               {error && (
                 <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
                   <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mb-6" />
                   <h3 className="text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
                     Oops! Something went wrong.
-                  </h3>
+                      </h3>
                   <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
-                    {error.message ||
+                        {error.message ||
                       "We couldn't load the products at this moment. Please try again in a bit."}
-                  </p>
-                </div>
+                      </p>
+                    </div>
               )}
               {!error && products.length === 0 && !isValidating && (
                 <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
                   <Search className="h-16 w-16 text-neutral-400 dark:text-neutral-500 mb-6" />
                   <h3 className="text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
                     No Treasures Found
-                  </h3>
+                      </h3>
                   <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
                     It seems we couldn't find any products matching your search
                     or filter. Try a different spell!
-                  </p>
-                </div>
+                      </p>
+                    </div>
               )}
               {(products.length > 0 || isValidating) && !error && (
-                <div
-                  className={cn(
+                    <div
+                      className={cn(
                     "grid gap-4 sm:gap-6 mt-6",
-                    gridView
-                      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        gridView
+                          ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                       : "grid-cols-1 space-y-4 sm:space-y-6"
-                  )}
-                >
-                  <AnimatePresence>
+                      )}
+                    >
+                      <AnimatePresence>
                     {products.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        isListView={!gridView}
-                      />
-                    ))}
-                  </AnimatePresence>
+                          <ProductCard
+                            key={product.id}
+                            product={product}
+                            isListView={!gridView}
+                          />
+                        ))}
+                      </AnimatePresence>
                   {isValidating && products.length > 0 && !isFinished && (
                     <AnimatePresence>
                       {[...Array(gridView ? 4 : 1)].map((_, i) => (
@@ -258,8 +258,8 @@ export default function MarketplacePage() {
                       ))}
                     </AnimatePresence>
                   )}
-                </div>
-              )}
+                      </div>
+                    )}
               <div
                 ref={ref}
                 className="h-10 mt-10 flex items-center justify-center"
@@ -274,40 +274,40 @@ export default function MarketplacePage() {
                   <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
                     You've reached the end of the scroll. No more ancient relics
                     to uncover!
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </>
-          )}
+                </>
+              )}
 
-          {activeTab === "Services" && (
-            <>
-              {filteredServices.length === 0 ? (
+              {activeTab === "Services" && (
+                <>
+                  {filteredServices.length === 0 ? (
                 <div className="min-h-[300px] flex flex-col items-center justify-center text-center p-8 bg-white dark:bg-neutral-900 rounded-xl shadow-lg">
                   <Clock className="h-16 w-16 text-neutral-400 dark:text-neutral-500 mb-6" />
                   <h3 className="text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
                     No Services Available
-                  </h3>
+                      </h3>
                   <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
                     Try adjusting your search or filter, or check back later for
                     new service offerings.
-                  </p>
-                </div>
-              ) : (
-                <div
-                  className={cn(
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      className={cn(
                     "grid gap-4 sm:gap-6 mt-6",
-                    gridView
-                      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        gridView
+                          ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                       : "grid-cols-1 space-y-4 sm:space-y-6"
-                  )}
-                >
-                  <AnimatePresence>
-                    {filteredServices.map((service) => (
-                      <ServiceCard key={service.id} service={service} />
-                    ))}
-                  </AnimatePresence>
-                </div>
+                      )}
+                    >
+                      <AnimatePresence>
+                        {filteredServices.map((service) => (
+                          <ServiceCard key={service.id} service={service} />
+                        ))}
+                      </AnimatePresence>
+                    </div>
               )}
             </>
           )}

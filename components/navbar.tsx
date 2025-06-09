@@ -14,6 +14,7 @@ import {
   Zap,
   BookOpen,
   UserCircle2,
+  Store,
 } from "lucide-react";
 import {
   Sheet,
@@ -90,13 +91,7 @@ const WishlistIcon = ({ itemCount = 0 }: { itemCount?: number }) => (
   </Link>
 );
 
-const Navbar = ({
-  session,
-  cartCount,
-}: {
-  session: Session | null;
-  cartCount: number;
-}) => {
+const Navbar = ({ session }: { session: Session | null }) => {
   // const session = await getSession(); // This needs to be handled client-side if Navbar is a client component
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -219,8 +214,21 @@ const Navbar = ({
           >
             <Search size={24} strokeWidth={2} />
           </button>
-          <WishlistIcon itemCount={3} /> {/* Example: 3 items in wishlist */}
-          <CartIcon itemCount={cartCount} /> {/* Example: 2 items in cart */}
+          <div className="hidden lg:flex items-center gap-4">
+            <Link
+              href="/store/create"
+              className="text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-300"
+            >
+              Start Selling
+            </Link>
+            <WishlistIcon itemCount={3} /> {/* Example: 3 items in wishlist */}
+            <CartIcon itemCount={2} /> {/* Example: 2 items in cart */}
+          </div>
+          {/* Mobile Icons */}
+          <div className="flex lg:hidden items-center gap-2">
+            <WishlistIcon itemCount={3} />
+            <CartIcon itemCount={2} />
+          </div>
           {/* User Authentication / Menu */}
           {!session?.user ? (
             <div className="hidden sm:flex gap-2 items-center">
@@ -284,6 +292,20 @@ const Navbar = ({
                     </SheetClose>
                   ))}
                   <hr className="my-4 border-gray-300/70" />
+                  <SheetClose asChild>
+                    <Link
+                      href="/store/create"
+                      className="group flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all duration-200"
+                    >
+                      <Store
+                        size={22}
+                        className="text-primary/80 group-hover:text-primary"
+                      />
+                      <span className="text-gray-700 group-hover:text-primary font-medium text-lg">
+                        Start Selling
+                      </span>
+                    </Link>
+                  </SheetClose>
                   {!session?.user ? (
                     <>
                       <SheetClose asChild>

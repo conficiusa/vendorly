@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    process.env.BASE_URL!,
+    "https://mountain-womens-dates-payroll.trycloudflare.com",
+  ],
   images: {
     remotePatterns: [
       {

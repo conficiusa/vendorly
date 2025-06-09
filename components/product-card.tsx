@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,7 +20,9 @@ export function ProductCard({
   className,
   isListView = false,
 }: ProductCardProps) {
-  const imageUrl = product.images?.[0] || "/bag.jpg";
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const imageUrl = product.images?.[1] || "/bag.jpg";
 
   const cardVariants = {
     initial: { opacity: 0, y: 20 },
@@ -102,6 +105,8 @@ export function ProductCard({
       animate="animate"
       exit="exit"
       whileHover={hoverEffect}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
       className={cn(
         "group relative overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 transition-all duration-300 flex flex-col justify-between",
         className
@@ -127,15 +132,16 @@ export function ProductCard({
             </div>
           )}
 
-          <div className="absolute inset-0 hidden md:flex items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          >
             <div className="flex space-x-3">
               <button
                 title="Quick View"
                 className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Add quick view functionality here
-                }}
               >
                 <Eye size={20} />
                 <span className="sr-only">Quick View</span>
@@ -143,16 +149,12 @@ export function ProductCard({
               <button
                 title="Add to Wishlist"
                 className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Add wishlist functionality here
-                }}
               >
                 <Heart size={20} />
                 <span className="sr-only">Add to Wishlist</span>
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </Link>
 

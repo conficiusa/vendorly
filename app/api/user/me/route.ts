@@ -22,7 +22,6 @@ export const GET = async () => {
         name: true,
         first_name: true,
         last_name: true,
-        onboarded: true,
         phone: true,
         email: true,
         emailVerified: true,

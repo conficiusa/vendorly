@@ -67,19 +67,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is a vendor
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    });
-
-    if (user?.role !== "VENDOR") {
-      return NextResponse.json(
-        { error: "Only vendors can create stores" },
-        { status: 403 }
-      );
-    }
-
     // Parse request body
     const body: CreateStoreFormData = await request.json();
 
@@ -101,38 +88,50 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create store with address
-    const store = await prisma.store.create({
-      data: {
-        name: body.name,
-        slug,
-        bio: body.bio,
-        userId: session.user.id,
-        address: body.useExistingAddress
-          ? {
-              connect: {
-                id: body.selectedAddressId,
+    // Use transaction to update user role and create store
+    const result = await prisma.$transaction(async (tx) => {
+      // Update user role to VENDOR
+      const updatedUser = await tx.user.update({
+        where: { id: session.user.id },
+        data: { role: "VENDOR" },
+      });
+
+      // Create store with address
+      const store = await tx.store.create({
+        data: {
+          name: body.name,
+          slug,
+          bio: body.bio,
+          userId: session.user.id,
+          address: body.useExistingAddress
+            ? {
+                connect: {
+                  id: body.selectedAddressId,
+                },
+              }
+            : {
+                create: {
+                  address_line1: body.address!.address_line1,
+                  address_line2: body.address?.address_line2,
+                  city: body.address!.city,
+                  region: body.address!.region,
+                  digital_address: body.address?.digital_address,
+                },
               },
-            }
-          : {
-              create: {
-                address_line1: body.address!.address_line1,
-                address_line2: body.address?.address_line2,
-                city: body.address!.city,
-                region: body.address!.region,
-                digital_address: body.address?.digital_address,
-              },
-            },
-      },
-      include: {
-        address: true,
-      },
+        },
+        include: {
+          address: true,
+        },
+      });
+
+      return { user: updatedUser, store };
     });
 
     return NextResponse.json(
       {
         message: "Store created successfully",
-        store,
+        store: result.store,
+        user: result.user,
       },
       { status: 201 }
     );

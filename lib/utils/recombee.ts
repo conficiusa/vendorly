@@ -1,4 +1,9 @@
-import { Category, Product, Store } from "@/prisma/generated/prisma-client";
+import {
+  Category,
+  GENDERTYPE,
+  Product,
+  Store,
+} from "@/prisma/generated/prisma-client";
 import * as recombee from "recombee-api-client";
 const rqs = recombee.requests;
 
@@ -203,11 +208,31 @@ export const addRatingToRecombee = async (
   const request = new rqs.AddRating(userId, productId, rating);
   await client.send(request);
 };
-export const mergeRecombeeUsers = async (userId: string, sessionId: string) => {
+export const mergeRecombeeUsers = async (
+  userId: string,
+  sessionId: string,
+  newUser: {
+    name: string;
+    email: string;
+    role: string;
+    gender: GENDERTYPE;
+  }
+) => {
+  try {
+    await getRecombeeUser(sessionId);
+  } catch (err: any) {
+    if (err.statusCode === 404) {
+      return; // Terminate the function if user not found
+    }
+    throw err; // Re-throw other errors
+  }
+
   const request = new rqs.MergeUsers(userId, sessionId, {
     cascadeCreate: true,
   });
+  // modify the new user
   await client.send(request);
+  await modifyRecombeeUser(newUser, userId);
 };
 
 export const getRecombeeUser = async (userId?: string, sessionId?: string) => {

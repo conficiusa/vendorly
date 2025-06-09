@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -23,7 +24,8 @@ export default function VerifyEmailPage() {
 
         if (data.status === "success" && data.user.emailVerified) {
           setIsPolling(false);
-          router.push("/auth/login");
+          toast.success("Email verified successfully");
+          router.push("/discover");
           return;
         }
 

@@ -66,8 +66,12 @@ const LoginForm = () => {
             router.push("/auth/verify-email");
             return;
           }
-        if (!session?.user.onboarded) {
-            router.push("/onboarding");
+
+          console.log("sssssssssjjjjjjjjjjjjjs")
+          if (session?.user.role === "VENDOR") {
+            router.push(redirect || "/vendor/dashboard");
+          } else {
+            router.push(redirect || "/discover");
           }
         },
       }

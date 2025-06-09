@@ -39,6 +39,12 @@ interface RecombeePayload {
   gender?: GENDERTYPE;
   recommId?: string;
   quantity?: number;
+  newUser?: {
+    name: string;
+    email: string;
+    role: string;
+    gender: GENDERTYPE;
+  };
   price?: number;
   name?: string;
   email?: string;
@@ -198,5 +204,5 @@ async function handleMergeUsers(params: Omit<RecombeePayload, "type">) {
       "userId and sessionId are required for mergeUsers"
     );
   }
-  await mergeRecombeeUsers(params.userId, params.sessionId);
+  await mergeRecombeeUsers(params.userId, params.sessionId, params.newUser!);
 }
