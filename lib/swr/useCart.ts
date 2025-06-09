@@ -13,6 +13,87 @@ export const useCart = () => {
     keepPreviousData: true,
   });
 
+  const addToCart = async (
+    productId: string,
+    variantId?: string,
+    quantity: number = 1
+  ) => {
+    // Optimistically update the cart
+    const optimisticData = {
+      success: true,
+      data: {
+        ...data?.data,
+        items: [
+          ...(data?.data?.items || []),
+          {
+            id: "temp-id",
+            productId,
+            productVariantOptionId: variantId || null,
+            quantity,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            cartId: data?.data?.id,
+            product: {
+              id: productId,
+              // Add minimal product data needed for display
+              name: "Loading...",
+              price: 0,
+            },
+          },
+        ],
+      },
+    };
+
+    try {
+      // Optimistically update the UI
+      await mutate(
+        "/api/cart",
+        async () => {
+          const response = await fetch("/api/cart", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              productId,
+              variantId,
+              quantity,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            toast.error(error.error.message);
+            return data;
+          }
+
+          const newItem = await response.json();
+
+          // Return the complete updated data structure
+          return {
+            success: true,
+            data: {
+              ...data?.data,
+              items: [...(data?.data?.items || []), newItem],
+            },
+          };
+        },
+        {
+          optimisticData,
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false,
+        }
+      );
+
+      return true;
+    } catch (error: any) {
+      console.error("Error adding to cart:", error);
+      toast.error(error.message || "Failed to add item to cart");
+      return false;
+    }
+  };
+
   const updateQuantity = async (itemId: string, quantity: number) => {
     // Optimistically update the cart
     const optimisticData = {
@@ -122,7 +203,6 @@ export const useCart = () => {
     }
   };
 
-  console.log("data", data);
   return {
     data: data?.data?.items as CartItem[],
     error,
@@ -130,5 +210,6 @@ export const useCart = () => {
     mutate,
     updateQuantity,
     removeItem,
+    addToCart,
   };
 };

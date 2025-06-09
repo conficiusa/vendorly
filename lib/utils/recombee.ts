@@ -31,6 +31,7 @@ export const addProductToRecombee = async (
       new rqs.SetItemValues(
         product.id,
         {
+          available: product.stock > 0,
           name: product.name,
           description: product.description,
           price: product.price,

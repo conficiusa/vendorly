@@ -3,13 +3,16 @@
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useCart } from "@/lib/swr/useCart";
 
 interface CartIconProps {
-  itemCount: number;
   className?: string;
 }
 
-export default function CartIcon({ itemCount, className = "" }: CartIconProps) {
+export default function CartIcon({ className = "" }: CartIconProps) {
+  const { data: cartItems, isLoading } = useCart();
+  const itemCount = cartItems?.length || 0;
+
   return (
     <Link href="/cart" className={`relative inline-block ${className}`}>
       <motion.div
@@ -19,7 +22,7 @@ export default function CartIcon({ itemCount, className = "" }: CartIconProps) {
       >
         <ShoppingCart className="w-6 h-6" />
 
-        {itemCount > 0 && (
+        {!isLoading && itemCount > 0 && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}

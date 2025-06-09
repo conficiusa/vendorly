@@ -5,7 +5,6 @@ import Link from "next/link";
 import UserMenu from "./user-menu";
 import {
   Search,
-  ShoppingCart,
   Heart,
   X,
   Menu,
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils"; // Import cn for conditional classes
 import { Session } from "@/lib/types/better-auth.types";
+import CartIcon from "@/app/components/CartIcon";
 
 // Define the type for a navigation link item
 interface NavLinkItem {
@@ -59,22 +59,6 @@ const SearchBar = ({ onSearchToggle }: { onSearchToggle?: () => void }) => (
 );
 
 // Enhanced Icons with Lucide
-const CartIcon = ({ itemCount = 0 }: { itemCount?: number }) => (
-  <Link href="/cart" className="relative">
-    <button
-      aria-label="Shopping Cart"
-      className="p-3 hover:bg-primary/10 rounded-full text-gray-700 hover:text-primary transition-all duration-300 transform hover:scale-125 hover:rotate-[-10deg] focus:outline-none focus:ring-2 focus:ring-primary/50"
-    >
-      <ShoppingCart size={26} strokeWidth={2} />
-      {itemCount > 0 && (
-        <span className="absolute top-0 right-0  h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center transform translate-x-1/4 -translate-y-1/4 ring-2 ring-white animate-pulse">
-          {itemCount}
-        </span>
-      )}
-    </button>
-  </Link>
-);
-
 const WishlistIcon = ({ itemCount = 0 }: { itemCount?: number }) => (
   <Link href="/wishlist" className="relative">
     <button
@@ -221,13 +205,13 @@ const Navbar = ({ session }: { session: Session | null }) => {
             >
               Start Selling
             </Link>
-            <WishlistIcon itemCount={3} /> {/* Example: 3 items in wishlist */}
-            <CartIcon itemCount={2} /> {/* Example: 2 items in cart */}
+            <WishlistIcon itemCount={3} />
+            <CartIcon />
           </div>
           {/* Mobile Icons */}
           <div className="flex lg:hidden items-center gap-2">
             <WishlistIcon itemCount={3} />
-            <CartIcon itemCount={2} />
+            <CartIcon />
           </div>
           {/* User Authentication / Menu */}
           {!session?.user ? (

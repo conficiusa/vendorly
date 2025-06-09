@@ -42,6 +42,7 @@ export const POST = async (req: NextRequest) => {
       });
 
       await QueueJob(QUEUE_URLS.SMS_NOTIFICATION, { phoneNumber, orderId });
+      await QueueJob(QUEUE_URLS.RECOMBEE, { type: "purchase", orderId });
     } else {
       await prisma.transaction.update({
         where: {
@@ -52,11 +53,7 @@ export const POST = async (req: NextRequest) => {
         },
       });
       await QueueJob(QUEUE_URLS.SMS_NOTIFICATION, { phoneNumber, orderId });
-      await QueueJob(QUEUE_URLS.RECOMBEE, { type: "purchase", orderId }).then(
-        () => {
-          console.log("purchase added to recombee");
-        }
-      );
+      await QueueJob(QUEUE_URLS.RECOMBEE, { type: "purchase", orderId });
     }
 
     return Response.success("webhook received");

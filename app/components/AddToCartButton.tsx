@@ -2,6 +2,7 @@
 import { MouseEvent, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Check } from "lucide-react";
+import { useCart } from "@/lib/swr/useCart";
 
 interface AddToCartButtonProps {
   productId: string;
@@ -22,32 +23,22 @@ export default function AddToCartButton({
 }: AddToCartButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const { addToCart } = useCart();
 
   const handleAddToCart = async (e: MouseEvent<HTMLButtonElement>) => {
     if (e && e.stopPropagation) e.stopPropagation();
     setIsLoading(true);
     try {
-      const response = await fetch("/api/cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId,
-          variantId,
-          quantity: 1,
-        }),
-      });
+      const success = await addToCart(productId, variantId, 1);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to add item to cart");
+      if (success) {
+        setIsSuccess(true);
+        onSuccess?.();
+        // Reset success state after 2 seconds
+        setTimeout(() => setIsSuccess(false), 2000);
+      } else {
+        throw new Error("Failed to add item to cart");
       }
-
-      setIsSuccess(true);
-      onSuccess?.();
-
-      // Reset success state after 2 seconds
-      setTimeout(() => setIsSuccess(false), 2000);
     } catch (error) {
       onError?.(
         error instanceof Error ? error.message : "Failed to add item to cart"

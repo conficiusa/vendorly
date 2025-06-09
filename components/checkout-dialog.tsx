@@ -112,8 +112,6 @@ export function CheckoutDialog({
   const [otp, setOtp] = useState("");
   const [reference, setReference] = useState<string | null>(null);
 
-  console.log(paymentStatus);
-
   const form = useForm<ChargeSchemaData>({
     resolver: zodResolver(chargeSchema),
     defaultValues: {
@@ -123,6 +121,13 @@ export function CheckoutDialog({
       variantId: variantId,
       provider: "MTN",
       saveForFuture: false,
+      address: {
+        region: "",
+        city: "",
+        address_line1: "",
+        address_line2: "",
+        digital_address: "",
+      },
     },
   });
   const {
@@ -136,13 +141,16 @@ export function CheckoutDialog({
 
   useEffect(() => {
     if (errors.provider) {
-      toast.error(errors.provider.message);
+      toast.error(errors.provider.message +"aa");
     }
-  }, [errors.provider]);
+    if (errors.address) {
+      toast.warning("Please fill in all address fields");
+    }
+  }, [errors.provider, errors.address]);
 
   useEffect(() => {
     if (!isLoadingAddresses && addresses) {
-      form.setValue("addressId", addresses[0].id);
+      form.setValue("addressId", addresses[0]?.id);
     }
   }, [addresses, isLoadingAddresses, form]);
 
@@ -167,6 +175,9 @@ export function CheckoutDialog({
     }
   };
 
+  useEffect(() => {
+  console.log(errors)
+},[errors])
   const onSubmit = async (data: ChargeSchemaData) => {
     try {
       const res = await fetch(`/api/transactions/charge?from=${from}`, {
@@ -182,7 +193,6 @@ export function CheckoutDialog({
 
       if (response.success) {
         const status = response.data.data.status as PaystackStatus;
-        console.log(status);
         setPaymentStatus(status);
         setPaymentMessage(response.data.data.display_text);
         setReference(response.data.data.reference);
