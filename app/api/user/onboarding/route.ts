@@ -24,29 +24,20 @@ export const POST = async (req: NextRequest) => {
       },
       data: {
         role: body.role.toUpperCase(),
-        address: body.address
+        addresses: body.address
           ? {
-              upsert: {
-                create: {
-                  region: body.address.region,
-                  city: body.address.city,
-                  address_line1: body.address.address_line1,
-                  address_line2: body.address.address_line2,
-                  digital_address: body.address.digital_address,
-                },
-                update: {
-                  region: body.address.region,
-                  city: body.address.city,
-                  address_line1: body.address.address_line1,
-                  address_line2: body.address.address_line2,
-                  digital_address: body.address.digital_address,
-                },
+              create: {
+                region: body.address.region,
+                city: body.address.city,
+                address_line1: body.address.address_line1,
+                address_line2: body.address.address_line2,
+                digital_address: body.address.digital_address,
               },
             }
           : undefined,
       },
       include: {
-        address: true,
+        addresses: true,
       },
     });
 
