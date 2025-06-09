@@ -12,7 +12,7 @@ export default async function RootLayout({
   return (
     <>
       <Suspense>
-        <Navbar session={session} cartCount={2} />
+        <Navbar session={session}/>
         {children}
       </Suspense>
     </>
