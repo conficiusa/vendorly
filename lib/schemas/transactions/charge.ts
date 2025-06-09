@@ -13,7 +13,7 @@ export const chargeSchema = z
       .regex(/^[0-9]+$/, "Phone number must contain only numbers"),
     provider: z.nativeEnum(MobileMoneyProvider),
     saveForFuture: z.boolean(),
-    addressId: z.string(),
+    addressId: z.string().optional(),
     address: z
       .object({
         region: z.string().min(1, "Region is required"),
@@ -32,6 +32,20 @@ export const chargeSchema = z
         path: ["phoneNumber"],
       });
     }
-  });
+  })
+  .refine(
+    (data) => {
+      if (data.addressId) {
+        return true;
+      }
+      return (
+        data.address?.region &&
+        data.address?.city &&
+        data.address?.digital_address &&
+        data.address?.address_line1
+      );
+    },
+    { message: "Address is required", path: ["addressId"] }
+  );
 
 export type ChargeSchemaData = z.infer<typeof chargeSchema>;

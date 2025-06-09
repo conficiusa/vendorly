@@ -32,7 +32,7 @@ model User {
   Review              Review[]
   phoneNumber         String?
   phoneNumberVerified Boolean?
-  address             Address?
+  addresses           Address[]
   cart                Cart?
   Order               Order[]
 
@@ -49,7 +49,7 @@ model Address {
   digital_address String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  userId          String?  @unique
+  userId          String?
   user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeId         String?  @unique
   store           Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)

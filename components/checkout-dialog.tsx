@@ -121,13 +121,6 @@ export function CheckoutDialog({
       variantId: variantId,
       provider: "MTN",
       saveForFuture: false,
-      address: {
-        region: "",
-        city: "",
-        address_line1: "",
-        address_line2: "",
-        digital_address: "",
-      },
     },
   });
   const {
@@ -141,12 +134,14 @@ export function CheckoutDialog({
 
   useEffect(() => {
     if (errors.provider) {
-      toast.error(errors.provider.message +"aa");
+      toast.error(errors.provider.message + "aa");
     }
-    if (errors.address) {
-      toast.warning("Please fill in all address fields");
+    if (errors.addressId) {
+      toast.error("Address is required", {
+        description: "Please select an address from the list or add a new one",
+      });
     }
-  }, [errors.provider, errors.address]);
+  }, [errors.provider, errors.addressId]);
 
   useEffect(() => {
     if (!isLoadingAddresses && addresses) {
@@ -175,9 +170,7 @@ export function CheckoutDialog({
     }
   };
 
-  useEffect(() => {
-  console.log(errors)
-},[errors])
+ 
   const onSubmit = async (data: ChargeSchemaData) => {
     try {
       const res = await fetch(`/api/transactions/charge?from=${from}`, {

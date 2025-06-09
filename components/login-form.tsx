@@ -67,7 +67,6 @@ const LoginForm = () => {
             return;
           }
 
-          console.log("sssssssssjjjjjjjjjjjjjs")
           if (session?.user.role === "VENDOR") {
             router.push(redirect || "/vendor/dashboard");
           } else {

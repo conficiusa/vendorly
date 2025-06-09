@@ -62,7 +62,7 @@ export function ProductsTable() {
   // Debounce the search query to avoid too many API calls
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { error, isLoading, products, pagination, isValidating } = useProducts({
+  const { error, isLoading, products, pagination} = useProducts({
     page: currentPage,
     search: debouncedSearch,
     limit,
@@ -108,7 +108,6 @@ export function ProductsTable() {
     setShowDeleteDialog(true);
   };
 
-  console.log(isLoading, isValidating);
   const renderContent = () => {
     if (isLoading) {
       return <ProductsTableSkeleton />;
