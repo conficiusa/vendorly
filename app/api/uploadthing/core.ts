@@ -3,6 +3,7 @@ import { prisma } from "@/prisma/prisma-client";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { z } from "zod";
+import { QueueJob } from "../utils/job";
 
 const authmiddleware = async () => {
   const session = await getSession();
@@ -101,6 +102,10 @@ export const uploadRouter = {
       const updatedProduct = await prisma.product.update({
         where: { id: metadata.productId },
         data: { images: { push: imageUrls } },
+      });
+      await QueueJob("updateItem", {
+        productId: metadata.productId,
+        product: { images: imageUrls[0] },
       });
 
       if (!updatedProduct) {

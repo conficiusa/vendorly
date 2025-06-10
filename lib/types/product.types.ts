@@ -28,7 +28,7 @@ export interface ProductCard {
   name: string;
   description: string;
   price: number;
-  images: string;
+  image: string;
   category: string;
   store: string;
   slug: string;

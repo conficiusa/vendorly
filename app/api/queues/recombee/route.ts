@@ -8,6 +8,7 @@ import {
   addRatingToRecombee,
   modifyRecombeeUser,
   mergeRecombeeUsers,
+  updateRecombeeItem,
 } from "@/lib/utils/recombee";
 import {
   Category,
@@ -28,7 +29,8 @@ type InteractionType =
   | "addUser"
   | "addRating"
   | "modifyUser"
-  | "mergeUsers";
+  | "mergeUsers"
+  | "updateItem";
 
 interface RecombeePayload {
   type: InteractionType;
@@ -54,6 +56,7 @@ interface RecombeePayload {
     store: Store;
   };
   orderId?: string;
+  [key: string]: any;
 }
 
 export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
@@ -93,6 +96,10 @@ export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
 
       case "mergeUsers":
         await handleMergeUsers(params);
+        break;
+
+      case "updateItem":
+        await handleUpdateItem(params);
         break;
 
       default:
@@ -205,4 +212,11 @@ async function handleMergeUsers(params: Omit<RecombeePayload, "type">) {
     );
   }
   await mergeRecombeeUsers(params.userId, params.sessionId, params.newUser!);
+}
+
+async function handleUpdateItem(params: Omit<RecombeePayload, "type">) {
+  if (!params.productId) {
+    throw new BadRequestError("productId is required for updateItem");
+  }
+  await updateRecombeeItem(params.productId, params);
 }

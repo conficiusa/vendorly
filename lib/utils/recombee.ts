@@ -88,7 +88,7 @@ export const addToCart = async (
 export const addItemPropertiesToRecombee = async () => {
   const itemProperties = [
     new rqs.AddItemProperty("name", "string"),
-    new rqs.AddItemProperty("image", "string"),
+    new rqs.AddItemProperty("image", "image"),
     new rqs.AddItemProperty("price", "double"),
     new rqs.AddItemProperty("description", "string"),
     new rqs.AddItemProperty("category", "string"),
@@ -146,7 +146,9 @@ export const addDetailViewToRecombee = async (
   await client.send(request);
 };
 
-export const removeItemPropertiesFromRecombee = async (properties: string[]) => {
+export const removeItemPropertiesFromRecombee = async (
+  properties: string[]
+) => {
   const itemProperties = properties.map(
     (property) => new rqs.DeleteItemProperty(property)
   );
@@ -291,4 +293,15 @@ export const fetchRecommendedProducts = async (
   });
   const res = await client.send(req);
   return res;
+};
+
+export const updateRecombeeItem = async (
+  id: string,
+  update: {
+    [key: string]: string;
+  }
+) => {
+  const req = new rqs.SetItemValues(id, update);
+  const response = await client.send(req);
+  return response;
 };
