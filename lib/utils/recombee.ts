@@ -5,6 +5,7 @@ import {
   Store,
 } from "@/prisma/generated/prisma-client";
 import * as recombee from "recombee-api-client";
+import { RecombeeScenario } from "../types/recombee-types";
 const rqs = recombee.requests;
 
 const RECOMBEE_DB = process.env.RECOMBEE_DB;
@@ -240,4 +241,27 @@ export const getRecombeeUser = async (userId?: string, sessionId?: string) => {
   const request = new rqs.GetUserValues(userId || (sessionId as string));
   const response = await client.send(request);
   return response;
+};
+
+
+//recommend items to user
+export const fetchRecommendedProducts = async (
+  userId: string,
+  scenario?: RecombeeScenario,
+  recommId?: string
+) => {
+  if (recommId) {
+    const req = new rqs.RecommendNextItems(recommId, 10);
+    const res = await client.send(req);
+    return res;
+  }
+
+  const req = new rqs.RecommendItemsToUser(userId, 10, {
+    cascadeCreate: true,
+    returnProperties: true,
+    includedProperties: ["name", "description", "images", "price", "category","rating"],
+    scenario,
+  });
+  const res = await client.send(req);
+  return res;
 };

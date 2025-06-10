@@ -22,7 +22,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const [isHovered, setIsHovered] = React.useState(false);
 
-  const imageUrl = product.images?.[1] || "/bag.jpg";
+  const imageUrl = product.images?.[0];
 
   const cardVariants = {
     initial: { opacity: 0, y: 20 },
@@ -63,11 +63,9 @@ export function ProductCard({
                 {product.name}
               </h3>
             </Link>
-            {product.store?.name && (
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                {product.store.name}
+                {product.store}
               </p>
-            )}
             {product.description && (
               <p className="text-xs text-muted-foreground mt-2 line-clamp-2 sm:line-clamp-3">
                 {product.description}
@@ -124,10 +122,10 @@ export function ProductCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-70 group-hover:opacity-50 transition-opacity duration-300"></div>
 
-          {product.Category?.name && (
+          {product.category && (
             <div className="absolute top-3 left-3">
               <span className="inline-block rounded-full bg-white/90 dark:bg-black/70 px-3 py-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-200 shadow-md backdrop-blur-sm">
-                {product.Category.name}
+                {product.category}
               </span>
             </div>
           )}
@@ -163,9 +161,9 @@ export function ProductCard({
           <h3 className="font-semibold text-base sm:text-lg text-neutral-800 dark:text-neutral-100 group-hover:text-primary dark:group-hover:text-primary-dark transition-colors duration-300 line-clamp-2">
             <Link href={`/discover/${product.slug}`}>{product.name}</Link>
           </h3>
-          {product.store?.name && (
+          {product.store && (
             <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-1">
-              By {product.store.name}
+              By {product.store}
             </p>
           )}
         </div>
