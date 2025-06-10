@@ -36,7 +36,7 @@ export const addProductToRecombee = async (
           name: product.name,
           description: product.description,
           price: product.price,
-          images: product.images,
+          image: product.images[0],
           category: product.Category?.name,
           slug: product.slug,
           faults: product.faults,
@@ -88,7 +88,7 @@ export const addToCart = async (
 export const addItemPropertiesToRecombee = async () => {
   const itemProperties = [
     new rqs.AddItemProperty("name", "string"),
-    new rqs.AddItemProperty("images", "imageList"),
+    new rqs.AddItemProperty("image", "image"),
     new rqs.AddItemProperty("price", "double"),
     new rqs.AddItemProperty("description", "string"),
     new rqs.AddItemProperty("category", "string"),
@@ -259,7 +259,7 @@ export const fetchRecommendedProducts = async (
   const req = new rqs.RecommendItemsToUser(userId, 10, {
     cascadeCreate: true,
     returnProperties: true,
-    includedProperties: ["name", "description", "images", "price", "category","rating"],
+    includedProperties: ["name", "description", "image", "price", "category","rating"],
     scenario,
   });
   const res = await client.send(req);
