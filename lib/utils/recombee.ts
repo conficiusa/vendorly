@@ -88,7 +88,7 @@ export const addToCart = async (
 export const addItemPropertiesToRecombee = async () => {
   const itemProperties = [
     new rqs.AddItemProperty("name", "string"),
-    new rqs.AddItemProperty("image", "image"),
+    new rqs.AddItemProperty("image", "string"),
     new rqs.AddItemProperty("price", "double"),
     new rqs.AddItemProperty("description", "string"),
     new rqs.AddItemProperty("category", "string"),
@@ -144,6 +144,27 @@ export const addDetailViewToRecombee = async (
   });
 
   await client.send(request);
+};
+
+export const removeItemPropertiesFromRecombee = async (properties: string[]) => {
+  const itemProperties = properties.map(
+    (property) => new rqs.DeleteItemProperty(property)
+  );
+  let count = 0;
+  for (const property of itemProperties) {
+    try {
+      await client.send(property);
+      count++;
+    } catch (error) {
+      // Ignore if property already exists
+      if (
+        !(error instanceof Error && error.message.includes("already exists"))
+      ) {
+        throw error;
+      }
+    }
+  }
+  console.log(`${count} properties removed`);
 };
 
 export const addUserPropertiesToRecombee = async () => {
@@ -243,7 +264,6 @@ export const getRecombeeUser = async (userId?: string, sessionId?: string) => {
   return response;
 };
 
-
 //recommend items to user
 export const fetchRecommendedProducts = async (
   userId: string,
@@ -259,7 +279,14 @@ export const fetchRecommendedProducts = async (
   const req = new rqs.RecommendItemsToUser(userId, 10, {
     cascadeCreate: true,
     returnProperties: true,
-    includedProperties: ["name", "description", "image", "price", "category","rating"],
+    includedProperties: [
+      "name",
+      "description",
+      "image",
+      "price",
+      "category",
+      "rating",
+    ],
     scenario,
   });
   const res = await client.send(req);

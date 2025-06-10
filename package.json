@@ -18,7 +18,8 @@
     "add-user-properties": "tsx lib/scripts/add-user-properties.ts",
     "addProperties-recombee": "tsx lib/scripts/addProperties-recombee.ts",
     "add-recombee-product": "tsx lib/scripts/add-recombee-product.ts",
-    "test:get-user-recombee": "tsx lib/scripts/testGetRecombeeUser.ts"
+    "test:get-user-recombee": "tsx lib/scripts/testGetRecombeeUser.ts",
+    "remove-item-property": "tsx lib/scripts/remove-item-property.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
