@@ -4,6 +4,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import { z } from "zod";
 import { QueueJob } from "../utils/job";
+import { QUEUE_URLS } from "../utils/constants";
 
 const authmiddleware = async () => {
   const session = await getSession();
@@ -103,7 +104,8 @@ export const uploadRouter = {
         where: { id: metadata.productId },
         data: { images: { push: imageUrls } },
       });
-      await QueueJob("updateItem", {
+      await QueueJob(QUEUE_URLS.RECOMBEE, {
+        type:"updateItem",
         productId: metadata.productId,
         update: { image: imageUrls[0] },
       });
