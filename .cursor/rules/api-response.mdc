@@ -10,6 +10,8 @@ This Rules is essential when writing Api routes.
 
 -use [response.ts](mdc:app/api/utils/response.ts) for returning responses. 
 -use a try catch 
+
 -errors in try catch are thrown and handled in the catch block like return Response.error(error)
+
 
 - the [response.ts](mdc:app/api/utils/response.ts) is also used for seccuss reponses return Response.sucess()

@@ -105,7 +105,7 @@ export const uploadRouter = {
       });
       await QueueJob("updateItem", {
         productId: metadata.productId,
-        product: { images: imageUrls[0] },
+        update: { image: imageUrls[0] },
       });
 
       if (!updatedProduct) {

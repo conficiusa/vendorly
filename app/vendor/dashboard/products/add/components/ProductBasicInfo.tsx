@@ -8,6 +8,7 @@ import { TextAreaInput } from "@/components/textarea-input";
 import { formatCurrency } from "@/lib/utils";
 import { useCategories } from "@/lib/swr/useCategories";
 import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ProductBasicInfoProps {
   form: UseFormReturn<CreateProductFormData>;
@@ -29,86 +30,92 @@ export function ProductBasicInfo({ form, error }: ProductBasicInfoProps) {
   }, [categories]);
 
   return (
-    <>
-      <div className="grid gap-4 md:grid-cols-2">
-        <TextInput
-          control={control}
-          name="name"
-          type="text"
-          label="Product Name"
-          placeholder="Enter product name"
-          error={error.name?.message}
-        />
+    <Card className="shadow-none border-none">
+      <CardHeader>
+        <CardTitle>Basic Information</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-6">
+        <div className="grid gap-4 md:grid-cols-2">
+          <TextInput
+            control={control}
+            name="name"
+            type="text"
+            label="Product Name"
+            placeholder="Enter product name"
+            error={error.name?.message}
+          />
 
-        <Combobox
-          control={control}
-          name="category"
-          label="Category"
-          placeholder="Select category"
-          items={categoryOptions}
-          isLoading={isLoading}
-          emptyText="No categories found"
-          searchPlaceholder="Search categories..."
-        />
-      </div>
-      <div className="grid gap-2">
-        <TextInput
-          control={control}
-          name="price"
-          type="number"
-          label="Price"
-          placeholder="Enter product price"
-          error={error.price?.message}
-        />
-        {Number(watch("price")) > 0 && (
-          <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Preview Price</p>
-            <p className="text-xl font-semibold text-primary">
-              {formatCurrency(Number(watch("price")))}
-            </p>
-          </div>
-        )}
-      </div>
-      {!hasVariants && (
+          <Combobox
+            control={control}
+            name="category"
+            label="Category"
+            placeholder="Select category"
+            items={categoryOptions}
+            isLoading={isLoading}
+            emptyText="No categories found"
+            searchPlaceholder="Search categories..."
+          />
+        </div>
         <div className="grid gap-2">
           <TextInput
             control={control}
-            name="stock"
+            name="price"
             type="number"
-            label="Stock"
-            placeholder="Number of product in stock"
-            error={error.stock?.message}
+            label="Price"
+            placeholder="Enter product price"
+            error={error.price?.message}
+          />
+          {Number(watch("price")) > 0 && (
+            <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border">
+              <p className="text-sm text-muted-foreground">Preview Price</p>
+              <p className="text-xl font-semibold text-primary">
+                {formatCurrency(Number(watch("price")))}
+              </p>
+            </div>
+          )}
+        </div>
+        {!hasVariants && (
+          <div className="grid gap-2">
+            <TextInput
+              control={control}
+              name="stock"
+              type="number"
+              label="Stock"
+              placeholder="Number of product in stock"
+              error={error.stock?.message}
+            />
+            <p className="text-sm text-muted-foreground">
+              How many of the products are in stock?
+            </p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <TextAreaInput
+            rows={5}
+            control={control}
+            name="description"
+            label="Description"
+            placeholder="Enter product description"
+            error={error.description?.message}
+          />
+        </div>
+        <div className="space-y-2">
+          <TextAreaInput
+            control={control}
+            name="faults"
+            label="Known Faults"
+            placeholder="Enter product known faults"
+            error={error.faults?.message}
+            rows={5}
+            className="resize-none"
           />
           <p className="text-sm text-muted-foreground">
-            How many of the products are in stock?
+            This is used to help customers understand the product and its
+            condition.
           </p>
         </div>
-      )}
-
-      <div className="space-y-2">
-        <TextAreaInput
-          control={control}
-          name="description"
-          label="Description"
-          placeholder="Enter product description"
-          error={error.description?.message}
-        />
-      </div>
-      <div className="space-y-2">
-        <TextAreaInput
-          control={control}
-          name="faults"
-          label="Known Faults"
-          placeholder="Enter product known faults"
-          error={error.faults?.message}
-          rows={5}
-          className="resize-none"
-        />
-        <p className="text-sm text-muted-foreground">
-          This is used to help customers understand the product and its
-          condition.
-        </p>
-      </div>
-    </>
+      </CardContent>
+    </Card>
   );
 }

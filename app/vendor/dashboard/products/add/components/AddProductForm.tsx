@@ -14,10 +14,20 @@ import {
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useUploadThing } from "@/lib/uploadthing";
+import { useEffect, useState } from "react";
 
 export function AddProductForm() {
   const router = useRouter();
-  const { startUpload, isUploading } = useUploadThing("productImages", {
+  const [triggerUpload, setTriggerUpload] = useState<{
+    status: boolean;
+    images: Array<File> | null;
+    productId: string | null;
+  }>({
+    status: false,
+    images: null,
+    productId: null,
+  });
+  const { startUpload } = useUploadThing("productImages", {
     onUploadError: () => {
       toast.error("Failed to upload product images", {
         description: "You can retry to upload images by updating the product",
@@ -31,7 +41,7 @@ export function AddProductForm() {
       category: "",
       description: "",
       price: 0,
-      stock:0,
+      stock: 0,
       images: [],
       hasVariants: false,
       variants: {
@@ -46,6 +56,22 @@ export function AddProductForm() {
     formState: { isSubmitting, errors },
   } = form;
 
+  useEffect(() => {
+    const uploadImages = async () => {
+      if (
+        triggerUpload.status &&
+        triggerUpload.images &&
+        triggerUpload.productId
+      ) {
+        await startUpload(triggerUpload.images, {
+          productId: triggerUpload.productId,
+        });
+      }
+    };
+
+    uploadImages();
+  }, [triggerUpload, startUpload, router]);
+
   const onSubmit = async (data: CreateProductFormData) => {
     const { images, ...productData } = data;
     try {
@@ -57,7 +83,11 @@ export function AddProductForm() {
       if (!res.ok) {
         throw new Error(product.error);
       }
-      await startUpload(images, { productId: product.data.id });
+      setTriggerUpload({
+        status: true,
+        images,
+        productId: product.data.id,
+      });
       toast.success("Product created successfully");
     } catch (error: any) {
       console.error("Error:", error);
@@ -67,29 +97,12 @@ export function AddProductForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Add New Product</h1>
-          <p className="text-muted-foreground">
-            Add a new product to your store. Fill in the details and configure
-            variants if needed.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => router.back()}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting || isUploading}>
-            {isSubmitting || isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Product...
-              </>
-            ) : (
-              "Add Product"
-            )}
-          </Button>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Add New Product</h1>
+        <p className="text-muted-foreground">
+          Add a new product to your store. Fill in the details and configure
+          variants if needed.
+        </p>
       </div>
 
       <div className="grid gap-6">
@@ -102,6 +115,23 @@ export function AddProductForm() {
 
         <ProductBasicInfo form={form} error={errors} />
         <ProductVariants form={form} error={errors.variants?.message} />
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex items-center justify-end gap-2 mt-8">
+        <Button variant="outline" type="button" onClick={() => router.back()}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Product...
+            </>
+          ) : (
+            "Add Product"
+          )}
+        </Button>
       </div>
     </form>
   );

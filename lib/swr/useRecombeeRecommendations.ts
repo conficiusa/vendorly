@@ -10,7 +10,7 @@ interface RecommendationResponse {
       name: string;
       description: string;
       price: number;
-      images: string;
+      image: string;
       category: string;
       rating: number | null;
       store: string;

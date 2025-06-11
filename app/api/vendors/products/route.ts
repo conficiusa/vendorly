@@ -140,7 +140,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    await QueueJob(QUEUE_URLS.RECOMBEE, { type: "addProduct", product });
+    // await QueueJob(QUEUE_URLS.RECOMBEE, { type: "addProduct", product });
     return NextResponse.json({ data: product, status: "success" });
   } catch (error: any) {
     console.error("Error creating product:", error);
