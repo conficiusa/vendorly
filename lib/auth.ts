@@ -6,7 +6,11 @@ import { render } from "@react-email/components";
 import { VerificationEmail as VerificationEmailComponent } from "@/lib/emails/auth/verify-email";
 import { headers } from "next/headers";
 import { prisma } from "@/prisma/prisma-client";
-import { createAuthMiddleware, customSession } from "better-auth/plugins";
+import {
+  createAuthMiddleware,
+  customSession,
+  anonymous,
+} from "better-auth/plugins";
 import { tryCatch } from "./utils";
 import { getUser } from "./queries/user/me";
 import { QUEUE_URLS } from "@/app/api/utils/constants";
@@ -22,6 +26,12 @@ const options = {
   rateLimit: {
     storage: "database",
     modelName: "rateLimit",
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
   },
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
@@ -127,6 +137,7 @@ const options = {
 export const auth = betterAuth({
   ...options,
   plugins: [
+    anonymous(),
     customSession(async ({ session, user }) => {
       const { data } = await tryCatch(getUser(session.userId));
       return {

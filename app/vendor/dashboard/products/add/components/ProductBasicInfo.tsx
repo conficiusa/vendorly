@@ -3,11 +3,10 @@
 import { UseFormReturn } from "react-hook-form";
 import { CreateProductFormData } from "@/lib/schemas/products/create";
 import { TextInput } from "@/components/text-input";
-import { Combobox } from "@/components/combo-box";
+import { EnhancedPriceInput } from "@/components/enhanced-price-input";
+import { CategoryTreeSelect } from "@/components/category-tree-select";
 import { TextAreaInput } from "@/components/textarea-input";
-import { formatCurrency } from "@/lib/utils";
-import { useCategories } from "@/lib/swr/useCategories";
-import { useMemo } from "react";
+import useSWR from "swr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ProductBasicInfoProps {
@@ -15,19 +14,22 @@ interface ProductBasicInfoProps {
   error: any;
 }
 
+interface CategoryTreeNode {
+  id: string;
+  name: string;
+  children?: CategoryTreeNode[];
+}
+
 export function ProductBasicInfo({ form, error }: ProductBasicInfoProps) {
   const { control, watch } = form;
-  const { categories, isLoading } = useCategories("PRODUCT");
   const hasVariants = watch("hasVariants");
 
-  const categoryOptions = useMemo(() => {
-    return (
-      categories?.map((category) => ({
-        value: category.id,
-        label: category.name,
-      })) || []
-    );
-  }, [categories]);
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const { data: categoryTree, isLoading } = useSWR<CategoryTreeNode[]>(
+    "/api/vendors/category?type=PRODUCT&nested=true",
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
   return (
     <Card className="shadow-none border-none">
@@ -45,34 +47,22 @@ export function ProductBasicInfo({ form, error }: ProductBasicInfoProps) {
             error={error.name?.message}
           />
 
-          <Combobox
-            control={control}
-            name="category"
+          <CategoryTreeSelect
             label="Category"
-            placeholder="Select category"
-            items={categoryOptions}
+            name="category"
+            control={control}
+            categories={categoryTree}
             isLoading={isLoading}
-            emptyText="No categories found"
-            searchPlaceholder="Search categories..."
+            error={error.category?.message}
           />
         </div>
         <div className="grid gap-2">
-          <TextInput
+          <EnhancedPriceInput
             control={control}
             name="price"
-            type="number"
             label="Price"
-            placeholder="Enter product price"
             error={error.price?.message}
           />
-          {Number(watch("price")) > 0 && (
-            <div className="mt-2 p-3 bg-muted/50 rounded-lg border border-border">
-              <p className="text-sm text-muted-foreground">Preview Price</p>
-              <p className="text-xl font-semibold text-primary">
-                {formatCurrency(Number(watch("price")))}
-              </p>
-            </div>
-          )}
         </div>
         {!hasVariants && (
           <div className="grid gap-2">

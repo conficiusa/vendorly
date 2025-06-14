@@ -42,10 +42,10 @@ export default function MarketplacePage() {
   } = useRecombeeRecommendations("discover");
 
   useEffect(() => {
-    if (inView && !isValidating && !isReachingEnd) {
+    if (inView && !isValidating && !isReachingEnd && !error) {
       setSize((prevSize) => prevSize + 1);
     }
-  }, [inView, isValidating, setSize, isReachingEnd]);
+  }, [inView, isValidating, setSize, isReachingEnd, error]);
 
   const filteredServices = mockServices.filter((service) => {
     const matchesCategory =
@@ -90,10 +90,10 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-violet-100 dark:from-neutral-950 dark:to-purple-900/30">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-amber-50 dark:from-neutral-950 dark:to-purple-900/30">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-10 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 dark:from-purple-400 dark:via-pink-400 dark:to-orange-300">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500 dark:from-purple-400 dark:via-pink-400 dark:to-orange-300">
             Discover Your Next Favorite
           </h1>
           <p className="mt-3 text-lg sm:text-xl text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
@@ -179,8 +179,9 @@ export default function MarketplacePage() {
                     Oops! Something went wrong.
                   </h3>
                   <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-md">
-                    {error.message ||
-                      "We couldn't load the products at this moment. Please try again in a bit."}
+                    {
+                      "We couldn't load the products at this moment. Please try again in a bit."
+                    }
                   </p>
                 </div>
               )}

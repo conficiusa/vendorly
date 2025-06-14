@@ -1,3 +1,4 @@
+"use client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,11 +9,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import * as Icons from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { getSession } from "@/lib/auth";
 import { User } from "@/lib/types/better-auth.types";
+import { authClient } from "@/lib/auth-client";
 
-const VendorUserDp = async () => {
-  const session = await getSession();
+const VendorUserDp = () => {
+  const { data: session } = authClient.useSession();
   const user = session?.user as User;
   return (
     <DropdownMenu>
@@ -24,7 +25,6 @@ const VendorUserDp = async () => {
             {user?.last_name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-      
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -42,7 +42,7 @@ const VendorUserDp = async () => {
           <span>Billing</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={async () => await authClient.signOut()}>
           <Icons.LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

@@ -8,7 +8,6 @@ import Footer from "@/components/footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Suspense } from "react";
 import Loader from "@/components/loader";
-import SessionProvider from "@/components/providers/sessionProvider";
 
 export const metadata: Metadata = {
   title: "Vendorly",
@@ -26,7 +25,6 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <Suspense fallback={<Loader />}>
-          <SessionProvider>
           <TooltipProvider>
 
             <div className="min-h-screen">
@@ -36,7 +34,6 @@ export default async function RootLayout({
             </div>
           </TooltipProvider>
           <Footer />
-        </SessionProvider>
         </Suspense>
       </body>
     </html>

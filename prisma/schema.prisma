@@ -16,6 +16,7 @@ model User {
   name                String
   email               String         @unique
   phone               String?
+  isAnonymous         Boolean?        @default(false)
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
   emailVerified       Boolean
@@ -24,19 +25,14 @@ model User {
   role                UserRole       @default(CUSTOMER)
   sessions            Session[]
   accounts            Account[]
-  twoFactorEnabled    Boolean?
-  twofactors          TwoFactor[]
-  first_name          String
-  last_name           String
+  first_name          String?
+  last_name           String?
   store               Store?
   Review              Review[]
-  phoneNumber         String?
-  phoneNumberVerified Boolean?
   addresses           Address[]
   cart                Cart?
   Order               Order[]
 
-  @@unique([phoneNumber])
   @@map("user")
 }
 
@@ -92,16 +88,6 @@ model Account {
   @@map("account")
 }
 
-model TwoFactor {
-  id          String @id
-  secret      String
-  backupCodes String
-  userId      String
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("twoFactor")
-}
-
 model Verification {
   id         String    @id
   identifier String
@@ -140,6 +126,8 @@ model Product {
   images          String[]
   description     String?
   price           Float
+  discount        Float?
+  discountType    DiscountType?
   stock           Int
   storeId         String
   rating          Float?
@@ -215,6 +203,13 @@ model Category {
   name              String
   type              CategoryType               @default(PRODUCT)
   slug              String                     @unique
+  /*
+   * Hierarchical fields: a category can have a parent, and any number of children.
+   * "parentId" is nullable for root categories.
+   */
+  parentId         String?
+  parent           Category?                  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children         Category[]                 @relation("CategoryHierarchy")
   createdAt         DateTime                   @default(now())
   updatedAt         DateTime                   @updatedAt
   products          Product[]
@@ -223,6 +218,7 @@ model Category {
   ServiceCategory   ServiceCategory[]
   variantAttributes CategoryVariantAttribute[]
 
+  @@index([parentId])
   @@map("category")
 }
 
@@ -412,4 +408,9 @@ enum CategoryType {
 enum GENDERTYPE {
   MALE
   FEMALE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
 }

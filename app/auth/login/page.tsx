@@ -7,6 +7,7 @@ import Image from "next/image";
 import { carouselSlides } from "@/lib/constants/carousel-data";
 import LoginForm from "@/components/login-form";
 import { Suspense } from "react";
+import GoogleButton from "@/components/google-button";
 
 export default function SignInPage() {
   return (
@@ -47,12 +48,7 @@ export default function SignInPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant="outline"
-              className="border-gray-200 hover:bg-gray-50"
-            >
-              Google
-            </Button>
+            <GoogleButton />
             <Button
               variant="outline"
               className="border-gray-200 hover:bg-gray-50"

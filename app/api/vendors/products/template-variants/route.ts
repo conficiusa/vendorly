@@ -13,11 +13,27 @@ export async function GET(request: Request) {
       );
     }
 
+    // Collect the category id and all its ancestors
+    const categoryIds: string[] = [];
+    let current = await prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { id: true, parentId: true },
+    });
+
+    while (current) {
+      categoryIds.push(current.id);
+      if (!current.parentId) break;
+      current = await prisma.category.findUnique({
+        where: { id: current.parentId },
+        select: { id: true, parentId: true },
+      });
+    }
+
     const variantAttributes = await prisma.variantAttribute.findMany({
       where: {
         categories: {
           some: {
-            categoryId: categoryId,
+            categoryId: { in: categoryIds },
           },
         },
       },

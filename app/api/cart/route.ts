@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionId } from "@/lib/utils/session";
+import { fetchSessionId, getSessionId } from "@/lib/utils/session";
 import { prisma } from "@/prisma/prisma-client";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
@@ -9,6 +9,7 @@ import { BadRequestError, DatabaseError, NotFoundError } from "../utils/errors";
 import { revalidateTag } from "next/cache";
 import { QueueJob } from "../utils/job";
 import { QUEUE_URLS } from "../utils/constants";
+import { queueAddUser } from "@/lib/actions/recombee";
 
 // Schema for adding items to cart
 const addToCartSchema = z.object({
@@ -20,14 +21,19 @@ const addToCartSchema = z.object({
 export async function GET() {
   try {
     const session = await getSession();
-    const sessionId = await getSessionId();
+    let sessionId = await fetchSessionId();
+
+    if (!sessionId) {
+      sessionId = await getSessionId();
+      await queueAddUser(sessionId);
+    }
 
     const where: Prisma.CartWhereInput = {
       OR: [{ userId: session?.user?.id }, { sessionId: sessionId }],
     };
 
     // Find cart based on user status
-    const cart = await prisma.cart.findFirst({
+    let cart = await prisma.cart.findFirst({
       where,
       include: {
         cartItems: {
@@ -39,15 +45,26 @@ export async function GET() {
       },
     });
 
-    if (!cart) throw new NotFoundError("Cart not found");
-
-    const total = await prisma.cart.count({
-      where,
-    });
+    // Create cart if not found
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: {
+          userId: session?.user?.id,
+          sessionId: session?.user?.id ? null : sessionId,
+        },
+        include: {
+          cartItems: {
+            include: {
+              product: true,
+              productVariantOption: true,
+            },
+          },
+        },
+      });
+    }
 
     return Response.success({
       items: cart.cartItems,
-      total,
     });
   } catch (error) {
     console.error("Error fetching cart:", error);

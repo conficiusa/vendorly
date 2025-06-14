@@ -33,7 +33,7 @@ export function ProductVariants({ form }: ProductVariantsProps) {
     isLoading,
     isError,
     error: useVariantsError,
-  } = useVariants(form.watch("category"));
+  } = useVariants(category);
   const [newValue, setNewValue] = useState("");
   const [editingValue, setEditingValue] = useState<{
     attribute: string;

@@ -2,8 +2,8 @@
 import { cookies } from "next/headers";
 import { v4 as uuid } from "uuid";
 
-const SESSION_COOKIE_NAME = "cart_session_id";
-const SESSION_EXPIRY_DAYS = 30;
+const SESSION_COOKIE_NAME = "guest_id";
+const SESSION_EXPIRY_DAYS = 365;
 
 export async function getSessionId(): Promise<string> {
   const cookieStore = await cookies();

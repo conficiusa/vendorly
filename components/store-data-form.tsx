@@ -24,7 +24,7 @@ const StoreDataForm = ({ form }: storeDataFromProps) => {
       <TextAreaInput
         control={control}
         name="bio"
-        rows={20}
+        rows={5}
         label="Store Description"
         placeholder="Tell customers about your store"
         error={errors.bio?.message}

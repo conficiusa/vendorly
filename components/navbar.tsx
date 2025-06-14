@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react"; // Added useEffect and useRef
+import React, { useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import UserMenu from "./user-menu";
@@ -79,24 +80,13 @@ const Navbar = ({ session }: { session: Session | null }) => {
   // const session = await getSession(); // This needs to be handled client-side if Navbar is a client component
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const announcementBarRef = useRef<HTMLDivElement>(null); // Ref for announcement bar height
-  const categoryLinksRef = useRef<HTMLDivElement>(null); // Ref for category links height
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
+  // Framer-motion scroll values for buttery-smooth animations
+  const { scrollY } = useScroll();
+  const announceHeight = useTransform(scrollY, [0, 120], [48, 0]); // 0-120px scroll shrinks the bar
+  const announceOpacity = useTransform(scrollY, [0, 120], [1, 0]);
+  const categoryHeight = useTransform(scrollY, [0, 120], [60, 0]);
+  const categoryOpacity = useTransform(scrollY, [0, 120], [1, 0]);
 
   const toggleMobileSearch = () => {
     setIsMobileSearchOpen(!isMobileSearchOpen);
@@ -143,17 +133,14 @@ const Navbar = ({ session }: { session: Session | null }) => {
   // }
 
   return (
-    <header
+    <motion.header
       className={cn(
-        "sticky top-0 bg-white/80 backdrop-blur-xl z-30 transition-all duration-300 ease-in-out font-sans" // Add more shadow on scroll if desired
+        "fixed top-0 inset-x-0 bg-white/80 backdrop-blur-xl z-30 font-sans"
       )}
     >
-      <div
-        ref={announcementBarRef}
-        className={cn(
-          "bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white text-center py-3 px-4 text-sm sm:text-base font-semibold tracking-wide shadow-inner hover:opacity-95 transition-all duration-300 ease-in-out overflow-hidden",
-          isScrolled ? "max-h-0 py-0 opacity-0" : "max-h-20 py-3 opacity-100" // Dynamic height, padding, opacity
-        )}
+      <motion.div
+        style={{ height: announceHeight, opacity: announceOpacity }}
+        className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white text-center flex items-center justify-center px-4 text-sm sm:text-base font-semibold tracking-wide shadow-inner hover:opacity-95 overflow-hidden"
       >
         <Link
           href="/special-offers"
@@ -166,7 +153,7 @@ const Navbar = ({ session }: { session: Session | null }) => {
             className="group-hover:animate-ping duration-1000 delay-200"
           />
         </Link>
-      </div>
+      </motion.div>
 
       {/* Main Navigation */}
       <nav className="container mx-auto py-4 px-4 sm:px-6 flex justify-between items-center gap-2 sm:gap-4 relative">
@@ -184,12 +171,12 @@ const Navbar = ({ session }: { session: Session | null }) => {
         </Link>
 
         {/* Desktop Search Bar - centered */}
-        <div className="hidden lg:flex flex-grow justify-center items-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2/5">
+        <div className="hidden lg:flex flex-1 justify-center items-center max-w-xl mx-auto px-4">
           <SearchBar />
         </div>
 
         {/* Right-side Icons and User Menu */}
-        <div className="flex items-center gap-2 sm:gap-3 z-10">
+        <div className="flex items-center gap-2 sm:gap-3 z-10 flex-shrink-0">
           {/* Mobile Search Icon */}
           <button
             aria-label="Search Products"
@@ -201,9 +188,9 @@ const Navbar = ({ session }: { session: Session | null }) => {
           <div className="hidden lg:flex items-center gap-4">
             <Link
               href="/store/create"
-              className="text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-300"
+              className="text-sm font-medium text-gray-600 whitespace-nowrap hover:text-primary transition-colors duration-300"
             >
-              Start Selling
+              Become a Vendor
             </Link>
             <WishlistIcon itemCount={3} />
             <CartIcon />
@@ -222,7 +209,7 @@ const Navbar = ({ session }: { session: Session | null }) => {
                 </button>
               </Link>
               <Link href={"/auth/sign-up"}>
-                <button className="text-sm font-bold px-5 py-2.5 bg-gradient-to-r from-primary via-purple-600 to-pink-600 text-white rounded-full shadow-md hover:shadow-xl hover:from-primary-dark hover:to-pink-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                <button className="text-sm font-bold px-5 py-2.5 bg-gradient-to-r from-rose-500 to-amber-500 text-white rounded-full shadow-md hover:shadow-xl hover:from-primary-dark hover:to-pink-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/50">
                   Sign Up
                 </button>
               </Link>
@@ -286,7 +273,7 @@ const Navbar = ({ session }: { session: Session | null }) => {
                         className="text-primary/80 group-hover:text-primary"
                       />
                       <span className="text-gray-700 group-hover:text-primary font-medium text-lg">
-                        Start Selling
+                        Become a Vendor
                       </span>
                     </Link>
                   </SheetClose>
@@ -373,19 +360,11 @@ const Navbar = ({ session }: { session: Session | null }) => {
       )}
 
       {/* Desktop Category/Navigation Links */}
-      <div
-        ref={categoryLinksRef}
-        className={cn(
-          "hidden lg:block border-t border-gray-200/50 bg-white/70 backdrop-blur-sm shadow-inner transition-all duration-300 ease-in-out overflow-hidden",
-          isScrolled ? "max-h-0 opacity-0 border-none" : "max-h-40 opacity-100" // Dynamic height, opacity and border
-        )}
+      <motion.div
+        style={{ height: categoryHeight, opacity: categoryOpacity }}
+        className="hidden lg:block border-t border-gray-200/50 bg-white/70 backdrop-blur-sm shadow-inner overflow-hidden"
       >
-        <div
-          className={cn(
-            "container mx-auto px-6 flex justify-center items-center gap-x-8 xl:gap-x-12 text-gray-700 font-medium transition-all duration-300 ease-in-out",
-            isScrolled ? "py-0" : "py-4"
-          )}
-        >
+        <div className="container mx-auto px-6 flex justify-center items-center gap-x-8 xl:gap-x-12 text-gray-700 font-medium py-4 transition-all duration-300 ease-in-out">
           {navLinks.map((item) => (
             <Link
               key={item.name}
@@ -403,8 +382,8 @@ const Navbar = ({ session }: { session: Session | null }) => {
             </Link>
           ))}
         </div>
-      </div>
-    </header>
+      </motion.div>
+    </motion.header>
   );
 };
 

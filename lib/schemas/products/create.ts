@@ -4,6 +4,9 @@ export const createProductSchema = z
   .object({
     name: z.string().min(1, "Product name is required"),
     category: z.string().min(1, "Category is required"),
+    categoryRoot: z.string().optional(),
+    categoryChild: z.string().optional(),
+    categorySubChild: z.string().optional(),
     description: z.string().min(1, "Description is required"),
     faults: z.string().optional(),
     price: z.number().gt(0, "Price must be greater than 0"),
@@ -45,6 +48,9 @@ export const ServercreateProductSchema = z
   .object({
     name: z.string().min(1, "Product name is required"),
     category: z.string().min(1, "Category is required"),
+    categoryRoot: z.string().optional(),
+    categoryChild: z.string().optional(),
+    categorySubChild: z.string().optional(),
     description: z.string().min(1, "Description is required"),
     faults: z.string().optional(),
     price: z.number().gt(0, "Price must be greater than 0"),

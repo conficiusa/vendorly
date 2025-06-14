@@ -1,20 +1,16 @@
-"use client";
+import { getSession } from "@/lib/auth";
+import { fetchSessionId } from "@/lib/utils/session";
+import { ReactNode } from "react";
 
-import { authClient } from "@/lib/auth-client";
-import { ReactNode, useEffect } from "react";
+const SessionProvider = async ({ children }: { children: ReactNode }) => {
+  const session = await getSession();
 
-const SessionProvider = ({ children }: { children: ReactNode }) => {
-  const { data, isPending } = authClient.useSession();
-
-  useEffect(() => {
-    const initializeSession = async () => {
-      if (!isPending && !data?.user) {
-        await fetch("/api/user/initializesession");
-      }
-    };
-    initializeSession();
-  }, [data, isPending]);
-
+  if (!session) {
+    const sessionId = await fetchSessionId();
+    if (!sessionId) {
+      await fetch(`${process.env.BASE_URL}/api/user/initializesession`);
+    }
+  }
   return <>{children}</>;
 };
 

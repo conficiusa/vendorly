@@ -39,6 +39,9 @@ export function AddProductForm() {
     defaultValues: {
       name: "",
       category: "",
+      categoryRoot: "",
+      categoryChild: "",
+      categorySubChild: "",
       description: "",
       price: 0,
       stock: 0,

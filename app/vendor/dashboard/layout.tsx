@@ -3,7 +3,6 @@ import { Header } from "@/components/header";
 import { SidebarProvider } from "@/lib/context/sidebar-context";
 import { Suspense } from "react";
 import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,19 +12,12 @@ export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const session = await getSession();
-  if (!session) {
-    redirect("/auth/login");
-  }
-
-  if (!("store" in session)) {
-    redirect("/discover");
-  }
   return (
     <Suspense>
       <SidebarProvider>
         <div className="flex min-h-screen bg-gray-100">
           <div className="max-sm:hidden">
-            <Sidebar session={session} />
+            <Sidebar session={session!} />
           </div>
           <div className="flex-1 flex flex-col">
             <Header />

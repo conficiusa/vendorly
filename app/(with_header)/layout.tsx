@@ -12,8 +12,8 @@ export default async function RootLayout({
   return (
     <>
       <Suspense>
-        <Navbar session={session}/>
-        {children}
+        <Navbar session={session} />
+        <main className="pt-36 lg:pt-54">{children}</main>
       </Suspense>
     </>
   );
