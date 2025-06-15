@@ -73,7 +73,7 @@ export function AddProductForm() {
     };
 
     uploadImages();
-  }, [triggerUpload, startUpload, router]);
+  }, [triggerUpload, startUpload]);
 
   const onSubmit = async (data: CreateProductFormData) => {
     const { images, ...productData } = data;

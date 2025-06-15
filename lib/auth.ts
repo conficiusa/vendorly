@@ -16,6 +16,7 @@ import { getUser } from "./queries/user/me";
 import { QUEUE_URLS } from "@/app/api/utils/constants";
 import { fetchSessionId } from "./utils/session";
 import { QueueJob } from "@/app/api/utils/job";
+import { decodeJwt } from "jose";
 
 const options = {
   database: prismaAdapter(prisma, {
@@ -31,6 +32,26 @@ const options = {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      getUserInfo: async (token) => {
+        if (!token?.idToken) {
+          throw new Error("Invalid Google OAuth token");
+        }
+
+        const profile = decodeJwt(token.idToken) as Record<string, any>;
+
+        return {
+          user: {
+            id: String(profile.sub),
+            name: profile.name as string,
+            first_name: profile.given_name as string,
+            last_name: profile.family_name as string,
+            email: profile.email as string,
+            image: profile.picture as string,
+            emailVerified: true,
+          },
+          data: profile,
+        };
+      },
     },
   },
   hooks: {

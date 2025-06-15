@@ -1,16 +1,40 @@
+"use client";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import React from "react";
+import { toast } from "sonner";
 
-const GoogleButton = () => {
+const GoogleButton = ({ className }: { className?: string }) => {
   const handleGoogleLogin = async () => {
-    await authClient.signIn.social({
-      provider: "google",
-    });
+    let toastId: string | number;
+    await authClient.signIn.social(
+      {
+        provider: "google",
+        callbackURL: "/discover",
+        newUserCallbackURL: "/auth/complete-profile",
+      },
+      {
+        onRequest: () => {
+          toastId = toast.loading("Signing in...");
+        },
+        onError: () => {
+          toast.dismiss(toastId);
+          toast.error("Failed to sign in");
+        },
+        onSuccess: () => {
+          toast.dismiss(toastId);
+          toast.success("Signed in successfully");
+        },
+      }
+    );
   };
   return (
     <button
       onClick={handleGoogleLogin}
-      className="cursor-pointer text-black flex gap-2 items-center bg-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-zinc-100 transition-all ease-in duration-200 border border-gray-200"
+      className={cn(
+        "cursor-pointer text-black flex gap-2 items-center bg-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-zinc-100 transition-all ease-in duration-200 border border-gray-200",
+        className
+      )}
     >
       <svg
         viewBox="0 0 48 48"

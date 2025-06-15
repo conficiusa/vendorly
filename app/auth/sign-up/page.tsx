@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Carousel } from "@/components/carousel";
 import { carouselSlides } from "@/lib/constants/carousel-data";
 import Image from "next/image";
 import SignupForm from "@/components/signup-form";
+import GoogleSignInButton from "@/components/google-button";
 
 export default function SignUpPage() {
   return (
@@ -50,19 +50,8 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              variant="outline"
-              className="border-gray-200 hover:bg-gray-50"
-            >
-              Google
-            </Button>
-            <Button
-              variant="outline"
-              className="border-gray-200 hover:bg-gray-50"
-            >
-              Facebook
-            </Button>
+          <div>
+            <GoogleSignInButton className="w-full flex justify-center" />
           </div>
 
           <div className="mt-6 text-center text-sm">

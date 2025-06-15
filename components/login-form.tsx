@@ -41,6 +41,7 @@ const LoginForm = () => {
         },
         onError: (ctx) => {
           if (ctx.error.status === 403) {
+            console.log(ctx.error)
             toast.dismiss(loadingToastId);
             toast.warning("Email not verified", {
               description: "Please verify your email address to log in.",

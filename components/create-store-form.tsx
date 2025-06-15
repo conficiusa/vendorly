@@ -18,38 +18,33 @@ import { useRouter } from "next/navigation";
 
 export default function CreateStoreForm() {
   const router = useRouter();
-  const { startUpload, isUploading: ImagesUploading } = useUploadThing(
-    "StoreImages",
-    {
-      onUploadError: () => {
-        toast.warning(
-          "Failed to upload images. You can retry in your dashboard"
-        );
-      },
-    }
-  );
-  const { startUpload: LogoUpload, isUploading } = useUploadThing(
-    "storeLogoUploader",
-    {
-      onClientUploadComplete: () => {
-        toast.success("You store has been set up", {
-          description: "You can start adding products and services",
-        });
-        router.push("/vendor/dashboard");
-      },
-      onUploadError: () => {
-        toast.warning("Failed to upload logo. You can retry in your dashboard");
-        router.push("/vendor/dashboard");
-      },
-    }
-  );
+  const [triggerUpload, setTriggerUpload] = React.useState<{
+    status: boolean;
+    images: Array<File> | null;
+    logo: File | null;
+  }>({
+    status: false,
+    images: null,
+    logo: null,
+  });
+  const { startUpload } = useUploadThing("StoreImages", {
+    onUploadError: () => {
+      toast.warning("Failed to upload images. You can retry in your dashboard");
+    },
+  });
+  const { startUpload: LogoUpload } = useUploadThing("storeLogoUploader", {
+    onUploadError: () => {
+      toast.warning("Failed to upload logo. You can retry in your dashboard");
+      router.push("/vendor/dashboard");
+    },
+  });
   const form = useForm<CreateStoreFormData>({
     resolver: zodResolver(createStoreSchema),
     defaultValues: {
       name: "",
       bio: "",
       logo: undefined,
-      
+
       images: [],
       useExistingAddress: false,
       address: {
@@ -61,7 +56,7 @@ export default function CreateStoreForm() {
       },
     },
   });
-const {
+  const {
     formState: { isSubmitting },
   } = form;
 
@@ -79,19 +74,46 @@ const {
         throw new Error(store.error);
       }
 
-      // Upload images if provided
-      if (images.length > 0) {
-        await startUpload(images);
+      if (images || logo) {
+        setTriggerUpload({
+          status: true,
+          images: images || null,
+          logo: logo || null,
+        });
       }
-      // Upload logo if provided
-      if (logo) {
-        await LogoUpload([logo]);
-    }
+      toast.success("You store has been set up", {
+        description: "You can start adding products and services",
+      });
+      router.push("/vendor/dashboard");
     } catch (error: any) {
       console.error("Error:", error);
       toast.error(error.message || "Failed to create store");
     }
   };
+
+  React.useEffect(() => {
+    const uploadImages = async () => {
+      if (
+        triggerUpload.status &&
+        (triggerUpload.images || triggerUpload.logo)
+      ) {
+        const uploadPromises: Promise<unknown>[] = [];
+
+        if (triggerUpload.images) {
+          uploadPromises.push(startUpload(triggerUpload.images));
+        }
+
+        if (triggerUpload.logo) {
+          uploadPromises.push(LogoUpload([triggerUpload.logo]));
+        }
+
+        await Promise.all(uploadPromises);
+        setTriggerUpload({ status: false, images: null, logo: null });
+      }
+    };
+
+    uploadImages();
+  }, [triggerUpload, startUpload, LogoUpload]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,10 +140,10 @@ const {
             <div className="flex justify-end">
               <button
                 type="submit"
-                disabled={isSubmitting || isUploading || ImagesUploading}
+                disabled={isSubmitting}
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSubmitting || isUploading || ImagesUploading ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {isSubmitting ? "Creating Store..." : "Uploading Images..."}

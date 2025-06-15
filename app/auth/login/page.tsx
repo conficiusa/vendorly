@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Carousel } from "@/components/carousel";
 import Image from "next/image";
@@ -47,14 +46,8 @@ export default function SignInPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <GoogleButton />
-            <Button
-              variant="outline"
-              className="border-gray-200 hover:bg-gray-50"
-            >
-              Facebook
-            </Button>
+          <div className="w-full">
+            <GoogleButton className="w-full flex justify-center " />
           </div>
 
           <div className="mt-6 text-center text-sm">
