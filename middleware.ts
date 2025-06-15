@@ -13,8 +13,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  
-  console.log("in middle", request.nextUrl.pathname,request.method);
   if (!session) {
     return NextResponse.redirect(
       new URL(`/auth/login/?redirect=${request.nextUrl.pathname}`, request.url)
@@ -33,5 +31,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?:vendor|api\\/vendors).*)"],
+  matcher: ["/((?:vendor|api\\/vendors|store|api\\/stores).*)"],
 };

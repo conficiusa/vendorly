@@ -1,17 +1,20 @@
 "use client";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 
 const GoogleButton = ({ className }: { className?: string }) => {
+  const redirect = useSearchParams().get("redirect");
+
   const handleGoogleLogin = async () => {
     let toastId: string | number;
     await authClient.signIn.social(
       {
         provider: "google",
-        callbackURL: "/discover",
-        newUserCallbackURL: "/auth/complete-profile",
+        callbackURL: redirect ?? "/discover",
+        newUserCallbackURL: redirect ?? "/auth/complete-profile",
       },
       {
         onRequest: () => {
