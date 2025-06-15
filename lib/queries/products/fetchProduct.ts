@@ -27,7 +27,6 @@ export const fetchProduct = async (
   });
   if (!product) throw new NotFoundError("product not found");
   if (userId || sessionId) {
-    console.log("sending detail view event", userId);
     await QueueJob(QUEUE_URLS.RECOMBEE, {
       type: "detailView",
       userId: userId || sessionId,

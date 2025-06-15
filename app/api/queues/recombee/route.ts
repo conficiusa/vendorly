@@ -65,6 +65,7 @@ export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
     const payload = body as RecombeePayload;
     const { type, ...params } = payload;
 
+
     switch (type) {
       case "addToCart":
         await handleAddToCart(params);
@@ -218,5 +219,6 @@ async function handleUpdateItem(params: Omit<RecombeePayload, "type">) {
   if (!params.productId) {
     throw new BadRequestError("productId is required for updateItem");
   }
-  await updateRecombeeItem(params.productId, params);
+  const { update } = params;
+  await updateRecombeeItem(params.productId, update);
 }

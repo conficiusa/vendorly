@@ -23,7 +23,6 @@ export async function initiateMobileMoneyCharge({
   };
   const providerCode = providerMap[provider];
 
-  console.log(providerCode);
 
   const res = await fetch("https://api.paystack.co/charge", {
     method: "POST",
@@ -43,7 +42,6 @@ export async function initiateMobileMoneyCharge({
     }),
   });
   const data = await res.json();
-  console.log(data);
   if (!res.ok) throw new PaymentError(data.message || "Failed to initialize payment");
   return data;
 }

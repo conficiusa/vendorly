@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error("[GET /api/vendors/orders]", err);
+    console.error( err);
     return Response.error(err);
   }
 }
