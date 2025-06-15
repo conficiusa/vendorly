@@ -19,10 +19,10 @@ export async function middleware(request: NextRequest) {
     );
   }
   if (session.user.role !== "VENDOR") {
-    if (
+    if ((
       request.nextUrl.pathname === "/api/vendors/store" &&
       request.method === "POST"
-    ) {
+    )|| request.nextUrl.pathname==="/store/create") {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL("/discover", request.url));
