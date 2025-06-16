@@ -288,6 +288,7 @@ export const fetchRecommendedProducts = async (
       "price",
       "category",
       "rating",
+      "slug",
     ],
     scenario,
   });
