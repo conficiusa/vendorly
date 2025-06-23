@@ -186,12 +186,14 @@ const Navbar = ({ session }: { session: Session | null }) => {
             <Search size={24} strokeWidth={2} />
           </button>
           <div className="hidden lg:flex items-center gap-4">
-            <Link
-              href="/store/create"
-              className="text-sm font-medium text-gray-600 whitespace-nowrap hover:text-primary transition-colors duration-300"
-            >
-              Become a Vendor
-            </Link>
+            {session?.user?.role !== "VENDOR" && (
+              <Link
+                href="/store/create"
+                className="text-sm font-medium text-gray-600 whitespace-nowrap hover:text-primary transition-colors duration-300"
+              >
+                Become a Vendor
+              </Link>
+            )}
             <WishlistIcon itemCount={3} />
             <CartIcon />
           </div>
@@ -263,20 +265,23 @@ const Navbar = ({ session }: { session: Session | null }) => {
                     </SheetClose>
                   ))}
                   <hr className="my-4 border-gray-300/70" />
-                  <SheetClose asChild>
-                    <Link
-                      href="/store/create"
-                      className="group flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all duration-200"
-                    >
-                      <Store
-                        size={22}
-                        className="text-primary/80 group-hover:text-primary"
-                      />
-                      <span className="text-gray-700 group-hover:text-primary font-medium text-lg">
-                        Become a Vendor
-                      </span>
-                    </Link>
-                  </SheetClose>
+                  {session?.user?.role !== "VENDOR" && (
+                    <SheetClose asChild>
+                      <Link
+                        href="/store/create"
+                        className="group flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all duration-200"
+                      >
+                        <Store
+                          size={22}
+                          className="text-primary/80 group-hover:text-primary"
+                        />
+                        <span className="text-gray-700 group-hover:text-primary font-medium text-lg">
+                          Become a Vendor
+                        </span>
+                      </Link>
+                    </SheetClose>
+                  )}
+
                   {!session?.user ? (
                     <>
                       <SheetClose asChild>
