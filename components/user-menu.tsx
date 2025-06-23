@@ -20,6 +20,7 @@ import UserAvater from "./user-avater";
 import { authClient } from "@/lib/auth-client";
 import { User } from "@/lib/types/better-auth.types";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function UserMenu({ user }: { user: User }) {
   const router = useRouter();
@@ -45,9 +46,11 @@ export default function UserMenu({ user }: { user: User }) {
             <ShoppingCart />
             <span>My Cart</span>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Package2 />
-            <span>My Orders</span>
+          <DropdownMenuItem asChild>
+            <Link href="/my-orders">
+              <Package2 />
+              <span>My Orders</span>
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings />
