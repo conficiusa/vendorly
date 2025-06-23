@@ -355,9 +355,9 @@ const ProductDetails = ({ product }: ProductDetailsProp) => {
             "Add to Cart"
           )}
         </button>
-        <Link href={checkoutUrl}>
+        <Link href={checkoutUrl} className="flex-1">
           <button
-            className="flex-1 bg-primary text-primary-foreground rounded-full px-8 py-4 font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 w-full bg-primary text-primary-foreground rounded-full px-8 py-4 font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
               currentVariant?.stock === 0 || product.stock === 0 || isLoading
             }

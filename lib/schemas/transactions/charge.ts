@@ -14,10 +14,7 @@ export const chargeSchema = z
     provider: z.nativeEnum(MobileMoneyProvider),
     saveForFuture: z.boolean(),
     addressId: z.string().optional(),
-    quantity: z
-      .string()
-      .optional()
-      .transform((val) => parseInt(val || "1")),
+    quantity: z.number().min(1, "Quantity must be at least 1").optional(),
     address: z
       .object({
         region: z.string().min(1, "Region is required"),

@@ -24,14 +24,15 @@ export const POST = async (req: NextRequest) => {
 
     if (!from || !(from === "product" || from === "cart")) {
       throw new BadRequestError(
-        "Cannot determine the source of the request; please try again"
+        "Cannot determine the source of the request; please try again "
       );
     }
 
     // Getting and validating body
-    const body = await req.json();
+    const body = await req.json()
     const parsedBody = chargeSchema.safeParse(body);
     if (!parsedBody.success) {
+      console.log(parsedBody.error);
       return Response.error(parsedBody.error);
     }
 
