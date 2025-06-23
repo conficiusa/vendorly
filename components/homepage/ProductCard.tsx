@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, Eye, Link } from "lucide-react";
+import { Heart, Eye } from "lucide-react";
 import Image from "next/image";
 import { ProductCard as ProductCardType } from "@/lib/types/product.types";
 import { formatCurrency } from "@/lib/utils";
-import AddToCartButton from "@/app/components/AddToCartButton";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import AddToCartButton from "@/app/components/AddToCartButton";
 
 export default function ProductCard({ product }: { product: ProductCardType }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -76,7 +77,7 @@ export default function ProductCard({ product }: { product: ProductCardType }) {
             className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
           >
             <div className="flex space-x-3">
-              <Link href={`/product/${product.slug}`}>
+              <Link href={`/${product.slug}`}>
                 <button
                   title="Quick View"
                   className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
@@ -97,32 +98,34 @@ export default function ProductCard({ product }: { product: ProductCardType }) {
         </div>
 
         {/* Product Info */}
-        <div className="p-6">
-          <h3 className="font-semibold text-slate-800 mb-2 text-sm leading-tight line-clamp-2">
-            {product.name}
-          </h3>
-          <p className="text-xs text-slate-500 mb-4">{product.category}</p>
+        <Link href={`/${product.slug}`}>
+          <div className="p-6">
+            <h3 className="font-semibold text-slate-800 mb-2 text-sm leading-tight line-clamp-2">
+              {product.name}
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">{product.category}</p>
 
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg font-bold text-slate-800">
-                {formatCurrency(product.price - (product?.discount || 0))}
-              </span>
-              {product.discount && (
-                <span className="text-sm text-slate-500 line-through">
-                  Was:
-                  {formatCurrency(product.price)}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-lg font-bold text-slate-800">
+                  {formatCurrency(product.price - (product?.discount || 0))}
                 </span>
-              )}
-            </div>
+                {product.discount && (
+                  <span className="text-sm text-slate-500 line-through">
+                    Was:
+                    {formatCurrency(product.price)}
+                  </span>
+                )}
+              </div>
 
-            {/* {product.coupon && (
+              {/* {product.coupon && (
               <div className="text-xs text-rose-600 font-medium">
                 after {product.coupon}
               </div>
-            )} */}
+              )} */}
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
     </motion.div>
   );

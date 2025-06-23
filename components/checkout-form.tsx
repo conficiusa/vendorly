@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TextInput } from "./text-input";
 import SelectComponent from "./select-component";
 import { regions } from "@/lib/constants/regions";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
 import { PaystackStatus } from "@/lib/types/transactions";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
@@ -126,6 +126,13 @@ export function CheckoutForm({
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
   const [otp, setOtp] = useState("");
   const [reference, setReference] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollingTimeRemaining, setPollingTimeRemaining] = useState(0);
+
+  // Refs for cleanup
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<ChargeSchemaData>({
     resolver: zodResolver(chargeSchema),
@@ -147,6 +154,128 @@ export function CheckoutForm({
     isLoading: isLoadingAddresses,
     error: addressesError,
   } = useAddress();
+
+  // Cleanup polling on unmount or status change
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Start polling when payment status changes to "pay_offline"
+  useEffect(() => {
+    if (paymentStatus === "pay_offline" && reference) {
+      startPolling();
+    } else {
+      stopPolling();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentStatus, reference]);
+
+  const checkTransactionStatus = async () => {
+    if (!reference) return;
+
+    try {
+      const res = await fetch(
+        `/api/transactions/status?reference=${reference}`
+      );
+      const response = await res.json();
+
+      if (res.ok && response.success) {
+        const transaction = response.data.transaction;
+
+        if (transaction.status === "SUCCESS") {
+          toast.success("Payment confirmed successfully!");
+          setPaymentStatus(null);
+          setPaymentMessage("Payment completed successfully!");
+          stopPolling();
+          // You can redirect or update UI here
+        } else if (transaction.status === "FAILED") {
+          toast.error("Payment failed. Please try again.");
+          setPaymentStatus(null);
+          setPaymentMessage("Payment failed. Please try again.");
+          stopPolling();
+        }
+        // If status is still PENDING, continue polling
+      }
+    } catch (error) {
+      console.error("Error checking transaction status:", error);
+    }
+  };
+
+  const startPolling = () => {
+    if (isPolling) return;
+
+    setIsPolling(true);
+    setPollingTimeRemaining(120); // 2 minutes
+
+    // Start countdown
+    countdownIntervalRef.current = setInterval(() => {
+      setPollingTimeRemaining((prev) => {
+        if (prev <= 1) {
+          stopPolling();
+          toast.error("Payment confirmation timeout. Please try again.");
+          setPaymentStatus(null);
+          setPaymentMessage("Payment confirmation timeout. Please try again.");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Start polling after 8 seconds
+    pollingTimeoutRef.current = setTimeout(() => {
+      // Initial check
+      checkTransactionStatus();
+
+      // Then poll every 15 seconds
+      pollingIntervalRef.current = setInterval(() => {
+        checkTransactionStatus();
+      }, 15000);
+    }, 8000);
+
+    // Stop polling after 2 minutes total
+    setTimeout(() => {
+      if (isPolling) {
+        stopPolling();
+        toast.error("Payment confirmation timeout. Please try again.");
+        setPaymentStatus(null);
+        setPaymentMessage("Payment confirmation timeout. Please try again.");
+      }
+    }, 120000);
+  };
+
+  const stopPolling = () => {
+    setIsPolling(false);
+    setPollingTimeRemaining(0);
+
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   useEffect(() => {
     if (errors.provider) {
@@ -219,6 +348,7 @@ export function CheckoutForm({
   };
 
   const resetDialog = () => {
+    stopPolling();
     setPaymentStatus(null);
     setPaymentMessage(null);
     setOtp("");
@@ -269,7 +399,7 @@ export function CheckoutForm({
               "Please check your mobile money account and follow the prompts to complete your payment."}
           </p>
 
-          <div className="inline-flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 px-4 py-3 rounded-lg">
+          <div className="inline-flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 px-4 py-3 rounded-lg mb-6">
             <span>
               <strong>Amount:</strong> {formatCurrency(total)}
             </span>
@@ -278,6 +408,19 @@ export function CheckoutForm({
               <strong>Ref:</strong> {reference}
             </span>
           </div>
+
+          {/* Polling status */}
+          {isPolling && pollingTimeRemaining > 0 && (
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Checking for payment confirmation...</span>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Timeout in {formatTime(pollingTimeRemaining)}
+              </p>
+            </div>
+          )}
         </div>
       ) : paymentStatus === "send_otp" ? (
         /* OTP Verification State */

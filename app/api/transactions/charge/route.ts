@@ -75,7 +75,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
 
-    await createTransaction({
+    const transaction = await createTransaction({
       amount: order.total,
       mobileMoneyProvider: provider,
       orderId: order.id,
@@ -86,6 +86,7 @@ export const POST = async (req: NextRequest) => {
     return Response.success({
       message: chargeResponse.message,
       data: chargeResponse.data,
+      transactionId: transaction.id,
     });
   } catch (error) {
     console.error(error);
