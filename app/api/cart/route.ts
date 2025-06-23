@@ -199,6 +199,7 @@ export async function POST(req: NextRequest) {
           productId,
           productVariantOptionId: variantId || null,
           quantity,
+          image: product.images[0] || null,
         },
         include: {
           product: true,

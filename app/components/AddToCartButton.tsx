@@ -7,7 +7,6 @@ import { useCart } from "@/lib/swr/useCart";
 interface AddToCartButtonProps {
   productId: string;
   variantId?: string;
-  className?: string;
   disabled?: boolean;
   onSuccess?: () => void;
   onError?: (error: string) => void;
@@ -16,7 +15,6 @@ interface AddToCartButtonProps {
 export default function AddToCartButton({
   productId,
   variantId,
-  className = "",
   disabled = false,
   onSuccess,
   onError,
@@ -49,21 +47,10 @@ export default function AddToCartButton({
   };
 
   return (
-    <motion.button
-      whileTap={{ scale: 0.98 }}
+    <button
       onClick={(e) => handleAddToCart(e)}
       disabled={disabled || isLoading}
-      className={`
-        relative flex items-center justify-center gap-2
-        px-6 py-3 rounded-lg font-medium
-        transition-colors duration-200
-        ${
-          disabled
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-primary text-white hover:bg-primary/70"
-        }
-        ${className}
-      `}
+      className="absolute bottom-4 right-4 p-2 px-4 bg-white/80 hover:bg-white rounded-full shadow-lg transition-all duration-200 z-10"
     >
       <span
         className={`flex items-center gap-2 transition-opacity duration-200 ${isLoading || isSuccess ? "opacity-0" : "opacity-100"}`}
@@ -94,6 +81,6 @@ export default function AddToCartButton({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </motion.button>
+    </button>
   );
 }

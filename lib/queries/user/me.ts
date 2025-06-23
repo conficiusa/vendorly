@@ -36,3 +36,21 @@ export const getUser = async (userId: string | null) => {
 
   return user;
 };
+
+export const getUserCart = async (userId: string) => {
+  const cart = await prisma.cart.findUnique({
+    where: { userId },
+    include: {
+      cartItems: {
+        include: {
+          product: true,
+        },
+      },
+    },
+  });
+
+  if (!cart) {
+    throw new NotFoundError("Cart not found");
+  }
+  return cart;
+};

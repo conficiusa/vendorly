@@ -13,7 +13,7 @@ const ProductCardSkeleton = ({ className }: ProductCardSkeletonProps) => {
       )}
     >
       {/* Image Placeholder - aspect-[4/5] */}
-      <div className="aspect-[4/5] w-full bg-neutral-200 dark:bg-neutral-800"></div>
+      <div className="aspect-video w-full bg-neutral-200 dark:bg-neutral-800"></div>
       {/* Content Placeholder */}
       <div className="p-4 sm:p-5">
         <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4 mb-2"></div>

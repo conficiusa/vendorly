@@ -2,37 +2,41 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
+  ArrowRight,
+  Heart,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckoutDialog } from "@/components/checkout-dialog";
 import { useCart } from "@/lib/swr/useCart";
 import { CartSkeleton } from "@/components/skeletons/cart-skeleton";
+import { useRecombeeRecommendations } from "@/lib/swr/useRecombeeRecommendations";
+import { useInView } from "react-intersection-observer";
+import { ProductCard } from "@/components/product-card";
+import { ProductsGridSkeleton } from "@/components/skeletons/products-grid-skeleton";
+import { formatCurrency } from "@/lib/utils";
+import { Product } from "@/prisma/generated/prisma-client";
 
 interface CartItem {
   id: string;
   cartId: string;
   productId: string;
   productVariantOptionId: string | null;
+  image: string | null;
   quantity: number;
   createdAt: Date;
   updatedAt: Date;
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-  };
+  product: Product | null;
   productVariantOption?: {
     id: string;
     attributes: Record<string, string>;
   };
 }
-
-// Define a primary color (Rose Gold)
-const primaryColor = "#B76E79"; // A sample rose gold hex code
-const accentColor = "#D9A6B0"; // Lighter rose gold
-const subtleBg = "#FFF7F5"; // Very light rose/peach for subtle backgrounds
 
 export default function CartPage() {
   const {
@@ -41,48 +45,27 @@ export default function CartPage() {
     isLoading,
     mutate,
     updateQuantity,
-    removeItem
+    removeItem,
   } = useCart();
-  const [recommendedProducts, setRecommendedProducts] = useState<
-    CartItem["product"][]
-  >([]);
 
-  // Fetch cart items & recommended products
+  const { ref, inView } = useInView();
+  const anchorItemId = cartItems?.[0]?.productId;
+  const recScenario = anchorItemId ? ("cartpage" as const) : undefined;
+
+  const {
+    recommendations: recommendedProducts,
+    isLoadingInitialData: isRecInitialLoading,
+    isReachingEnd: isRecEnd,
+    isValidating: isRecLoadingMore,
+    setSize: setRecSize,
+    error: recError,
+  } = useRecombeeRecommendations(recScenario, anchorItemId);
+
   useEffect(() => {
-    fetchRecommendedProducts();
-  }, []);
-
-  const fetchRecommendedProducts = async () => {
-    // Placeholder: In a real app, fetch actual recommendations
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRecommendedProducts([
-      {
-        id: "rec1",
-        name: "Enchanted Rose Elixir",
-        price: 199.99,
-        image: "/bag.jpg",
-      },
-      {
-        id: "rec2",
-        name: "Gilded Leaf Notebook",
-        price: 89.99,
-        image: "/bag.jpg",
-      },
-      {
-        id: "rec3",
-        name: "Velvet Cushion & Throw Set",
-        price: 24.5,
-        image: "/bag.jpg",
-      },
-      {
-        id: "rec4",
-        name: "Artisan Ceramic Mug",
-        price: 59.0,
-        image: "/bag.jpg",
-      },
-    ]);
-  };
+    if (inView && !isRecLoadingMore && !isRecEnd && !recError) {
+      setRecSize((s) => s + 1);
+    }
+  }, [inView, isRecLoadingMore, isRecEnd, recError, setRecSize]);
 
   const handleQuantityUpdate = async (id: string, change: number) => {
     const item = cartItems?.find((item) => item.id === id);
@@ -92,10 +75,9 @@ export default function CartPage() {
     await updateQuantity(id, newQuantity);
   };
 
-
   const subtotal =
-    (cartItems as CartItem[])?.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
+    cartItems?.reduce(
+      (sum, item) => sum + (item.product?.price ?? 0) * item.quantity,
       0
     ) || 0;
 
@@ -105,21 +87,20 @@ export default function CartPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-rose-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-xl text-center max-w-md">
-          <h2
-            style={{ color: primaryColor }}
-            className="text-2xl font-bold mb-4"
-          >
-            A slight hiccup...
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl text-center max-w-md shadow-lg border border-gray-200 dark:border-gray-700">
+          <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShoppingCart className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Unable to load cart
           </h2>
-          <p className="mb-6">{error}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <button
             onClick={() => mutate("/api/cart")}
-            style={{ backgroundColor: primaryColor }}
-            className="px-6 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
           >
-            Retry
+            Try Again
           </button>
         </div>
       </div>
@@ -127,73 +108,88 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-rose-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="container mx-auto">
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{ color: primaryColor }}
-          className="text-5xl font-extrabold text-center mb-12 tracking-tight"
+          className="mb-8"
         >
-          Your Shopping Cart
-        </motion.h1>
+          <div className="flex items-center space-x-3 mb-2">
+            <ShoppingCart className="h-8 w-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Shopping Cart
+            </h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">
+            {cartItems && cartItems.length > 0
+              ? `${cartItems.length} item${cartItems.length !== 1 ? "s" : ""} in your cart`
+              : "Your cart is empty"}
+          </p>
+        </motion.div>
 
         {!cartItems || cartItems.length === 0 ? (
           <EmptyCart />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="lg:col-span-8"
+              transition={{ delay: 0.1 }}
+              className="lg:col-span-2"
             >
-              <div className="bg-white rounded-xl overflow-hidden divide-y divide-rose-100 border border-rose-200">
-                <AnimatePresence>
-                  {cartItems.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{
-                        opacity: 0,
-                        x: -30,
-                        transition: { duration: 0.3 },
-                      }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="p-6 hover:bg-rose-50/50 transition-colors duration-300"
-                    >
-                      <CartItem
-                        item={item as CartItem}
-                        onUpdateQuantity={handleQuantityUpdate}
-                        onRemove={() => removeItem(item.id)}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Items in your cart
+                  </h2>
+                </div>
+
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <AnimatePresence>
+                    {cartItems.map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -100 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="p-6"
+                      >
+                        <CartItem
+                          item={item}
+                          onUpdateQuantity={handleQuantityUpdate}
+                          onRemove={() => removeItem(item.id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
             </motion.div>
 
             {/* Cart Summary */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="lg:col-span-4"
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-1"
             >
-              <CartSummary
-                subtotal={subtotal}
-                items={cartItems as CartItem[]}
-              />
+              <CartSummary subtotal={subtotal} items={cartItems} />
             </motion.div>
           </div>
         )}
 
-        {/* You May Also Like Section */}
-        {recommendedProducts.length > 0 && (
-          <RecommendedProducts products={recommendedProducts} />
+        {/* Recommended Products */}
+        <RecommendedProducts
+          products={recommendedProducts}
+          isLoading={isRecInitialLoading && recommendedProducts.length === 0}
+        />
+
+        {recommendedProducts.length > 0 && !isRecEnd && (
+          <div ref={ref} className="h-4"></div>
         )}
       </div>
     </div>
@@ -207,58 +203,86 @@ interface CartItemProps {
 }
 
 function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
+  if (!item.product) {
+    return null;
+  }
+
   return (
-    <div className="flex items-center gap-6">
-      <div className="relative w-28 h-28 rounded-lg overflow-hidden flex-shrink-0 border border-rose-200 shadow-md">
+    <div className="flex items-start space-x-4">
+      {/* Product Image */}
+      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
         <Image
-          src={item.product.image || "/bag.jpg"}
+          src={item.product.images[0] || "/placeholder.jpg"}
           alt={item.product.name}
           fill
-          className="object-cover transition-transform duration-300 hover:scale-105"
+          className="object-cover"
         />
       </div>
-      <div className="flex-grow">
-        <h3 className="text-xl font-semibold hover:text-rose-600 transition-colors cursor-default">
+
+      {/* Product Details */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
           {item.product.name}
         </h3>
+
         {item.productVariantOption && (
-          <p style={{ color: primaryColor }} className="text-sm mt-1">
-            {Object.entries(item.productVariantOption.attributes)
-              .map(
-                ([key, value]) =>
-                  `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`
-              )
-              .join(" / ")}
-          </p>
+          <div className="mt-1">
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(item.productVariantOption.attributes).map(
+                ([key, value]) => (
+                  <span
+                    key={key}
+                    className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-md"
+                  >
+                    {key}: {value}
+                  </span>
+                )
+              )}
+            </div>
+          </div>
         )}
-        <p className="text-2xl font-bold mt-2">
-          ${item.product.price.toFixed(2)}
-        </p>
+
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-xl font-bold text-gray-900 dark:text-white">
+            {formatCurrency(item.product.price)}
+          </div>
+
+          {/* Quantity Controls */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onUpdateQuantity(item.id, -1)}
+              className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              disabled={item.quantity <= 1}
+            >
+              <Minus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+
+            <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
+              {item.quantity}
+            </span>
+
+            <button
+              onClick={() => onUpdateQuantity(item.id, 1)}
+              className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Plus className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Total Price for Item */}
+        <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Total: {formatCurrency(item.product.price * item.quantity)}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onUpdateQuantity(item.id, -1)}
-          className="p-1 rounded-full hover:bg-rose-100 transition-colors"
-          aria-label="Decrease quantity"
-        >
-          <Minus className="w-4 h-4" style={{ color: primaryColor }} />
-        </button>
-        <span className="w-8 text-center">{item.quantity}</span>
-        <button
-          onClick={() => onUpdateQuantity(item.id, 1)}
-          className="p-1 rounded-full hover:bg-rose-100 transition-colors"
-          aria-label="Increase quantity"
-        >
-          <Plus className="w-4 h-4" style={{ color: primaryColor }} />
-        </button>
-      </div>
+
+      {/* Remove Button */}
       <button
         onClick={() => onRemove(item.id)}
-        style={{ color: primaryColor }}
-        className="p-3 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 ring-red-500 ring-offset-1"
+        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
         aria-label="Remove item"
       >
-        <Trash2 className="w-6 h-6" />
+        <Trash2 className="w-5 h-5" />
       </button>
     </div>
   );
@@ -271,77 +295,76 @@ interface CartSummaryProps {
 
 function CartSummary({ subtotal, items }: CartSummaryProps) {
   const shippingThreshold = 50;
-  const shippingCost = subtotal > shippingThreshold ? 0 : 0.1;
-  const total = subtotal + shippingCost;
+  const shippingCost = subtotal >= shippingThreshold ? 0 : 5.99;
+  const tax = subtotal * 0.08; // 8% tax
+  const total = subtotal + shippingCost + tax;
   const [showCheckout, setShowCheckout] = useState(false);
 
   return (
-    <div
-      style={{ backgroundColor: subtleBg }}
-      className="rounded-xl p-8 sticky top-12 border border-rose-200"
-    >
-      <h2
-        style={{ color: primaryColor }}
-        className="text-3xl font-bold mb-8 border-b border-rose-200 pb-4"
-      >
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-8">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
         Order Summary
       </h2>
-      <div className="space-y-5">
-        {/* Item Details */}
-        <div className="space-y-3 mb-6">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex justify-between items-center text-sm"
-            >
-              <div>
-                <span className="font-medium italic">{item.product.name}</span>
-              </div>
-              <span className="opacity-70 ml-2">x{item.quantity}</span>
-              <span className="font-semibold">
-                ${(item.product.price * item.quantity).toFixed(2)}
-              </span>
-            </div>
-          ))}
+
+      {/* Order Details */}
+      <div className="space-y-4 mb-6">
+        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+          <span>Subtotal ({items.length} items)</span>
+          <span>{formatCurrency(subtotal as number)}</span>
         </div>
 
-        <div className="border-t border-rose-200 pt-4">
-          <div className="flex justify-between text-lg">
-            <span>Subtotal</span>
-            <span className="font-semibold">${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-lg mt-4">
-            <span>Shipping</span>
+        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+          <span>Shipping</span>
+          <span>
             {shippingCost === 0 ? (
-              <span style={{ color: primaryColor }} className="font-semibold">
-                FREE
-              </span>
+              <span className="text-green-600 font-medium">FREE</span>
             ) : (
-              <span className="font-semibold">${shippingCost.toFixed(2)}</span>
+              formatCurrency(shippingCost as number)
             )}
-          </div>
+          </span>
         </div>
-        <div className="border-t border-rose-200 pt-6 mt-6">
-          <div className="flex justify-between items-center font-bold text-2xl">
-            <span>Total</span>
-            <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
+
+        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+          <span>Tax</span>
+          <span>{formatCurrency(tax as number)}</span>
+        </div>
+
+        {subtotal < shippingThreshold && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              Add ${(shippingThreshold - subtotal).toFixed(2)} more for free
+              shipping!
+            </p>
           </div>
+        )}
+      </div>
+
+      {/* Total */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
+        <div className="flex justify-between items-center">
+          <span className="text-lg font-semibold text-gray-900 dark:text-white">
+            Total
+          </span>
+          <span className="text-2xl font-bold text-gray-900 dark:text-white">
+            {formatCurrency(total as number)}
+          </span>
         </div>
       </div>
-      <motion.button
-        whileHover={{
-          scale: 1.03,
-          boxShadow: `0 10px 15px -3px ${accentColor}40, 0 4px 6px -2px ${accentColor}20`,
-        }}
-        whileTap={{ scale: 0.98 }}
-        style={{ backgroundColor: primaryColor }}
-        className="w-full mt-10 text-white py-3.5 px-6 rounded-lg text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-opacity-50"
-        onClick={() => setShowCheckout(true)}
-      >
-        Proceed to Checkout
-      </motion.button>
-      <p className="text-xs opacity-70 mt-4 text-center">
-        Secure payments | Easy returns
+
+      {/* Checkout Button */}
+      <Link href={`/checkout?from=cart`}>
+        <button
+          // onClick={() => setShowCheckout(true)}
+          className="w-full bg-primary  hover:bg-primary/80 text-white py-3 px-4 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 shadow-sm"
+        >
+          <span>Proceed to Checkout</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </Link>
+
+      {/* Security Note */}
+      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
+        🔒 Secure checkout
       </p>
 
       <CheckoutDialog
@@ -357,92 +380,75 @@ function CartSummary({ subtotal, items }: CartSummaryProps) {
 function EmptyCart() {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, type: "spring", stiffness: 120 }}
-      style={{ backgroundColor: subtleBg }}
-      className="text-center py-20 rounded-xl shadow-xl p-10 border border-rose-200"
+      className="text-center py-16"
     >
-      <div
-        style={{
-          background: `linear-gradient(to bottom right, ${primaryColor}, ${accentColor})`,
-        }}
-        className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-8 shadow-lg"
-      >
-        <ShoppingCart className="w-12 h-12 text-white" />
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-12 shadow-sm border border-gray-200 dark:border-gray-700 max-w-md mx-auto">
+        <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <ShoppingCart className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+        </div>
+
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+          Your cart is empty
+        </h2>
+
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
+          Looks like you haven't added anything to your cart yet. Start browsing
+          to find amazing products!
+        </p>
+
+        <Link
+          href="/discover"
+          className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-sm"
+        >
+          <span>Start Shopping</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
-      <h2 style={{ color: primaryColor }} className="text-4xl font-bold mb-4">
-        Your Cart Awaits Treasures
-      </h2>
-      <p className="text-lg mb-10 max-w-md mx-auto opacity-80">
-        Adorn your cart with beautiful finds. Let the shopping journey begin!
-      </p>
-      <Link
-        href="/"
-        style={{ backgroundColor: primaryColor }}
-        className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-lg font-semibold rounded-lg text-white hover:opacity-90 transition-opacity shadow-md hover:shadow-lg transform hover:scale-105"
-      >
-        Discover Collections
-      </Link>
     </motion.div>
   );
 }
 
 interface RecommendedProductsProps {
-  products: CartItem["product"][];
+  products: import("@/lib/types/product.types").ProductCard[];
+  isLoading?: boolean;
 }
 
-function RecommendedProducts({ products }: RecommendedProductsProps) {
+function RecommendedProducts({
+  products,
+  isLoading = false,
+}: RecommendedProductsProps) {
+  if (isLoading) {
+    return (
+      <div className="mt-16">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+          You might also like
+        </h2>
+        <ProductsGridSkeleton count={4} />
+      </div>
+    );
+  }
+
+  if (products.length === 0) return null;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.6 }}
-      className="mt-20"
+      transition={{ delay: 0.3 }}
+      className="mt-16"
     >
-      <h2
-        style={{ color: primaryColor }}
-        className="text-3xl font-bold text-center mb-12 tracking-tight"
-      >
-        Perhaps You'll Adore These?
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div className="flex items-center space-x-2 mb-8">
+        <Heart className="w-6 h-6 text-blue-600" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          You might also like
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
-          <motion.div
-            key={product.id}
-            whileHover={{
-              y: -8,
-              boxShadow: `0 10px 20px -5px ${accentColor}30, 0 4px 8px -4px ${accentColor}20`,
-            }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer border border-rose-100 hover:border-rose-300 transition-all duration-300 flex flex-col"
-          >
-            <div className="relative w-full h-60">
-              <Image
-                src={product.image || "/bag.jpg"}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <div className="p-5 flex flex-col flex-grow">
-              <h3 className="text-lg font-semibold mb-2 truncate flex-grow">
-                {product.name}
-              </h3>
-              <p
-                style={{ color: primaryColor }}
-                className="text-xl font-bold mb-4"
-              >
-                ${product.price.toFixed(2)}
-              </p>
-              <button
-                style={{ backgroundColor: accentColor, color: "white" }}
-                className="w-full py-2.5 px-4 rounded-lg hover:opacity-90 transition-opacity font-medium text-sm mt-auto"
-              >
-                View Details
-              </button>
-            </div>
-          </motion.div>
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </motion.div>

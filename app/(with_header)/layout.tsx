@@ -5,8 +5,10 @@ import { Suspense } from "react";
 
 export default async function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode;
+  modal: React.ReactNode;
 }>) {
   const session = await getSession();
   return (
@@ -15,6 +17,7 @@ export default async function RootLayout({
         <Navbar session={session} />
         <main className="pt-36 lg:pt-54">{children}</main>
       </Suspense>
+      {modal}
     </>
   );
 }

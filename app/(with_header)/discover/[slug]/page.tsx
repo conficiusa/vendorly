@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<any> }) {
     getSession(),
   ]);
   const { data: product, error } = await tryCatch(
-    fetchProduct(slug, session?.user?.id, sessionId)
+    fetchProduct(slug, undefined, session?.user?.id, sessionId)
   );
 
   if (!product || error) {

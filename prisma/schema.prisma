@@ -275,6 +275,7 @@ model CartItem {
   cartId                 String
   productId              String
   productVariantOptionId String? // Null for non-variant products
+  image                  String?
   quantity               Int      @default(1)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt

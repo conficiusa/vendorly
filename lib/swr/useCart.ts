@@ -1,4 +1,4 @@
-import { CartItem } from "@/prisma/generated/prisma-client";
+import { CartItem, Product } from "@/prisma/generated/prisma-client";
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 
@@ -63,7 +63,7 @@ export const useCart = () => {
 
           if (!response.ok) {
             const error = await response.json();
-            toast.error(error.error.message);
+            toast.error(error.error);
             return data;
           }
 
@@ -204,7 +204,7 @@ export const useCart = () => {
   };
 
   return {
-    data: data?.data?.items as CartItem[],
+    data: data?.data?.items as Array<CartItem & { product: Product | null }>,
     error,
     isLoading,
     mutate,

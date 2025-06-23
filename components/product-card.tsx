@@ -63,9 +63,9 @@ export function ProductCard({
                 {product.name}
               </h3>
             </Link>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                {product.store}
-              </p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              {product.store}
+            </p>
             {product.description && (
               <p className="text-xs text-muted-foreground mt-2 line-clamp-2 sm:line-clamp-3">
                 {product.description}
@@ -86,10 +86,7 @@ export function ProductCard({
                 </div>
               )}
             </div>
-            <AddToCartButton
-              productId={product.id}
-              className="text-xs px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 flex-shrink-0"
-            />
+            <AddToCartButton productId={product.id} />
           </div>
         </div>
       </div>
@@ -130,29 +127,29 @@ export function ProductCard({
             </div>
           )}
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          >
-            <div className="flex space-x-3">
-              <button
-                title="Quick View"
-                className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
               >
-                <Eye size={20} />
-                <span className="sr-only">Quick View</span>
-              </button>
-              <button
-                title="Add to Wishlist"
-                className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
-              >
-                <Heart size={20} />
-                <span className="sr-only">Add to Wishlist</span>
-              </button>
-            </div>
-          </motion.div>
+                <div className="flex space-x-3">
+                  <button
+                    title="Quick View"
+                    className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
+                  >
+                    <Eye size={20} />
+                    <span className="sr-only">Quick View</span>
+                  </button>
+                  <button
+                    title="Add to Wishlist"
+                    className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
+                  >
+                    <Heart size={20} />
+                    <span className="sr-only">Add to Wishlist</span>
+                  </button>
+                </div>
+              </motion.div>
         </div>
       </Link>
 
@@ -192,10 +189,6 @@ export function ProductCard({
               </div>
             )}
           </div>
-          <AddToCartButton
-            productId={product.id}
-            className="text-xs px-3 py-1.5 sm:text-sm sm:px-4 sm:py-2 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 bg-neutral-700 text-white hover:bg-neutral-600 dark:bg-neutral-300 dark:text-black dark:hover:bg-neutral-400 flex-shrink-0"
-          />
         </div>
       </div>
     </motion.div>

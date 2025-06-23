@@ -29,6 +29,7 @@ export const GET = async () => {
         createdAt: true,
         updatedAt: true,
       },
+      
     });
 
     if (!user) {

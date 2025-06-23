@@ -1,16 +1,25 @@
+"use client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { useAddress } from "@/lib/swr/useAddresses";
 import { Address, MobileMoneyProvider } from "@/prisma/generated/prisma-client";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { MapPin, Loader2 } from "lucide-react";
+import {
+  MapPin,
+  Loader2,
+  CreditCard,
+  Shield,
+  CheckCircle,
+  Plus,
+  ArrowLeft,
+  Phone,
+} from "lucide-react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import {
   chargeSchema,
@@ -29,12 +38,31 @@ import mtn from "@/public/mtn.png";
 import telecel from "@/public/telecel.png";
 import airtel from "@/public/airtel.png";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 const providersImages = [
-  { src: mtn, alt: "mtn logo", value: MobileMoneyProvider.MTN },
-  { src: telecel, alt: "telecel logo", value: MobileMoneyProvider.TELECEL },
-  { src: airtel, alt: "airtel logo", value: MobileMoneyProvider.AIRTELTIGO },
+  {
+    src: mtn,
+    alt: "MTN Mobile Money",
+    value: MobileMoneyProvider.MTN,
+    name: "MTN",
+    color: "bg-yellow-500",
+  },
+  {
+    src: telecel,
+    alt: "Telecel Cash",
+    value: MobileMoneyProvider.TELECEL,
+    name: "Telecel",
+    color: "bg-blue-600",
+  },
+  {
+    src: airtel,
+    alt: "AirtelTigo Money",
+    value: MobileMoneyProvider.AIRTELTIGO,
+    name: "AirtelTigo",
+    color: "bg-red-500",
+  },
 ];
 
 interface CheckoutDialogProps {
@@ -50,14 +78,14 @@ interface CheckoutDialogProps {
 function AddressForm({ form }: { form: UseFormReturn<ChargeSchemaData> }) {
   return (
     <div className="space-y-4">
-      <div className="grid sm:grid-cols-2 gap-4 max-sm:gap-2">
+      <div className="grid sm:grid-cols-2 gap-4">
         <SelectComponent
           name="address.region"
           label="Region"
           control={form.control}
           error={form.formState.errors.address?.region?.message}
           items={regions}
-          placeholder="Choose region"
+          placeholder="Select region"
         />
 
         <TextInput
@@ -72,7 +100,7 @@ function AddressForm({ form }: { form: UseFormReturn<ChargeSchemaData> }) {
       <TextInput
         control={form.control}
         name="address.address_line1"
-        label="Address Line 1"
+        label="Street Address"
         placeholder="Enter your street address"
         error={form.formState.errors.address?.address_line1?.message}
       />
@@ -80,8 +108,8 @@ function AddressForm({ form }: { form: UseFormReturn<ChargeSchemaData> }) {
       <TextInput
         control={form.control}
         name="address.address_line2"
-        label="Address Line 2 (Optional)"
-        placeholder="Apartment, suite, unit, etc. (optional)"
+        label="Apartment, Suite, etc. (Optional)"
+        placeholder="Apartment, suite, unit, etc."
         error={form.formState.errors.address?.address_line2?.message}
       />
 
@@ -89,7 +117,7 @@ function AddressForm({ form }: { form: UseFormReturn<ChargeSchemaData> }) {
         control={form.control}
         name="address.digital_address"
         label="Digital Address (Optional)"
-        placeholder="Enter your digital address (optional)"
+        placeholder="e.g., GS-1234-5678"
         error={form.formState.errors.address?.digital_address?.message}
       />
     </div>
@@ -104,6 +132,7 @@ export function CheckoutDialog({
   from,
   total,
 }: CheckoutDialogProps) {
+  const {}=authClient.useSession
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaystackStatus | null>(
     null
@@ -123,6 +152,7 @@ export function CheckoutDialog({
       saveForFuture: false,
     },
   });
+
   const {
     formState: { errors },
   } = form;
@@ -134,7 +164,7 @@ export function CheckoutDialog({
 
   useEffect(() => {
     if (errors.provider) {
-      toast.error(errors.provider.message + "aa");
+      toast.error(errors.provider.message);
     }
     if (errors.addressId) {
       toast.error("Address is required", {
@@ -144,33 +174,33 @@ export function CheckoutDialog({
   }, [errors.provider, errors.addressId]);
 
   useEffect(() => {
-    if (!isLoadingAddresses && addresses) {
+    if (!isLoadingAddresses && addresses && addresses.length > 0) {
       form.setValue("addressId", addresses[0]?.id);
     }
   }, [addresses, isLoadingAddresses, form]);
 
   const selectedAddressId = form.watch("addressId");
+  const selectedProvider = form.watch("provider");
 
   const handleOtpSubmit = async (otp: string) => {
     try {
       const res = await fetch("/api/transactions/charge/otp", {
         method: "POST",
-        body: JSON.stringify({
-          otp,
-          reference,
-        }),
+        body: JSON.stringify({ otp, reference }),
       });
       const response = await res.json();
       if (!res.ok) {
         throw new Error(response.error.message || "An error occurred");
       }
+      // Handle successful OTP verification
+      toast.success("Payment verified successfully!");
+      onClose();
     } catch (error: any) {
       toast.error(error.message);
       setOtp("");
     }
   };
 
- 
   const onSubmit = async (data: ChargeSchemaData) => {
     try {
       const res = await fetch(`/api/transactions/charge?from=${from}`, {
@@ -202,286 +232,376 @@ export function CheckoutDialog({
       await form.trigger("phoneNumber");
     }
   };
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg bg-card rounded-xl shadow-2xl border-border p-0">
-        <DialogHeader className="px-6 py-4 border-b border-border">
-          <DialogTitle className="text-xl font-bold">Checkout</DialogTitle>
-        </DialogHeader>
 
-        {paymentStatus === "pay_offline" ? (
-          <div className="px-6 py-12 flex flex-col items-center justify-center space-y-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-primary animate-spin [animation-duration:4s]" />
-            </div>
-            <div className="text-center space-y-3">
-              <h3 className="text-lg font-semibold">
-                Awaiting Payment Confirmation
-              </h3>
-              <p className="text-muted-foreground text-sm max-w-sm">
-                {paymentMessage}
-              </p>
+  const resetDialog = () => {
+    setPaymentStatus(null);
+    setPaymentMessage(null);
+    setOtp("");
+    setReference(null);
+    form.reset();
+  };
+
+  const handleClose = () => {
+    resetDialog();
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0 p-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="px-6 py-5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            {(paymentStatus === "pay_offline" ||
+              paymentStatus === "send_otp") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetDialog}
+                className="p-2 hover:bg-white/50 dark:hover:bg-gray-700/50"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-white" />
+              </div>
+              <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">
+                Secure Checkout
+              </DialogTitle>
             </div>
           </div>
-        ) : paymentStatus === "send_otp" ? (
-          <div className="px-6 py-12 space-y-6 flex flex-col justify-center items-center">
-            <div className="space-y-6 mx-auto flex flex-col justify-between items-center">
-              <div className="text-center space-y-3">
-                <h3 className="text-lg font-semibold">
-                  Awaiting Payment Confirmation
-                </h3>
-                <p className="text-muted-foreground text-sm max-w-sm">
-                  {paymentMessage}
+
+          {/* Progress indicators */}
+          {!paymentStatus && (
+            <div className="flex items-center space-x-2 mt-4">
+              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+              <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              <div className="w-2 h-2 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
+              <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              <div className="w-2 h-2 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
+            </div>
+          )}
+        </DialogHeader>
+
+        {/* Payment Processing State */}
+        {paymentStatus === "pay_offline" ? (
+          <div className="px-6 py-12 flex flex-col items-center justify-center space-y-6">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 text-white" />
+              </div>
+            </div>
+
+            <div className="text-center space-y-3 max-w-md">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Payment Initiated
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                {paymentMessage ||
+                  "Please check your mobile money account and follow the prompts to complete your payment."}
+              </p>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-4">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <strong>Amount:</strong> {formatCurrency(total)} •{" "}
+                  <strong>Reference:</strong> {reference}
                 </p>
               </div>
+            </div>
+          </div>
+        ) : /* OTP Verification State */
+        paymentStatus === "send_otp" ? (
+          <div className="px-6 py-12 space-y-8">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mx-auto">
+                <Phone className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  Enter Verification Code
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {paymentMessage ||
+                    "Please enter the 6-digit code sent to your mobile money account"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center space-y-6">
               <InputOTP
                 maxLength={6}
                 pattern={REGEXP_ONLY_DIGITS}
+                value={otp}
+                onChange={setOtp}
                 onComplete={(value) => setOtp(value)}
               >
-                <InputOTPGroup>
+                <InputOTPGroup className="gap-3">
                   {[...Array(6)].map((_, index) => (
-                    <InputOTPSlot key={index} index={index} />
+                    <InputOTPSlot
+                      key={index}
+                      index={index}
+                      className="w-12 h-12 text-lg font-bold border-2 border-gray-300 dark:border-gray-600 rounded-lg"
+                    />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
+
+              <Button
+                onClick={() => handleOtpSubmit(otp)}
+                disabled={otp.length !== 6}
+                className="w-full max-w-xs bg-green-600 hover:bg-green-700 text-white h-12 font-semibold"
+              >
+                Verify & Complete Payment
+              </Button>
             </div>
-            <Button
-              onClick={() => handleOtpSubmit(otp)}
-              disabled={otp.length !== 6}
-              className="w-full"
-            >
-              Verify OTP
-            </Button>
           </div>
         ) : (
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="px-6  space-y-8 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/50 scrollbar-track-secondary/30"
-          >
-            <div className="space-y-4">
-              <Label
-                htmlFor="address"
-                className="text-md font-semibold text-foreground"
-              >
-                Delivery Address
-              </Label>
-              {isLoadingAddresses && (
-                <p className="text-sm text-muted-foreground">
-                  Loading addresses...
-                </p>
-              )}
-              {addressesError && (
-                <p className="text-sm text-destructive">
-                  Error loading addresses.
-                </p>
-              )}
-              {!isAddingNewAddress && addresses?.length === 0 && (
-                <p className="text-muted-foreground text-sm">
-                  You do not have any saved addresses;{" "}
-                  <span
-                    className="text-primary cursor-default"
-                    onClick={() => setIsAddingNewAddress(true)}
-                  >
-                    Add a new address
-                  </span>
-                </p>
-              )}
-
-              {addresses && addresses.length > 0 && !isAddingNewAddress && (
-                <RadioGroup
-                  value={selectedAddressId}
-                  onValueChange={(id) => {
-                    form.setValue("addressId", id);
-                    setIsAddingNewAddress(false);
-                  }}
-                  className="space-y-3"
-                >
-                  {addresses.map((address: Address) => (
-                    <Label
-                      key={address.id}
-                      htmlFor={address.id}
-                      className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all duration-200 ease-in-out 
-                                  ${
-                                    selectedAddressId === address.id
-                                      ? "border-primary bg-primary/10 ring-2 ring-primary shadow-md"
-                                      : "border-muted hover:border-primary/50 hover:bg-primary/5"
-                                  }`}
-                    >
-                      <RadioGroupItem
-                        value={address.id}
-                        id={address.id}
-                        className="mr-3 peer sr-only"
-                      />
-                      <MapPin
-                        className={`w-5 h-5 mr-3 flex-shrink-0 ${selectedAddressId === address.id ? "text-primary" : "text-muted-foreground"}`}
-                      />
-                      <div className="flex-grow">
-                        <p
-                          className={`font-medium ${selectedAddressId === address.id ? "text-primary" : "text-foreground"}`}
-                        >
-                          {address.address_line1}
-                        </p>
-                        <p
-                          className={`text-xs ${selectedAddressId === address.id ? "text-primary/80" : "text-muted-foreground"}`}
-                        >
-                          {address.city}, {address.region}
-                          {address.digital_address &&
-                            ` (${address.digital_address})`}
-                        </p>
-                      </div>
-                    </Label>
-                  ))}
-                </RadioGroup>
-              )}
-            </div>
-            {isAddingNewAddress && (
-              <div className="space-y-4">
-                {addresses.length > 0 && (
-                  <p className="text-muted-foreground text-sm">
-                    You have {addresses.length} saved addresses{" "}
-                    <span
-                      className="text-primary cursor-default"
-                      onClick={() => setIsAddingNewAddress(false)}
-                    >
-                      Choose from existing Addresses
-                    </span>
-                  </p>
-                )}
-                <AddressForm form={form} />
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold">Payment Details</h3>
-
-              <div className="space-y-4">
-                <p className="font-medium">
-                  Choose your mobile money provider:
-                </p>
-                <div className="flex items-center gap-4">
-                  {providersImages.map((provider, index) => (
-                    <button
+          /* Main Checkout Form */
+          <div className="max-h-[70vh] overflow-y-auto">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* Delivery Address Section */}
+              <div className="px-6 py-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                    <MapPin className="w-5 h-5 text-blue-600" />
+                    <span>Delivery Address</span>
+                  </h3>
+                  {addresses && addresses.length > 0 && !isAddingNewAddress && (
+                    <Button
                       type="button"
-                      key={index}
-                      onClick={() => handleProviderChange(provider.value)}
-                      className={cn(
-                        "p-2 rounded-lg border-2 border-muted-foreground/50 transition-all duration-200 hover:border-primary/50",
-                        form.watch("provider") === provider.value &&
-                          "border-primary bg-primary/20 shadow-md scale-105 [&>img]:mix-blend-multiply"
-                      )}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddingNewAddress(true)}
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
                     >
-                      <Image
-                        key={index}
-                        src={provider.src}
-                        alt={provider.alt}
-                        width={100}
-                        height={100}
-                        className="aspect-video object-cover rounded-lg sm:block h-auto"
-                      />
-                    </button>
-                  ))}
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add New
+                    </Button>
+                  )}
                 </div>
-                {form.watch("provider") && (
-                  <TextInput
-                    control={form.control}
-                    name="phoneNumber"
-                    label={`Mobile Money Number`}
-                    placeholder="Enter your mobile money number"
-                    error={form.formState.errors.phoneNumber?.message}
-                    labelClassName="capitalize"
-                  />
+
+                {isLoadingAddresses && (
+                  <div className="flex items-center space-x-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Loading addresses...
+                    </span>
+                  </div>
+                )}
+
+                {addressesError && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      Error loading addresses. Please try again.
+                    </p>
+                  </div>
+                )}
+
+                {!isAddingNewAddress && addresses?.length === 0 && (
+                  <div className="text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 dark:text-gray-400 mb-3">
+                      No saved addresses found
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={() => setIsAddingNewAddress(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Add Your First Address
+                    </Button>
+                  </div>
+                )}
+
+                {addresses && addresses.length > 0 && !isAddingNewAddress && (
+                  <RadioGroup
+                    value={selectedAddressId}
+                    onValueChange={(id) => {
+                      form.setValue("addressId", id);
+                      setIsAddingNewAddress(false);
+                    }}
+                    className="space-y-3"
+                  >
+                    {addresses.map((address: Address) => (
+                      <Label
+                        key={address.id}
+                        htmlFor={address.id}
+                        className={cn(
+                          "flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
+                          selectedAddressId === address.id
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+                            : "border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-900/10"
+                        )}
+                      >
+                        <RadioGroupItem
+                          value={address.id}
+                          id={address.id}
+                          className="mr-4"
+                        />
+                        <MapPin
+                          className={cn(
+                            "w-5 h-5 mr-3 flex-shrink-0",
+                            selectedAddressId === address.id
+                              ? "text-blue-600"
+                              : "text-gray-400"
+                          )}
+                        />
+                        <div className="flex-grow">
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {address.address_line1}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {address.city}, {address.region}
+                            {address.digital_address &&
+                              ` • ${address.digital_address}`}
+                          </p>
+                        </div>
+                      </Label>
+                    ))}
+                  </RadioGroup>
+                )}
+
+                {isAddingNewAddress && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        Add New Address
+                      </h4>
+                      {addresses && addresses.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsAddingNewAddress(false)}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          Use Existing Address
+                        </Button>
+                      )}
+                    </div>
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      <AddressForm form={form} />
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="saveForFuture"
-                className="form-checkbox h-4 w-4 text-primary border-muted rounded focus:ring-primary"
-              />
-              <Label
-                htmlFor="saveForFuture"
-                className="text-sm font-medium text-foreground"
-              >
-                Save these details for future purchases
-              </Label>
-            </div>
 
-            <div className="pt-6 border-t border-border/50">
-              <div className="flex justify-between items-center">
-                <p className="text-lg font-semibold text-foreground">
-                  Total Amount:
-                </p>
-                <p className="text-xl font-bold">GHS {total.toFixed(2)}</p>
+              {/* Payment Method Section */}
+              <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-700 space-y-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Payment Method</span>
+                </h3>
+
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Choose your mobile money provider
+                  </Label>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {providersImages.map((provider) => (
+                      <button
+                        key={provider.value}
+                        type="button"
+                        onClick={() => handleProviderChange(provider.value)}
+                        className={cn(
+                          "p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center space-y-2 hover:shadow-md",
+                          selectedProvider === provider.value
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
+                            : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
+                        )}
+                      >
+                        <div className="relative">
+                          <Image
+                            src={provider.src}
+                            alt={provider.alt}
+                            width={40}
+                            height={40}
+                            className="object-contain"
+                          />
+                          {selectedProvider === provider.value && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                              <CheckCircle className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          {provider.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {selectedProvider && (
+                    <div className="mt-4">
+                      <TextInput
+                        control={form.control}
+                        name="phoneNumber"
+                        label="Mobile Money Number"
+                        placeholder="e.g., 024 123 4567"
+                        error={form.formState.errors.phoneNumber?.message}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <DialogFooter className="py-6 px-6 border-t border-border rounded-b-xl bg-muted/5">
-              <div className="w-full space-y-4">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Secure payment powered by</span>
-                  <div className="flex items-center gap-2">
-                    <Image
-                      src="/mtn.png"
-                      alt="MTN Mobile Money"
-                      width={24}
-                      height={24}
-                      className="object-contain"
-                    />
-                    <Image
-                      src="/airtel.png"
-                      alt="AirtelTigo Money"
-                      width={24}
-                      height={24}
-                      className="object-contain"
-                    />
-                    <Image
-                      src="/telecel.png"
-                      alt="Telecel Money"
-                      width={24}
-                      height={24}
-                      className="object-contain"
-                    />
+
+              {/* Order Summary */}
+              <div className="px-6 py-6 bg-gray-50 dark:bg-gray-800">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Order Summary
+                  </h3>
+                  <div className="flex justify-between items-center text-xl font-bold">
+                    <span className="text-gray-900 dark:text-white">
+                      Total Amount:
+                    </span>
+                    <span className="text-blue-600">
+                      {formatCurrency(total)}
+                    </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                {/* Security Notice */}
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Shield className="w-4 h-4" />
+                  <span>Secured by 256-bit SSL encryption</span>
+                </div>
+
+                {/* Submit Button */}
                 <Button
                   type="submit"
                   disabled={form.formState.isSubmitting}
-                  className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 transition-colors duration-200"
+                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   {form.formState.isSubmitting ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center space-x-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
                       <span>Processing Payment...</span>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-2">
-                      <span>Pay GHS {total.toFixed(2)}</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="ml-1"
-                      >
-                        <path d="M5 12h14" />
-                        <path d="m12 5 7 7-7 7" />
-                      </svg>
+                    <div className="flex items-center justify-center space-x-2">
+                      <span>Pay {formatCurrency(total)}</span>
+                      <CreditCard className="w-5 h-5" />
                     </div>
                   )}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  By clicking Pay, you agree to our Terms of Service and Privacy
+
+                {/* Terms */}
+                <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                  By proceeding, you agree to our Terms of Service and Privacy
                   Policy
                 </p>
               </div>
-            </DialogFooter>
-          </form>
+            </form>
+          </div>
         )}
       </DialogContent>
     </Dialog>

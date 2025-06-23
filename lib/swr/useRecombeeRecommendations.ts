@@ -1,3 +1,4 @@
+
 import useSWRInfinite from "swr/infinite";
 import { RecombeeScenario } from "@/lib/types/recombee-types";
 
@@ -20,19 +21,28 @@ interface RecommendationResponse {
   };
 }
 
-export const useRecombeeRecommendations = (scenario?: RecombeeScenario) => {
+export const useRecombeeRecommendations = (scenario?: RecombeeScenario, itemId?: string) => {
   const getKey = (
     pageIndex: number,
     previousPageData: RecommendationResponse | null
   ) => {
     // reached the end
     if (previousPageData?.data.recomms.length === 0) return null;
+    const params = new URLSearchParams();
+    if (scenario) params.append("scenario", scenario);
+    if (itemId) params.append("itemId", itemId);
 
-    // first page, we don't have `previousPageData`
-    if (pageIndex === 0) return `/api/recommendations?scenario=${scenario}`;
+    if (pageIndex === 0) {
+      // first page, we don't have `previousPageData`
+      return `/api/recommendations?${params.toString()}`;
+    }
 
-    // add the recommId to the API endpoint
-    return `/api/recommendations?scenario=${scenario}&recommId=${previousPageData?.data.recommId}`;
+    // add the recommId to the API endpoint for subsequent pages
+    if (previousPageData?.data.recommId) {
+      params.append("recommId", previousPageData.data.recommId);
+    }
+
+    return `/api/recommendations?${params.toString()}`;
   };
 
   const { data, error, size, setSize, isValidating } =

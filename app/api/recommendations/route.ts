@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { fetchRecommendedProducts } from "@/lib/utils/recombee";
+import { fetchRecommendations } from "@/lib/utils/recombee";
 import { RecombeeScenario } from "@/lib/types/recombee-types";
 import { getSession } from "@/lib/auth";
 import { getSessionId } from "@/lib/utils/session";
@@ -11,6 +11,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const recommId = searchParams.get("recommId");
     const scenario = searchParams.get("scenario") as RecombeeScenario | null;
+    const itemId = searchParams.get("itemId");
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? parseInt(limitParam, 10) : 10;
 
     // Get user ID from session or generate anonymous ID
     const session = await getSession();
@@ -20,16 +23,19 @@ export async function GET(request: NextRequest) {
       throw new BadRequestError("User ID is required");
     }
 
-    const response = await fetchRecommendedProducts(
-      userId,
-      scenario || undefined,
-      recommId || undefined
-    );
+    const response = (await fetchRecommendations(userId, {
+      scenario: scenario || undefined,
+      itemId: itemId || undefined,
+      recommId: recommId || undefined,
+      limit,
+    })) as any;
 
-    const recommendations = response.recomms.map((recommendation) => ({
-      id: recommendation.id,
-      ...recommendation.values,
-    }));
+    const recommendations = response.recomms.map(
+      (recommendation: { id: string; values: Record<string, unknown> }) => ({
+        id: recommendation.id,
+        ...recommendation.values,
+      })
+    );
 
     return Response.success({
       recommId: response.recommId,

@@ -36,6 +36,7 @@ export const addProductToRecombee = async (
           name: product.name,
           description: product.description,
           price: product.price,
+          discount: product.discount,
           image: product.images[0],
           category: product.Category?.name,
           slug: product.slug,
@@ -90,6 +91,7 @@ export const addItemPropertiesToRecombee = async () => {
     new rqs.AddItemProperty("name", "string"),
     new rqs.AddItemProperty("image", "image"),
     new rqs.AddItemProperty("price", "double"),
+    new rqs.AddItemProperty("discount", "double"),
     new rqs.AddItemProperty("description", "string"),
     new rqs.AddItemProperty("category", "string"),
     new rqs.AddItemProperty("available", "boolean"),
@@ -99,6 +101,7 @@ export const addItemPropertiesToRecombee = async () => {
     new rqs.AddItemProperty("storeId", "string"),
     new rqs.AddItemProperty("storeDescription", "string"),
     new rqs.AddItemProperty("slug", "string"),
+    new rqs.AddItemProperty("dateAdded", "timestamp"),
   ];
 
   let count = 0;
@@ -266,6 +269,17 @@ export const getRecombeeUser = async (userId?: string, sessionId?: string) => {
   return response;
 };
 
+export const updateRecombeeItem = async (
+  id: string,
+  update: {
+    [key: string]: string;
+  }
+) => {
+  const req = new rqs.SetItemValues(id, update);
+  const response = await client.send(req);
+  return response;
+};
+
 //recommend items to user
 export const fetchRecommendedProducts = async (
   userId: string,
@@ -296,13 +310,134 @@ export const fetchRecommendedProducts = async (
   return res;
 };
 
-export const updateRecombeeItem = async (
-  id: string,
-  update: {
-    [key: string]: string;
+//recommend items to items
+export const fetchRecommendedProductsToItem = async (
+  userId: string,
+  itemId: string,
+  scenario?: RecombeeScenario,
+  recommId?: string
+) => {
+  if (recommId) {
+    return client.send(new rqs.RecommendNextItems(recommId, 10));
+  }
+
+  return client.send(
+    new rqs.RecommendItemsToItem(itemId, userId, 10, {
+      cascadeCreate: true,
+      returnProperties: true,
+      includedProperties: [
+        "name",
+        "description",
+        "image",
+        "price",
+        "category",
+        "rating",
+        "slug",
+      ],
+      scenario,
+    })
+  );
+};
+
+export const fetchRecommendations = async (
+  userId: string,
+  {
+    scenario,
+    itemId,
+    recommId,
+    limit,
+  }: {
+    scenario?: RecombeeScenario;
+    itemId?: string;
+    recommId?: string;
+    limit?: number;
   }
 ) => {
-  const req = new rqs.SetItemValues(id, update);
-  const response = await client.send(req);
-  return response;
+  const fetchLimit = limit ?? 10;
+  if (recommId) {
+    return client.send(new rqs.RecommendNextItems(recommId, fetchLimit));
+  }
+
+  let request:
+    | recombee.requests.RecommendItemsToUser
+    | recombee.requests.RecommendItemsToItem
+    | undefined;
+  switch (scenario) {
+    case "cartpage": {
+      // Requires an anchor item to generate item-to-item recommendations.
+      if (!itemId) break; // Fallback if no itemId is provided
+
+      request = new rqs.RecommendItemsToItem(itemId, userId, fetchLimit, {
+        cascadeCreate: true,
+        returnProperties: true,
+        includedProperties: [
+          "name",
+          "description",
+          "image",
+          "price",
+          "category",
+          "rating",
+          "slug",
+        ],
+        scenario,
+      });
+      break;
+    }
+    case "discover": {
+      request = new rqs.RecommendItemsToUser(userId, fetchLimit, {
+        cascadeCreate: true,
+        returnProperties: true,
+        includedProperties: [
+          "name",
+          "description",
+          "image",
+          "price",
+          "category",
+          "rating",
+          "slug",
+        ],
+        scenario,
+      });
+      break;
+    }
+
+    default: {
+      request = new rqs.RecommendItemsToUser(userId, fetchLimit, {
+        cascadeCreate: true,
+        returnProperties: true,
+        includedProperties: [
+          "name",
+          "description",
+          "image",
+          "price",
+          "category",
+          "rating",
+          "slug",
+        ],
+        scenario,
+      });
+      break;
+    }
+  }
+
+  // Fallback in case none of the above cases assigned the request (e.g.,
+  // scenario was 'cartpage' but itemId was missing). Default to user-centric
+  // recommendations without a scenario.
+  if (!request) {
+    request = new rqs.RecommendItemsToUser(userId, fetchLimit, {
+      cascadeCreate: true,
+      returnProperties: true,
+      includedProperties: [
+        "name",
+        "description",
+        "image",
+        "price",
+        "category",
+        "rating",
+        "slug",
+      ],
+    });
+  }
+
+  return client.send(request);
 };
