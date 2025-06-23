@@ -115,8 +115,8 @@ function PriceKeypad({
   });
 
   const display =
-    raw === ""
-      ? `${currency} 0.00`
+    raw === "" || raw === "0"
+      ? "Enter amount"
       : `${currency} ${formatter.format(parseFloat(raw)).replace("GHS", "").trim()}`;
 
   const buttons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0"];
@@ -131,7 +131,7 @@ function PriceKeypad({
             type="button"
             variant="secondary"
             onClick={() => addChar(b)}
-            className="py-6 text-lg"
+            className="py-6 text-lg active:bg-primary/10"
           >
             {b === "." ? "." : b}
           </Button>
