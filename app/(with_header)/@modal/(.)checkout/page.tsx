@@ -13,15 +13,17 @@ export default async function CheckoutPage({
     from: "cart" | "product";
     productId?: string;
     variantId?: string;
+    quantity?: string;
   }>;
 }) {
   const session = await getSession();
-  const { from, productId, variantId } = await searchParams;
+  const { from, productId, variantId, quantity } = await searchParams;
   if (!session) {
     const query = new URLSearchParams();
     query.set("from", from);
     if (productId) query.set("productId", productId);
     if (variantId) query.set("variantId", variantId);
+    if (quantity) query.set("quantity", quantity);
     redirect(`/auth/login?redirect=/checkout?${query.toString()}`);
   }
 

@@ -14,7 +14,7 @@ import { queueAddUser } from "@/lib/actions/recombee";
 // Schema for adding items to cart
 const addToCartSchema = z.object({
   productId: z.string(),
-  variantId: z.string().optional(),
+  variantId: z.string().nullable().optional(),
   quantity: z.number().min(1),
 });
 

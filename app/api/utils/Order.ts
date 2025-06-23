@@ -101,11 +101,13 @@ export async function createPendingOrderFromProduct({
   variantId,
   addressId,
   address,
+  quantity,
 }: {
   userId: string;
   productId: string;
   variantId?: string | null;
   addressId?: string;
+  quantity?: number;
   address?: {
     region: string;
     city: string;
@@ -163,15 +165,15 @@ export async function createPendingOrderFromProduct({
       userId,
       addressId: finalAddressId,
       subtotal: product.price,
-      total: product.price, // Add delivery fee if needed
+      total: product.price * (quantity || 1), // Add delivery fee if needed
       orderItems: {
         create: [
           {
             productId: product.id,
             productVariantOptionId: variantId || null,
-            quantity: 1,
+            quantity: quantity || 1,
             price: product.price,
-            total: product.price,
+            total: product.price * (quantity || 1),
             storeId: product.storeId,
           },
         ],

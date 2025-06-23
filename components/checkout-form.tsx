@@ -32,6 +32,7 @@ import telecel from "@/public/telecel.png";
 import airtel from "@/public/airtel.png";
 import Image from "next/image";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const providersImages = [
   {
@@ -128,6 +129,7 @@ export function CheckoutForm({
   const [reference, setReference] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [pollingTimeRemaining, setPollingTimeRemaining] = useState(0);
+  const router = useRouter();
 
   // Refs for cleanup
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -197,7 +199,7 @@ export function CheckoutForm({
           setPaymentStatus(null);
           setPaymentMessage("Payment completed successfully!");
           stopPolling();
-          // You can redirect or update UI here
+          router.push("/my-orders");
         } else if (transaction.status === "FAILED") {
           toast.error("Payment failed. Please try again.");
           setPaymentStatus(null);

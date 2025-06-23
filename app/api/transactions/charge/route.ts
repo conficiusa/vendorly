@@ -46,7 +46,7 @@ export const POST = async (req: NextRequest) => {
         address: addressId ? undefined : address,
       });
     } else {
-      const { productId, variantId } = parsedBody.data;
+      const { productId, variantId, quantity } = parsedBody.data;
       if (!productId) {
         throw new BadRequestError(
           "Product ID is required for direct product purchase"
@@ -58,6 +58,7 @@ export const POST = async (req: NextRequest) => {
         variantId: variantId || null,
         addressId: addressId || undefined,
         address: addressId ? undefined : address,
+        quantity,
       });
     }
 

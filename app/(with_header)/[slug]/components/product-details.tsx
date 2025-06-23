@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { CheckoutDialog } from "@/components/checkout-dialog";
+import Link from "next/link";
 
 // Helper function to format date
 const formatDate = (date: Date) => {
@@ -49,7 +49,15 @@ const ProductDetails = ({ product }: ProductDetailsProp) => {
   );
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  const checkoutparams = new URLSearchParams();
+  checkoutparams.set("productId", product.id);
+  checkoutparams.set("quantity", quantity.toString());
+  if (selectedVariantId) {
+    checkoutparams.set("variantId", selectedVariantId);
+  }
+
+  const checkoutUrl = `/checkout?${checkoutparams.toString()}`;
   const router = useRouter();
 
   // Get all unique variant attributes from the variant options
@@ -150,10 +158,6 @@ const ProductDetails = ({ product }: ProductDetailsProp) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleBuyNow = () => {
-    setIsCheckoutOpen(true);
   };
 
   return (
@@ -351,27 +355,19 @@ const ProductDetails = ({ product }: ProductDetailsProp) => {
             "Add to Cart"
           )}
         </button>
-        <button
-          className="flex-1 bg-primary text-primary-foreground rounded-full px-8 py-4 font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={
-            currentVariant?.stock === 0 || product.stock === 0 || isLoading
-          }
-          onClick={handleBuyNow}
-        >
-          {currentVariant?.stock === 0 || product.stock === 0
-            ? "Out of Stock"
-            : "Buy Now"}
-        </button>
+        <Link href={checkoutUrl}>
+          <button
+            className="flex-1 bg-primary text-primary-foreground rounded-full px-8 py-4 font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={
+              currentVariant?.stock === 0 || product.stock === 0 || isLoading
+            }
+          >
+            {currentVariant?.stock === 0 || product.stock === 0
+              ? "Out of Stock"
+              : "Buy Now"}
+          </button>
+        </Link>
       </div>
-
-      <CheckoutDialog
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        productId={product.id}
-        variantId={selectedVariantId || undefined}
-        from="product"
-        total={product.price * quantity}
-      />
 
       {/* Reviews Section */}
       <div className="mt-12">
