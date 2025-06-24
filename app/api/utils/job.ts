@@ -11,6 +11,7 @@ export const QueueJob = async (url: string, body: any) => {
     return { messageId: "dev-mode-skip" };
   }
 
+  console.log("url", url);
   try {
     const result = await client.publishJSON({
       url,

@@ -45,6 +45,7 @@ export const addProductToRecombee = async (
           store: product.store.name,
           storeId: product.store.id,
           storeDescription: product.store.bio,
+          dateAdded: product.createdAt,
         },
         {
           cascadeCreate: true,
