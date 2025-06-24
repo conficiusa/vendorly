@@ -7,15 +7,23 @@ import { tryCatch } from "@/lib/utils";
 import { fetchProduct } from "@/lib/queries/products/fetchProduct";
 import { fetchSessionId } from "@/lib/utils/session";
 import { getSession } from "@/lib/auth";
+import { RecommendationsSection } from "../my-orders/components/recommendations-section";
 
-export default async function Page({ params }: { params: Promise<any> }) {
-  const [{ slug }, sessionId, session] = await Promise.all([
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<any>;
+  searchParams: Promise<{ rid?: string }>;
+}) {
+  const [{ slug }, { rid }, sessionId, session] = await Promise.all([
     params,
+    searchParams,
     fetchSessionId(),
     getSession(),
   ]);
   const { data: product, error } = await tryCatch(
-    fetchProduct(slug, undefined, session?.user?.id, sessionId)
+    fetchProduct(slug, undefined, session?.user?.id, sessionId, rid)
   );
 
   if (!product || error) {
@@ -34,6 +42,9 @@ export default async function Page({ params }: { params: Promise<any> }) {
             Go back
           </Link>
         </div>
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <RecommendationsSection scenario="discover" />
+        </div>
       </div>
     );
   }
@@ -45,6 +56,9 @@ export default async function Page({ params }: { params: Promise<any> }) {
           <ProductDetails product={product} />
         </div>
       </main>
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+        <RecommendationsSection scenario="detailspage" itemId={product.id} />
+      </div>
     </div>
   );
 }

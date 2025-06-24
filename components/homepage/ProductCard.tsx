@@ -9,7 +9,13 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import AddToCartButton from "@/app/components/AddToCartButton";
 
-export default function ProductCard({ product }: { product: ProductCardType }) {
+export default function ProductCard({
+  product,
+  recommId,
+}: {
+  product: ProductCardType;
+  recommId?: string;
+}) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -77,7 +83,7 @@ export default function ProductCard({ product }: { product: ProductCardType }) {
             className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
           >
             <div className="flex space-x-3">
-              <Link href={`/${product.slug}`}>
+              <Link href={`/${product.slug}?rid=${recommId}`}>
                 <button
                   title="Quick View"
                   className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all transform hover:scale-110 focus:outline-none"
@@ -98,7 +104,7 @@ export default function ProductCard({ product }: { product: ProductCardType }) {
         </div>
 
         {/* Product Info */}
-        <Link href={`/${product.slug}`}>
+        <Link href={`/${product.slug}?rid=${recommId}`}>
           <div className="p-6">
             <h3 className="font-semibold text-slate-800 mb-2 text-sm leading-tight line-clamp-2">
               {product.name}

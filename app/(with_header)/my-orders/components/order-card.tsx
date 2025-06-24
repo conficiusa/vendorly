@@ -11,10 +11,14 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Star,
+  Check,
 } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Order,
   OrderItem,
@@ -115,6 +119,7 @@ const getPaymentStatusConfig = (status: string) => {
 
 export function OrderCard({ order }: OrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
   // Get the most recent transaction status
   const latestTransaction = order.Transaction?.[0];
@@ -143,6 +148,46 @@ export function OrderCard({ order }: OrderCardProps) {
       }
     >
   );
+
+  const handleConfirmDelivery = async (itemId: string) => {
+    setUpdatingItems((prev) => new Set(prev).add(itemId));
+
+    try {
+      const res = await fetch("/api/orders/confirm-delivery", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ itemId }),
+      });
+
+      const response = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          response.error?.message || "Failed to confirm delivery"
+        );
+      }
+
+      toast.success("Delivery confirmed successfully!");
+      // Refresh the page to show updated status
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to confirm delivery");
+    } finally {
+      setUpdatingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleWriteReview = () => {
+    // For now, we'll just show a toast. You can implement a review modal or redirect to a review page
+    toast.info("Review feature coming soon!");
+    // Example: router.push(`/products/${productSlug}/review`);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -243,6 +288,7 @@ export function OrderCard({ order }: OrderCardProps) {
                 {items.map((item) => {
                   const itemStatus = getOrderStatusConfig(item.status);
                   const StatusIcon = itemStatus.icon;
+                  const isUpdating = updatingItems.has(item.id);
 
                   return (
                     <div
@@ -294,18 +340,59 @@ export function OrderCard({ order }: OrderCardProps) {
                         </div>
                       </div>
 
-                      <div
-                        className={cn(
-                          "flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium",
-                          itemStatus.bg
-                        )}
-                      >
-                        <StatusIcon
-                          className={cn("w-4 h-4", itemStatus.color)}
-                        />
-                        <span className={itemStatus.color}>
-                          {itemStatus.label}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium",
+                            itemStatus.bg
+                          )}
+                        >
+                          <StatusIcon
+                            className={cn("w-4 h-4", itemStatus.color)}
+                          />
+                          <span className={itemStatus.color}>
+                            {itemStatus.label}
+                          </span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-2">
+                          {/* Confirm Delivery Button */}
+                          {(item.status === "PROCESSING" ||
+                            item.status === "SHIPPED") && (
+                            <Button
+                              onClick={() => handleConfirmDelivery(item.id)}
+                              disabled={isUpdating}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white h-8 px-3 text-xs"
+                            >
+                              {isUpdating ? (
+                                <>
+                                  <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1" />
+                                  Confirming...
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Confirm Delivery
+                                </>
+                              )}
+                            </Button>
+                          )}
+
+                          {/* Review Button */}
+                          {item.status === "DELIVERED" && (
+                            <Button
+                              onClick={() => handleWriteReview()}
+                              size="sm"
+                              variant="outline"
+                              className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 h-8 px-3 text-xs"
+                            >
+                              <Star className="w-3 h-3 mr-1" />
+                              Write Review
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

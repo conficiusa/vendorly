@@ -1,1 +1,5 @@
-export type RecombeeScenario = "discover" | "search" | "cartpage" | "wishlist";
+export type RecombeeScenario =
+  | "discover"
+  | "orderspage"
+  | "cartpage"
+  | "detailspage";

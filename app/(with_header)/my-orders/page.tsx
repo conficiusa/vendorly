@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@/prisma/generated/prisma-client";
 import { OrdersList } from "./components/orders-list";
+import { RecommendationsSection } from "./components/recommendations-section";
 import { Package, ClipboardList } from "lucide-react";
 import Link from "next/link";
 
@@ -104,8 +105,13 @@ export default async function MyOrdersPage() {
             </Link>
           </div>
         ) : (
-          <OrdersList orders={orders} />
+          <div className="space-y-8">
+            <OrdersList orders={orders} />
+          </div>
         )}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <RecommendationsSection scenario="orderspage" />
+        </div>
       </div>
     </div>
   );

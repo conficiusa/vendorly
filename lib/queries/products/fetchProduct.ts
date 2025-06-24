@@ -8,7 +8,8 @@ export const fetchProduct = async (
   slug: string | undefined,
   productId: string | undefined,
   userId?: string,
-  sessionId?: string
+  sessionId?: string,
+  recommId?: string
 ) => {
   if (!slug && !productId)
     throw new BadRequestError("product slug or id not provided");
@@ -39,6 +40,7 @@ export const fetchProduct = async (
       type: "detailView",
       userId: userId || sessionId,
       productId: product.id,
+      recommId,
     });
   }
 

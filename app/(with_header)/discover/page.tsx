@@ -22,6 +22,7 @@ export default function MarketplacePage() {
 
   const {
     recommendations,
+    recommId,
     isLoadingInitialData,
     isEmpty,
     isReachingEnd,
@@ -224,7 +225,7 @@ export default function MarketplacePage() {
                       layout: { duration: 0.3 },
                     }}
                   >
-                    <ProductCard product={recommendation} />
+                    <ProductCard product={recommendation} recommId={recommId} />
                   </motion.div>
                 ))}
               </AnimatePresence>

@@ -15,7 +15,7 @@ export default async function RootLayout({
     <>
       <Suspense>
         <Navbar session={session} />
-        <main className="pt-36 lg:pt-54">{children}</main>
+        <main className="pt-18">{children}</main>
       </Suspense>
       {modal}
     </>

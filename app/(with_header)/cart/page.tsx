@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart,
@@ -8,19 +8,15 @@ import {
   Plus,
   Minus,
   ArrowRight,
-  Heart,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckoutDialog } from "@/components/checkout-dialog";
 import { useCart } from "@/lib/swr/useCart";
 import { CartSkeleton } from "@/components/skeletons/cart-skeleton";
-import { useRecombeeRecommendations } from "@/lib/swr/useRecombeeRecommendations";
-import { useInView } from "react-intersection-observer";
-import { ProductCard } from "@/components/product-card";
-import { ProductsGridSkeleton } from "@/components/skeletons/products-grid-skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { Product } from "@/prisma/generated/prisma-client";
+import { RecommendationsSection } from "../my-orders/components/recommendations-section";
 
 interface CartItem {
   id: string;
@@ -48,24 +44,7 @@ export default function CartPage() {
     removeItem,
   } = useCart();
 
-  const { ref, inView } = useInView();
-  const anchorItemId = cartItems?.[0]?.productId;
-  const recScenario = anchorItemId ? ("cartpage" as const) : undefined;
 
-  const {
-    recommendations: recommendedProducts,
-    isLoadingInitialData: isRecInitialLoading,
-    isReachingEnd: isRecEnd,
-    isValidating: isRecLoadingMore,
-    setSize: setRecSize,
-    error: recError,
-  } = useRecombeeRecommendations(recScenario, anchorItemId);
-
-  useEffect(() => {
-    if (inView && !isRecLoadingMore && !isRecEnd && !recError) {
-      setRecSize((s) => s + 1);
-    }
-  }, [inView, isRecLoadingMore, isRecEnd, recError, setRecSize]);
 
   const handleQuantityUpdate = async (id: string, change: number) => {
     const item = cartItems?.find((item) => item.id === id);
@@ -182,15 +161,9 @@ export default function CartPage() {
           </div>
         )}
 
-        {/* Recommended Products */}
-        <RecommendedProducts
-          products={recommendedProducts}
-          isLoading={isRecInitialLoading && recommendedProducts.length === 0}
-        />
-
-        {recommendedProducts.length > 0 && !isRecEnd && (
-          <div ref={ref} className="h-4"></div>
-        )}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+          <RecommendationsSection scenario="cartpage" />
+        </div>
       </div>
     </div>
   );
@@ -405,51 +378,6 @@ function EmptyCart() {
           <span>Start Shopping</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
-      </div>
-    </motion.div>
-  );
-}
-
-interface RecommendedProductsProps {
-  products: import("@/lib/types/product.types").ProductCard[];
-  isLoading?: boolean;
-}
-
-function RecommendedProducts({
-  products,
-  isLoading = false,
-}: RecommendedProductsProps) {
-  if (isLoading) {
-    return (
-      <div className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-          You might also like
-        </h2>
-        <ProductsGridSkeleton count={4} />
-      </div>
-    );
-  }
-
-  if (products.length === 0) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="mt-16"
-    >
-      <div className="flex items-center space-x-2 mb-8">
-        <Heart className="w-6 h-6 text-blue-600" />
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          You might also like
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
       </div>
     </motion.div>
   );

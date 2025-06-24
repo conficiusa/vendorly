@@ -65,7 +65,6 @@ export const POST = verifySignatureAppRouter(async (req: NextRequest) => {
     const payload = body as RecombeePayload;
     const { type, ...params } = payload;
 
-
     switch (type) {
       case "addToCart":
         await handleAddToCart(params);
@@ -160,7 +159,11 @@ async function handleDetailView(params: Omit<RecombeePayload, "type">) {
       "userId and productId are required for detailView"
     );
   }
-  await addDetailViewToRecombee(params.userId, params.productId);
+  await addDetailViewToRecombee(
+    params.userId,
+    params.productId,
+    params.recommId
+  );
 }
 
 async function handleAddProduct(params: Omit<RecombeePayload, "type">) {

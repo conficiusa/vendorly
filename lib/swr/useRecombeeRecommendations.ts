@@ -1,4 +1,3 @@
-
 import useSWRInfinite from "swr/infinite";
 import { RecombeeScenario } from "@/lib/types/recombee-types";
 
@@ -21,7 +20,10 @@ interface RecommendationResponse {
   };
 }
 
-export const useRecombeeRecommendations = (scenario?: RecombeeScenario, itemId?: string) => {
+export const useRecombeeRecommendations = (
+  scenario?: RecombeeScenario,
+  itemId?: string
+) => {
   const getKey = (
     pageIndex: number,
     previousPageData: RecommendationResponse | null
@@ -74,6 +76,7 @@ export const useRecombeeRecommendations = (scenario?: RecombeeScenario, itemId?:
 
   return {
     recommendations,
+    recommId: data?.[0]?.data.recommId,
     isLoadingInitialData,
     isLoadingMore,
     isEmpty,
