@@ -51,6 +51,7 @@ const ProductDetails = ({ product }: ProductDetailsProp) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const checkoutparams = new URLSearchParams();
+  checkoutparams.set("from", "product");
   checkoutparams.set("productId", product.id);
   checkoutparams.set("quantity", quantity.toString());
   if (selectedVariantId) {
