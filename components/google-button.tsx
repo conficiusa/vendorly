@@ -8,6 +8,8 @@ import { toast } from "sonner";
 const GoogleButton = ({ className }: { className?: string }) => {
   const redirect = useSearchParams().get("redirect");
 
+  console.log("redirect", redirect);
+
   const handleGoogleLogin = async () => {
     let toastId: string | number;
     await authClient.signIn.social(

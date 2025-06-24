@@ -24,7 +24,9 @@ export default async function CheckoutPage({
     if (productId) query.set("productId", productId);
     if (variantId) query.set("variantId", variantId);
     if (quantity) query.set("quantity", quantity);
-    redirect(`/auth/login?redirect=/checkout?${query.toString()}`);
+    redirect(
+      `/auth/login?redirect=${encodeURIComponent(`/checkout?${query.toString()}`)}`
+    );
   }
 
   if (from === "cart") {

@@ -81,7 +81,7 @@ export function RecommendationsSection({
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           <span className="ml-3 text-gray-600 dark:text-gray-400">
-            Loading recommendations...
+            Loading products...
           </span>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function RecommendationsSection({
 
   if (isEmpty) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-8 px-4">
         <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
           No recommendations available
@@ -110,7 +110,7 @@ export function RecommendationsSection({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <div>

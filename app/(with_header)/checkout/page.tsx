@@ -22,7 +22,9 @@ const page = async ({
     query.set("from", from);
     if (productId) query.set("productId", productId);
     if (variantId) query.set("variantId", variantId);
-    redirect(`/auth/login?redirect=/checkout?${query.toString()}`);
+    redirect(
+      `/auth/login?redirect=${encodeURIComponent(`/checkout?${query.toString()}`)}`
+    );
   }
 
   if (from === "cart") {
@@ -56,7 +58,11 @@ const page = async ({
         </div>
       );
     }
-    return <CheckoutForm total={total} from={from} />;
+    return (
+      <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+        <CheckoutForm total={total} from={from} />
+      </div>
+    );
   }
 
   const { data: product, error } = await tryCatch(
@@ -87,12 +93,14 @@ const page = async ({
   const total = product.price;
 
   return (
-    <CheckoutForm
-      total={total}
-      productId={productId}
-      variantId={variantId}
-      from={from}
-    />
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <CheckoutForm
+        total={total}
+        productId={productId}
+        variantId={variantId}
+        from={from}
+      />
+    </div>
   );
 };
 

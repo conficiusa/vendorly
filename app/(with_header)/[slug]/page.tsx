@@ -28,19 +28,21 @@ export default async function Page({
 
   if (!product || error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Product not found</h1>
-          <p className="text-muted-foreground mb-4">
-            The product you&apos;re looking for doesn&apos;t exist.
-          </p>
-          <Link
-            href="/discover"
-            className="text-primary hover:text-primary/80 inline-flex items-center"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go back
-          </Link>
+      <div className="min-h-screen bg-background">
+        <div className="bg-background flex items-center justify-center py-12">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-2">Product not found</h1>
+            <p className="text-muted-foreground mb-4">
+              The product you&apos;re looking for doesn&apos;t exist.
+            </p>
+            <Link
+              href="/discover"
+              className="text-primary hover:text-primary/80 inline-flex items-center"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go back
+            </Link>
+          </div>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
           <RecommendationsSection scenario="discover" />

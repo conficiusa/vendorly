@@ -229,8 +229,8 @@ export function OrderCard({ order }: OrderCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
+          <div className="flex items-center gap-4 max-sm justify-between">
+            <div className="text-right flex items-center gap-2">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(order.total)}
               </p>

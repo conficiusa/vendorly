@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ShoppingCart,
-  Trash2,
-  Plus,
-  Minus,
-  ArrowRight,
-} from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckoutDialog } from "@/components/checkout-dialog";
@@ -43,8 +37,6 @@ export default function CartPage() {
     updateQuantity,
     removeItem,
   } = useCart();
-
-
 
   const handleQuantityUpdate = async (id: string, change: number) => {
     const item = cartItems?.find((item) => item.id === id);
@@ -215,13 +207,13 @@ function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
           </div>
         )}
 
-        <div className="mt-2 flex items-center justify-between">
-          <div className="text-xl font-bold text-gray-900 dark:text-white">
+        <div className="mt-2 flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
+          <div className="text-xl font-bold text-gray-900 dark:text-white max-sm:w-full">
             {formatCurrency(item.product.price)}
           </div>
 
           {/* Quantity Controls */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 max-sm:w-full">
             <button
               onClick={() => onUpdateQuantity(item.id, -1)}
               className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
