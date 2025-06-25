@@ -35,7 +35,8 @@ export default function MarketplacePage() {
     if (inView && !isValidating && !isReachingEnd && !error) {
       setSize((prevSize) => prevSize + 1);
     }
-  }, [inView, isValidating, setSize, isReachingEnd, error]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inView, isValidating, isReachingEnd, error]);
 
   if (isLoadingInitialData) {
     return (
