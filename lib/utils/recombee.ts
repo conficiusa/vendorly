@@ -27,7 +27,6 @@ export const addProductToRecombee = async (
   }
 ) => {
   try {
-    console.log("product", product.createdAt);
     await client.send(
       new rqs.SetItemValues(
         product.id,
