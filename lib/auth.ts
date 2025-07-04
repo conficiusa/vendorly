@@ -10,6 +10,7 @@ import {
   createAuthMiddleware,
   customSession,
   anonymous,
+  openAPI,
 } from "better-auth/plugins";
 import { tryCatch } from "./utils";
 import { getUser } from "./queries/user/me";
@@ -159,6 +160,7 @@ export const auth = betterAuth({
   ...options,
   plugins: [
     anonymous(),
+    openAPI(),
     customSession(async ({ session, user }) => {
       const { data } = await tryCatch(getUser(session.userId));
       return {

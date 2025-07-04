@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    console.log("recommendations", response.recommId);
     return Response.success({
       recommId: response.recommId,
       recomms: recommendations,

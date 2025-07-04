@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Heart, Eye } from "lucide-react";
 import Image from "next/image";
 import { ProductCard as ProductCardType } from "@/lib/types/product.types";
 import { formatCurrency } from "@/lib/utils";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import AddToCartButton from "@/app/components/AddToCartButton";
 
-export default function ProductCard({
+function ProductCard({
   product,
   recommId,
 }: {
@@ -17,35 +16,9 @@ export default function ProductCard({
   recommId?: string;
 }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const cardVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } },
-  };
-
-  const hoverEffect = {
-    y: -8,
-    boxShadow: "0px 20px 30px -10px rgba(0, 0, 0, 0.2)",
-    transition: { type: "spring", stiffness: 300, damping: 15 },
-  };
 
   return (
-    <motion.div
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={hoverEffect}
-      variants={cardVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-    >
+    <div className="group bg-white rounded-2xl h-full shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
       <div className="relative">
         {/* Product Image */}
         <div className="aspect-[14/10] relative overflow-hidden">
@@ -76,12 +49,7 @@ export default function ProductCard({
           </button>
           {/* Quick Add to Cart - appears on hover */}
           <AddToCartButton productId={product.id} />
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 10 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          >
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
             <div className="flex space-x-3">
               <Link href={`/${product.slug}?rid=${recommId}`}>
                 <button
@@ -100,7 +68,7 @@ export default function ProductCard({
                 <span className="sr-only">Add to Wishlist</span>
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Product Info */}
@@ -133,6 +101,13 @@ export default function ProductCard({
           </div>
         </Link>
       </div>
-    </motion.div>
+    </div>
   );
 }
+
+export default memo(
+  ProductCard,
+  (prevProps, nextProps) =>
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.recommId === nextProps.recommId
+);

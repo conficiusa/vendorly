@@ -374,6 +374,8 @@ export const fetchRecommendations = async (
     returnProperties: true,
     includedProperties,
     scenario,
+    rotationRate: 0.5,
+    rotationTime: 2 * 60,
   };
 
   let request:

@@ -36,6 +36,7 @@ export const useRecombeeRecommendations = (
 
     if (pageIndex === 0) {
       // first page, we don't have `previousPageData`
+      params.append("page", pageIndex.toString());
       return `/api/recommendations?${params.toString()}`;
     }
 
@@ -43,6 +44,9 @@ export const useRecombeeRecommendations = (
     if (previousPageData?.data.recommId) {
       params.append("recommId", previousPageData.data.recommId);
     }
+
+    // always append the current page index so each page has a unique key
+    params.append("page", pageIndex.toString());
 
     return `/api/recommendations?${params.toString()}`;
   };
@@ -72,7 +76,8 @@ export const useRecombeeRecommendations = (
     (size > 0 && data && typeof data[size - 1] === "undefined");
   const isEmpty = data?.[0]?.data.recomms.length === 0;
   const isReachingEnd =
-    isEmpty || (data && data[data.length - 1]?.data.recomms.length < 10);
+    isEmpty ||
+    (data && data[data.length - 1]?.data.numberNextRecommsCalls === 0);
 
   return {
     recommendations,
